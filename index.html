@@ -2604,9 +2604,96 @@ practice makes perfect so keep going</pre>
   },
 
   'ch2-a2-portforward': {
-    title: 'A2.2. ポートフォワーディング設定方法',
-    toc: [{ level: 1, label: 'A2.2. ポートフォワーディング設定方法', anchor: 'top' }],
-    content: `<h1 id="top">A2.2. ポートフォワーディング設定方法</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: 'A2.2. VirtualBoxのポートフォワーディング設定方法',
+    toc: [
+      { level: 1, label: 'A2.2. VirtualBoxのポートフォワーディング設定方法', anchor: 'top' },
+      { level: 2, label: '(1) ネットワーク設定の表示', anchor: 'sec1' },
+      { level: 2, label: '(2) ポートフォワーディングルールの新規追加', anchor: 'sec2' },
+      { level: 2, label: '(3) ポートフォワーディングルールの入力', anchor: 'sec3' },
+      { level: 2, label: '(4) Alpine Linux の起動', anchor: 'sec4' },
+      { level: 2, label: '(5) Tera Term の起動と SSH による接続開始', anchor: 'sec5' },
+      { level: 2, label: '(6) セキュリティ警告の確認', anchor: 'sec6' },
+      { level: 2, label: '(7) リモートホスト（ゲストOS）へのログイン', anchor: 'sec7' },
+    ],
+    content: `
+      <h1 id="top">A2.2. VirtualBoxのポートフォワーディング設定方法</h1>
+      <p class="meta">公開日： 2026年4月18日（土）</p>
+      <p class="meta">開講日： 2026年4月20日（月）</p>
+
+      <p>　この資料では、VirtualBox 上で動作するゲストOSのネットワークサービスへホストOSから接続する方法について説明する。 なお、この設定は仮想マシンの起動の可否に関わらず設定可能である。</p>
+
+      <h2 id="sec1">(1) ネットワーク設定の表示</h2>
+      <p>　まず、VirtualBox において、仮想マシンの設定ウィンドウを表示し、メニューが「Expert」になっていることを確認して、 左ペインのメニューから「ネットワーク」を選択する。すると「アダプター1」の欄に「ポートフォワーディング」という ボタンを押す。</p>
+      <div class="figure">
+        <img src="images/a22-fig1.png" alt="ネットワーク設定の表示" style="max-width:100%">
+        <p class="fig-caption">【図1. ネットワーク設定の表示】</p>
+      </div>
+
+      <h2 id="sec2">(2) ポートフォワーディングルールの新規追加</h2>
+      <p>　新たに「ポートフォワーディングルール」というウィンドウが表示されるので、ウィンドウ右端にあるツールバーの「＋」記号のついたアイコンをクリックする。</p>
+      <div class="figure">
+        <img src="images/a22-fig2.png" alt="ポートフォワーディングルールの新規追加" style="max-width:100%">
+        <p class="fig-caption">【図2. ポートフォワーディングルールの新規追加】</p>
+      </div>
+
+      <h2 id="sec3">(3) ポートフォワーディングルールの入力</h2>
+      <p>　すると、空欄のポートフォワーディングルールが1行追加されるので、該当箇所に次の内容を入力する。</p>
+      <table>
+        <thead><tr><th>項目</th><th>値</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>名前</td><td>ssh</td><td></td></tr>
+          <tr><td>プロトコル</td><td>TCP</td><td>デフォルト</td></tr>
+          <tr><td>ホストIP</td><td>※空欄</td><td>空欄にすると、ホスト OS のすべての IP アドレスでサービス提供</td></tr>
+          <tr><td>ホストポート</td><td>10022</td><td>インタフェースが共通化された仮想NATルータとホストマシンで提供されるポート番号</td></tr>
+          <tr><td>ゲストIP</td><td>※空欄</td><td>空欄にすると、ゲスト OS のすべての IP アドレスでサービス提供</td></tr>
+          <tr><td>ゲストポート</td><td>22</td><td>ゲスト OS の SSH のポート番号（サービス番号）</td></tr>
+        </tbody>
+      </table>
+      <div class="figure">
+        <img src="images/a22-fig3.png" alt="ポートフォワーディングルールの入力" style="max-width:100%">
+        <p class="fig-caption">【図3. ポートフォワーディングルールの入力】</p>
+      </div>
+
+      <h2 id="sec4">(4) Alpine Linux の起動</h2>
+      <p>　接続テストを行うために、ゲスト OS の Alpine Linux を起動する。</p>
+      <div class="figure">
+        <img src="images/a22-fig4.png" alt="Alpine Linux の起動" style="max-width:100%">
+        <p class="fig-caption">【図4. Alpine Linux の起動】</p>
+      </div>
+
+      <h2 id="sec5">(5) Tera Term の起動と SSH による接続開始</h2>
+      <p>　Windows 上で Tera Term を起動し、「新しい接続」ウィンドウに対して、以下の値を入力し、「OK」ボタンを押す。</p>
+      <table>
+        <thead><tr><th>項目</th><th>値</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>ホスト</td><td>localhost</td><td>自分自身を指すホスト名</td></tr>
+          <tr><td>TCPポート</td><td>10022</td><td>仮想NATルータがゲストOSへフォワーディングするポート番号</td></tr>
+        </tbody>
+      </table>
+      <div class="figure">
+        <img src="images/a22-fig5.png" alt="「新しい接続」ウィンドウへの入力" style="max-width:100%">
+        <p class="fig-caption">【図5. 「新しい接続」ウィンドウへの入力】</p>
+      </div>
+
+      <h2 id="sec6">(6) セキュリティ警告の確認</h2>
+      <p>　初めてのホストへ接続する場合や以前接続したホストと異なるホストが指定されている場合に セキュリティの警告が表示されるので、「既存の鍵を，新しい鍵で上書きする」にチェックを入れて、「続行」ボタンを押す。</p>
+      <div class="figure">
+        <img src="images/a22-fig6.png" alt="セキュリティ警告ウィンドウ表示" style="max-width:100%">
+        <p class="fig-caption">【図6. セキュリティ警告ウィンドウ表示】</p>
+      </div>
+
+      <h2 id="sec7">(7) リモートホスト（ゲストOS）へのログイン</h2>
+      <p>　SSHの認証ウィンドウが表示され、ユーザ名とパスワードの入力が求められる。 ここで、Alpine Linux で作成したユーザアカウントのユーザ名とパスワードを入力して「OK」ボタンを押せば、ログイン完了である。</p>
+      <div class="figure">
+        <img src="images/a22-fig7.png" alt="SSH認証ウィンドウ表示" style="max-width:100%">
+        <p class="fig-caption">【図7. SSH認証ウィンドウ表示】</p>
+      </div>
+
+      <div class="page-nav" style="justify-content:space-between;">
+        <a onclick="navigate('ch2-a1-distro')">← A2.1. ディストリビューションの違い</a>
+        <a onclick="navigate('ch3-linux-mgmt2')">3. Linuxのシステム管理2 →</a>
+      </div>
+    `
   },
 
   'ch3-linux-mgmt2': {
