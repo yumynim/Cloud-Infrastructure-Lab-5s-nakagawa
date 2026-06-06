@@ -460,8 +460,324 @@ const pages = {
 
   'guidance': {
     title: 'ガイダンス',
-    toc: [{ level: 1, label: 'ガイダンス', anchor: 'top' }],
-    content: `<h1 id="top">ガイダンス</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    toc: [
+      { level: 1, label: 'ガイダンス', anchor: 'top' },
+      { level: 2, label: '0.1. はじめに', anchor: 'sec01' },
+      { level: 3, label: '0.1.1. 科目情報（シラバスより）', anchor: 'sec011' },
+      { level: 3, label: '0.1.2. 授業内容に含まれる要素（シラバスより）', anchor: 'sec012' },
+      { level: 3, label: '0.1.3. 履修制限（シラバスより）', anchor: 'sec013' },
+      { level: 3, label: '0.1.4. スタッフ', anchor: 'sec014' },
+      { level: 2, label: '0.2. 授業内容について', anchor: 'sec02' },
+      { level: 3, label: '0.2.1. 授業の目的（シラバスより）', anchor: 'sec021' },
+      { level: 3, label: '0.2.2. 到達目標（シラバスより）', anchor: 'sec022' },
+      { level: 3, label: '0.2.3. 身につけるスキル', anchor: 'sec023' },
+      { level: 2, label: '0.3. 演習環境', anchor: 'sec03' },
+      { level: 3, label: '0.3.1. 利用するコンピュータの要件', anchor: 'sec031' },
+      { level: 2, label: '0.4. 学習を始めるにあたって', anchor: 'sec04' },
+      { level: 3, label: '0.4.1. 注意事項・学習アドバイス（シラバスより）', anchor: 'sec041' },
+      { level: 3, label: '0.4.2. 関連講義科目（シラバスより）', anchor: 'sec042' },
+      { level: 3, label: '0.4.3. 科目に関連した実務経験（シラバス＋α）', anchor: 'sec043' },
+      { level: 3, label: '0.4.4. 学習に利用するWebサイト・教材', anchor: 'sec044' },
+      { level: 3, label: '0.4.5. 教科書・参考書', anchor: 'sec045' },
+      { level: 2, label: '0.5. 授業の運営について', anchor: 'sec05' },
+      { level: 3, label: '0.5.1. 授業計画（シラバス＋α）', anchor: 'sec051' },
+      { level: 3, label: '0.5.2. 演習授業の基本構成', anchor: 'sec052' },
+      { level: 2, label: '0.6. 成績配分', anchor: 'sec06' },
+      { level: 3, label: '0.6.1. 成績配分', anchor: 'sec061' },
+      { level: 3, label: '0.6.2. 合格点', anchor: 'sec062' },
+      { level: 2, label: '0.7 その他注意事項', anchor: 'sec07' },
+    ],
+    content: `
+      <h1 id="top">ガイダンス</h1>
+      <div class="meta">
+        公開日： 2026年4月11日（土）<br>
+        開講日： 2026年4月13日（月）
+      </div>
+
+      <h2 id="sec01">0.1. はじめに</h2>
+      <p>　科目の位置づけと共にこの科目で得られる知識・技能について説明する。また，単位取得に必要な要件について説明する。</p>
+
+      <h3 id="sec011">0.1.1. 科目情報（シラバスより）</h3>
+      <table>
+        <thead><tr><th>項目</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>科目ナンバー</td><td>専8304</td></tr>
+          <tr><td>科目名</td><td>クラウド構築演習<br>Exercise in Cloud Computing</td></tr>
+          <tr><td>単位</td><td>2単位</td></tr>
+          <tr><td>開講</td><td>5S 月曜1～4限</td></tr>
+          <tr><td>関連するDP（ディプロマポリシー）</td><td>思考力、課題発見力、課題解決力</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="sec012">0.1.2. 授業内容に含まれる要素（シラバスより）</h3>
+      <table>
+        <thead><tr><th>項目</th><th>内容</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>課題解決型</td><td></td><td></td></tr>
+          <tr><td>グループワーク・ディスカッション</td><td></td><td></td></tr>
+          <tr><td>プレゼンテーション</td><td></td><td></td></tr>
+          <tr><td>実験・実習・演習</td><td>〇</td><td></td></tr>
+          <tr><td>フィールドワーク</td><td></td><td></td></tr>
+          <tr><td>オンライン</td><td>〇 ※シラバスより修正</td><td></td></tr>
+          <tr><td>AIアセスメントスケール</td><td>生成 AI とコラボする</td><td>生成AI（ChatGPT等）を適切に活用しながら課題に取り組む</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="sec013">0.1.3. 履修制限（シラバスより）</h3>
+      <p>　特になし</p>
+
+      <h3 id="sec014">0.1.4. スタッフ</h3>
+      <table>
+        <thead><tr><th>属性</th><th>氏名</th><th>役割</th></tr></thead>
+        <tbody>
+          <tr><td>主担当</td><td>中川 泰宏</td><td>資料作成、レクチャー、成績・評価</td></tr>
+          <tr><td>副担当</td><td>伊集院 大将</td><td>主担当補助、演習補助</td></tr>
+          <tr><td>TA (Teaching Assistant)</td><td>M2　井上 裕介 (山口研)<br>M1　川村 千尋（中川研）</td><td>演習補助</td></tr>
+        </tbody>
+      </table>
+      <p>　※ 環境構築トラブルは自己解決を基本とするが、担当・TAが必要に応じてサポート<br>
+      　※ 演習の運営に係る質問は中川まで</p>
+
+      <h2 id="sec02">0.2. 授業内容について</h2>
+
+      <h3 id="sec021">0.2.1. 授業の目的（シラバスより）</h3>
+      <p>　本演習では、パブリッククラウドないしパブリッククラウドに見立てたコンピューティング環境を利用してIaaS, PaaS, SaaSの違いについて学ぶと共に、クラウドストレージやクラウドデータベースなどと連携したWebアプリケーションの開発を行うことでクラウドサービス構築に必要な知識と技能について修得する。また、クラウド環境利用時に必要となるネットワークの設計・構築技法やホストやサーバの管理手法についてクラウド環境とローカル環境間で比較することにより、パブリッククラウド、プライベートクラウド、オンプレミス環境の違いについても理解する。</p>
+
+      <h3 id="sec022">0.2.2. 到達目標（シラバスより）</h3>
+      <p>１） クラウド環境を利用した仮想計算機の基本操作が行える<br>
+      ２） Linuxのシステム管理について基本操作が行える<br>
+      ３） LANの設計が行える<br>
+      ４） クラウドサービスを利用してシステムの開発が行える</p>
+
+      <h3 id="sec023">0.2.3. 身につけるスキル</h3>
+      <p>　この演習では、クラウドコンピューティングの基盤について理解し、自身で構築できるスキルを養う。そのため、クラウドネイティブ環境としてKubernetesを中心に仮想化環境を応用した学習を通して、実務へ応用可能なスキルを身に着ける。具体的には全体を通して以下のような要素について学習する予定である。</p>
+      <table>
+        <thead><tr><th>区分</th><th>学習要素</th></tr></thead>
+        <tbody>
+          <tr><td>コンピュータ基盤</td><td>Alpine Linux（軽量OS運用）<br>TCP/IP<br>DNS</td></tr>
+          <tr><td>クラウドネイティブ</td><td>Docker / OCI<br>Kubernetes（Pod / Service / Deployment）<br>CNI / Ingress　※検討中</td></tr>
+          <tr><td>Webアプリケーション開発</td><td>Web API<br>フロントエンド・バックエンド連携</td></tr>
+          <tr><td>実務で必要となる概念</td><td>コンテナ化<br>マイクロサービス設計　※検討中</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="sec03">0.3. 演習環境</h2>
+      <p>　本演習では、コンパクトなプライベートクラウド環境を構築し、その上でアプリケーションを動かすことで、クラウドコンピューティングの基礎について学習する。 具体的には、仮想環境を利用して次のような構成を作る。</p>
+      <table>
+        <thead><tr><th>項目</th><th>利用するソフトウェア</th><th>選定理由</th></tr></thead>
+        <tbody>
+          <tr><td>ホストOS</td><td>Microsoft Windows / (macOS)</td><td>学科指定PC ※macOSも対応するが説明はWindowsをベースとする</td></tr>
+          <tr><td>仮想化</td><td>Oracle VirtualBox</td><td>PC上で手軽に仮想マシンが利用できる。Windows, macOS, Linuxに対応</td></tr>
+          <tr><td>ゲストOS</td><td>Alpine Linux</td><td>軽量・高速・セキュア</td></tr>
+          <tr><td>コンテナ基盤</td><td>Kubernetes / Docker / OCI</td><td>業界のデファクトスタンダード</td></tr>
+        </tbody>
+      </table>
+      <p>　　※MacやLinuxでの演習も可能であるが、授業運営は上記2PCを対象とするので、適宜読み替えを行うこと。<br>
+      　　※演習用PCのみでの演習も可能なため、読み替えが難しい場合は演習室PCを利用すること。</p>
+      <p>　これらのソフトウェアは次のような構成で利用することとなる。</p>
+      <pre style="background:#f6f8fa;padding:16px;border-radius:4px;font-size:13px;line-height:1.6;overflow-x:auto;">演習室PC/ノートPC（物理マシン・ベアメタルマシン）
+   └─ Windows / (macOS)
+       └─ VirtualBox
+            └─ Alpine Linux
+                 ├─ Docker
+                 └─ k3s版 Kubernetes（containerdベース）</pre>
+      <p>　そのため、次の要件を満たす環境を用意する必要がある。</p>
+
+      <h3 id="sec031">0.3.1. 利用するコンピュータの要件</h3>
+      <p>　演習室で必要となるコンピュータの要件は以下の通りである。</p>
+      <table>
+        <thead><tr><th>項目</th><th>最低条件</th><th>推奨条件</th></tr></thead>
+        <tbody>
+          <tr><td>CPU</td><td>4コア</td><td>6コア以上</td></tr>
+          <tr><td>RAM</td><td>12GiB</td><td>16GiB 以上</td></tr>
+          <tr><td>HDD/SSD 空き領域</td><td>20GiB</td><td>30GiB以上</td></tr>
+          <tr><td>BIOS設定</td><td>VT-x / AMD-V 有効化</td><td></td></tr>
+          <tr><td>Hyper-V (Windows)</td><td>無効化（VirtualBox と競合）</td><td></td></tr>
+        </tbody>
+      </table>
+      <p>　仮想マシンの実行環境（学習環境）は、持ち込みPC（BYOD PC、以降BYOD PCと呼ぶ）と演習室PCの二つの中から選ぶことができる。 利用の快適さやバッテリーの心配がいらない演習室PCの利用を推奨するが、 自宅や隙間時間の学習の利便性を踏まえて BYOD PC を利用しても構わない。</p>
+      <p>　なお、CPUのコア数/スレッド数とメモリ容量は仮想マシン実行に影響する。 演習室PCの主要な仕様は次の通りとなっており、快適に動作させることができる内容となっている。</p>
+      <table>
+        <thead><tr><th>項目</th><th>最低条件</th></tr></thead>
+        <tbody>
+          <tr><td>CPU</td><td>13th Gen Intel Core i7-13700(2.10 GHz, Max 5.20 GHz)<br>16コア 24スレッド</td></tr>
+          <tr><td>RAM</td><td>32 GiB</td></tr>
+        </tbody>
+      </table>
+      <p>　この点と全学生の共通環境の2点を考慮して、授業中の例示は原則演習室PCで行う。 以下に、演習室 PC と BYOD PC を利用する時の注意点を示す。</p>
+      <p><strong>演習室 PC 利用時の注意事項：</strong></p>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>アカウント情報を忘れない（各種ログインに必要）</li>
+        <li>演習室 PC は再起動するたびにストレージが初期状態へ戻る</li>
+        <li>学習データ保存用に外部記憶装置を用意する（SSD 32GB 以上推奨）</li>
+      </ul>
+      <p><strong>注意事項：</strong></p>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>アカウント情報を忘れない（各種ログインに必要）</li>
+        <li>BYOD PC を忘れない</li>
+        <li>BYOD PC のバッテリーを十分に充電しておく</li>
+      </ul>
+
+      <h2 id="sec04">0.4. 学習を始めるにあたって</h2>
+
+      <h3 id="sec041">0.4.1. 注意事項・学習アドバイス（シラバスより）</h3>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>関連科目中のTCP/IPの内容について事前復習しておくと理解の助けにつながる。</li>
+        <li>OSとシステムソフトウェアの内容について事前復習しておくと理解の助けにつながる。</li>
+      </ul>
+
+      <h3 id="sec042">0.4.2. 関連講義科目（シラバスより）</h3>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>TCP/IP概論</li>
+        <li>情報ネットワーク</li>
+        <li>OSとシステムソフトウェア</li>
+        <li>クラウドコンピューティング</li>
+      </ul>
+
+      <h3 id="sec043">0.4.3. 科目に関連した実務経験（シラバス＋α）</h3>
+      <p>　中川：テクニカルエンジニア(ネットワーク)としてネットワークの設計、サーバ構築手法について指導する。<br>
+      　　　※高度応用情報科学科／情報ネットワーク学科のネットワーク管理者としてインフラの設計・管理・運用を担う。</p>
+
+      <h3 id="sec044">0.4.4. 学習に利用するWebサイト・教材</h3>
+      <p>【お知らせ、掲示板】<br>
+      　manaba - クラウド構築演習高度3年　※NS_ネットワーク管理実習</p>
+      <p>【演習資料】<br>
+      　中川研 e-Learning サーバ<br>
+      　※ いずれも大学アカウントにてログイン（ s学生番号@chibatech.ac.jp ）<br>
+      　※ 成績評価等に関する対応について、大学メールへ連絡することがあるので必要に応じて確認</p>
+
+      <h3 id="sec045">0.4.5. 教科書・参考書</h3>
+      <p>【教科書】　指定なし　※授業内で指定するe-Learningコンテンツを利用</p>
+      <p>【参考書】</p>
+      <p>Docker / Kubernetes 関連</p>
+      <table>
+        <thead><tr><th>著者</th><th>書籍名</th><th>出版社</th><th>発刊日</th><th>金額</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>小笠原 種高</td><td>仕組みと使い方がわかる Docker＆Kubernetesのきほんのきほん</td><td>マイナビ出版</td><td>2021/2/1</td><td>2,992円</td><td></td></tr>
+          <tr><td>山田 明憲</td><td>Docker/Kubernetes実践コンテナ開発入門 改訂新版</td><td>技術評論社</td><td>2024/4/1</td><td>3,960円</td><td></td></tr>
+        </tbody>
+      </table>
+      <p>Docker / Alpine Linux</p>
+      <table>
+        <thead><tr><th>著者</th><th>書籍名</th><th>出版社</th><th>発刊日</th><th>金額</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>中島 能和</td><td>軽量Alpine LinuxによるDockerコンテナ構築術</td><td>インプレス</td><td>2021/6/24</td><td>3,168円</td><td>電子書籍のみ？</td></tr>
+        </tbody>
+      </table>
+      <p>Linuxコマンドリファレンス</p>
+      <table>
+        <thead><tr><th>著者</th><th>書籍名</th><th>出版社</th><th>発刊日</th><th>金額</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>川口, 田谷, 三澤</td><td>Linuxコマンドブック ビギナーズ 第4版</td><td>SBクリエイティブ</td><td>2015/3/21</td><td></td><td></td></tr>
+          <tr><td>沓名 亮典</td><td>［改訂第3版］Linuxコマンドポケットリファレンス</td><td>技術評論社</td><td>2015/6/5</td><td>2,618円</td><td></td></tr>
+          <tr><td>沓名 亮典</td><td>［改訂第4版］Linuxコマンドポケットリファレンス</td><td>技術評論社</td><td>2026/4/20 <small>※2026/4/18訂正</small></td><td>3,168円</td><td>発売予定</td></tr>
+        </tbody>
+      </table>
+      <p>　　※他にも多くの関連書籍があるので津田沼丸善などの書店に寄って確かめると良い</p>
+
+      <h2 id="sec05">0.5. 授業の運営について</h2>
+
+      <h3 id="sec051">0.5.1. 授業計画（シラバス＋α）</h3>
+      <table>
+        <thead><tr><th>週番号</th><th>開講日</th><th>副題</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>4/13(月)</td><td>ガイダンス<br>第1章 クラウドネイティブ環境の構築</td></tr>
+          <tr><td>2</td><td>4/20(月)</td><td>第2章 Linuxのシステム管理1　プロセス管理とユーザ管理</td></tr>
+          <tr><td>3</td><td>4/27(月)</td><td>第3章 Linuxのシステム管理2　ネットワーク設定</td></tr>
+          <tr><td>X</td><td>5/4(月)</td><td>（休講：みどりの日）</td></tr>
+          <tr><td>4</td><td>5/11(月)</td><td>第4章 LANの設計1　ネットワーク分割手法とサブネット設計手法</td></tr>
+          <tr><td>5</td><td>5/18(月)</td><td>第5章 LANの設計2　名前解決（DNS）</td></tr>
+          <tr><td>6</td><td>5/25(月)</td><td>第6章 クラウドサービスの利用法1　クラウドストレージ</td></tr>
+          <tr><td>7</td><td>6/1(月)</td><td>第7章 クラウドサービスの利用法2　クラウドデータベース</td></tr>
+          <tr><td>8</td><td>6/8(月)</td><td>第8章 クラウド環境を利用したシステム構築1　Webサーバ、HTML・CSSの基礎</td></tr>
+          <tr><td>9</td><td>6/15(月)</td><td>第9章 クラウド環境を利用したシステム構築2　サーバサイドプログラミング1（Node.js 基礎）</td></tr>
+          <tr><td>10</td><td>6/22(月)</td><td>第10章 クラウド環境を利用したシステム構築3　サーバサイドプログラミング2（Node.js 応用）</td></tr>
+          <tr><td>11</td><td>6/29(月)</td><td>第11章 クラウド環境を利用したシステム構築4　クライアントサイドプログラミング1（JavaScript基礎）</td></tr>
+          <tr><td>12</td><td>7/6(月)</td><td>第12章 クラウド環境を利用したシステム構築5　クライアントサイドプログラミング2（JavaScript応用）</td></tr>
+          <tr><td>13</td><td>7/13(月)</td><td>第13章 期末試験と授業の総まとめ</td></tr>
+        </tbody>
+      </table>
+      <p>　　※第1週の「クラウド環境の仮想計算機操作」を「クラウドネイティブ環境の構築」へ変更<br>
+      　　※近年のアプリ開発の現状を踏まえて、第9, 10週のプログラム言語をPHPからNode.jsへ変更</p>
+      <p>　　必要とする授業外学習内容<br>
+      　　　事前： 配布資料に基づく概念理解（1時間程度）<br>
+      　　　事後： 授業内容の振り返りと演習課題の実施（2時間程度）</p>
+
+      <h3 id="sec052">0.5.2. 演習授業の基本構成</h3>
+      <p>　次のスケジュールをベースに授業運営を行う。</p>
+      <h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;">第1～12回 通常演習　※第13回は期末試験</h4>
+      <table>
+        <thead><tr><th>開始時刻</th><th>所要時間（分）</th><th>実施内容（第1回）</th><th>実施内容（第2～12回）</th></tr></thead>
+        <tbody>
+          <tr><td>9:00</td><td>20</td><td>事前準備（確認）</td><td>復習（前回到達目標の内容確認）</td></tr>
+          <tr><td>9:20</td><td>40</td><td>ガイダンス</td><td>解説 ＋ ハンズオン</td></tr>
+          <tr><td>10:00</td><td>10</td><td>休憩</td><td>　←</td></tr>
+          <tr><td>10:10</td><td>40</td><td>解説 ＋ ハンズオン</td><td>　←</td></tr>
+          <tr><td>10:50</td><td>10</td><td>休憩</td><td>　←</td></tr>
+          <tr><td>11:00</td><td>40</td><td>解説 ＋ ハンズオン</td><td>　←</td></tr>
+          <tr><td>11:40</td><td>10</td><td>休憩</td><td>　←</td></tr>
+          <tr><td>11:50</td><td>40</td><td>総合演習</td><td>　←</td></tr>
+          <tr><td>12:30</td><td>20</td><td>自由解散</td><td>　←</td></tr>
+        </tbody>
+      </table>
+      <p>　※12:00～13:00 授業内レポート受付期間</p>
+
+      <h2 id="sec06">0.6. 成績配分</h2>
+      <p>授業運営方法の変更に伴い、成績評価方法を次の通り変更する。</p>
+
+      <h3 id="sec061">0.6.1. 成績配分</h3>
+      <p><strong>変更前（シラバス）</strong></p>
+      <table>
+        <thead><tr><th>対象</th><th>配分</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>小レポート</td><td>60%（5%×12回）</td><td>第1～12回 授業終了時</td></tr>
+          <tr><td>期末試験</td><td>40%</td><td>第13回</td></tr>
+        </tbody>
+      </table>
+      <p><strong>変更後</strong></p>
+      <table>
+        <thead><tr><th>対象</th><th>配分</th><th>実施</th></tr></thead>
+        <tbody>
+          <tr><td>復習課題</td><td>33%（3%×11回）</td><td>第2～12回 授業開始時（3問）</td></tr>
+          <tr><td>小レポート</td><td>24%（2%×12回）<br><del>60%</del></td><td>第1～12回 授業終了時<del>（2問）</del></td></tr>
+          <tr><td>授業内成果物</td><td>23%<br><del>20%</del></td><td>第8～12回の取り組みを自動採点（予定）</td></tr>
+          <tr><td>期末試験</td><td>20%</td><td>第13回</td></tr>
+        </tbody>
+      </table>
+      <p>　　※ 復習課題の再提出・再実施は原則不可<br>
+      　　※ 小レポートを授業終了時に提出できない時は当日24時まで遅延提出可能<br>
+      　　※ 欠席減点：3点/回<br>
+      　　※ 遅刻減点：1点/回<br>
+      　　※ 欠席を5回を超えた場合の最終成績は欠席<br>
+      　　※ 欠席減点の免除対象： 事前連絡ありの就職活動、インフルエンザ等の伝染病<br>
+      　　※ 取り消し線とその後の修正配分は本年度の授業内の取り組みを踏まえて修正（授業内アナウンス済）</p>
+
+      <h3 id="sec062">0.6.2. 合格点</h3>
+      <p>　総合得点60%以上を合格とする</p>
+      <table>
+        <thead><tr><th>ランク</th><th>得点</th></tr></thead>
+        <tbody>
+          <tr><td>S</td><td>90点以上</td></tr>
+          <tr><td>A</td><td>80点以上</td></tr>
+          <tr><td>B</td><td>70点以上</td></tr>
+          <tr><td>C</td><td>60点以上</td></tr>
+          <tr><td>D</td><td>50点未満</td></tr>
+          <tr><td>欠席</td><td>欠席6回以上</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="sec07">0.7 その他注意事項</h2>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>複数の取り組みによって現れるトラブルもあるので（特に初年度）、気になったことがあればスタッフへ相談する</li>
+        <li>各種準備のために e-Learning サーバを週1（毎週金 13～17時）でメンテナンスする（時間中はアクセスが不安定になることがある）</li>
+        <li>演習授業で得た知識を利用して外部公開をする場合は、秘密鍵や認証情報の取り扱いに注意する</li>
+      </ul>
+
+      <div class="page-nav" style="justify-content:space-between;">
+        <a onclick="navigate('jizen-junbi')">← 事前準備</a>
+        <a onclick="navigate('ch1-cloud-native')">1. クラウドネイティブ環境の構築 →</a>
+      </div>
+    `
   },
 
   'ch1-cloud-native': {
