@@ -2513,9 +2513,94 @@ practice makes perfect so keep going</pre>
   },
 
   'ch2-a1-distro': {
-    title: 'A2.1. ディストリビューションの違い',
-    toc: [{ level: 1, label: 'A2.1. ディストリビューションの違い', anchor: 'top' }],
-    content: `<h1 id="top">A2.1. ディストリビューションの違い</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: 'A2.1. Linux ディストリビューションの違い',
+    toc: [
+      { level: 1, label: 'A2.1. Linux ディストリビューションの違い', anchor: 'top' },
+      { level: 2, label: '独立系', anchor: 'sec-independent' },
+      { level: 2, label: 'Debian系', anchor: 'sec-debian' },
+      { level: 2, label: 'RedHat系', anchor: 'sec-redhat' },
+      { level: 2, label: 'SUSE系', anchor: 'sec-suse' },
+      { level: 2, label: '補足', anchor: 'sec-note' },
+    ],
+    content: `
+      <h1 id="top">A2.1. Linux ディストリビューションの違い</h1>
+      <p class="meta">公開日： 2026年4月18日（土）</p>
+      <p class="meta">開講日： 2026年4月20日（月）</p>
+
+      <p>　Linux は OSのコアな機能であるカーネルを指す。 このカーネルを利用して、ユーザがすぐにOSを利用できるように、他の応用ソフトウェアを組み合わせてまとめたものを Linux ディストリビューションと呼ぶ。</p>
+      <p>　この Linux ディストリビューションには様々なものが存在している（List of Linux distributions）。 ディストリビューションなカテゴリー分けは、次のような観点で整理できる。</p>
+      <ul>
+        <li>パッケージ管理：ソフトウェアのインストール・更新方法</li>
+        <li>リリースモデル：安定性重視（固定）か最新性重視（ローリング）か</li>
+        <li>libc：プログラムが利用する基本ライブラリ（互換性や軽量性に影響）</li>
+        <li>init/systemd：OS起動やサービス管理の仕組み</li>
+        <li>設計思想：安定性重視・シンプル志向・カスタマイズ性など</li>
+      </ul>
+      <p>　以下にこれらを総合的に比較した表を示す。</p>
+
+      <h2 id="sec-independent">独立系</h2>
+      <table>
+        <thead>
+          <tr><th>ディストリ</th><th>パッケージ管理</th><th>リリースモデル</th><th>libc</th><th>init/systemd</th><th>設計思想 / 特徴</th><th>主な用途</th><th>標準の権限昇格</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Slackware</td><td>pkgtools</td><td>固定</td><td>glibc</td><td>非採用（独自）</td><td>最古の現役・シンプル・手動管理多い</td><td>上級者</td><td>su（sudoは標準でない）</td></tr>
+          <tr><td>Alpine Linux</td><td>apk</td><td>固定</td><td>musl</td><td>非採用（OpenRC）</td><td>軽量・シンプル・セキュリティ重視</td><td>コンテナ、組み込み</td><td>doas（推奨）/ sudo</td></tr>
+          <tr><td>Arch Linux</td><td>pacman</td><td>ローリング</td><td>glibc</td><td>採用</td><td>シンプル・最新志向・KISS原則</td><td>デスクトップ、開発</td><td>sudo（自分で設定）</td></tr>
+          <tr><td>Gentoo</td><td>emerge</td><td>ローリング</td><td>glibc（選択可）</td><td>選択可（OpenRC/systemd）</td><td>ソースベース・高カスタマイズ性</td><td>上級者、研究用途</td><td>sudo / su</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="sec-debian">Debian系</h2>
+      <table>
+        <thead>
+          <tr><th>ディストリ</th><th>パッケージ管理</th><th>リリースモデル</th><th>libc</th><th>init/systemd</th><th>設計思想 / 特徴</th><th>主な用途</th><th>標準の権限昇格</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Debian</td><td>apt (dpkg)</td><td>固定</td><td>glibc</td><td>採用</td><td>安定性最重視・保守的・自由ソフト重視</td><td>サーバー、ベースOS</td><td>sudo（未設定の場合あり）</td></tr>
+          <tr><td>Ubuntu</td><td>apt</td><td>固定（LTSあり）</td><td>glibc</td><td>採用</td><td>Debianベース・使いやすさ重視・商用サポートあり</td><td>デスクトップ、サーバー</td><td>sudo（デフォルト）</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="sec-redhat">RedHat系</h2>
+      <table>
+        <thead>
+          <tr><th>ディストリ</th><th>パッケージ管理</th><th>リリースモデル</th><th>libc</th><th>init/systemd</th><th>設計思想 / 特徴</th><th>主な用途</th><th>標準の権限昇格</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>RHEL</td><td>dnf (rpm)</td><td>固定</td><td>glibc</td><td>採用</td><td>商用・長期サポート・企業向け</td><td>企業サーバー</td><td>sudo</td></tr>
+          <tr><td>Rocky Linux</td><td>dnf</td><td>固定</td><td>glibc</td><td>採用</td><td>RHEL互換・安定・コミュニティ主導</td><td>サーバー</td><td>sudo</td></tr>
+          <tr><td>AlmaLinux</td><td>dnf</td><td>固定</td><td>glibc</td><td>採用</td><td>RHEL互換・企業支援あり</td><td>サーバー</td><td>sudo</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="sec-suse">SUSE系</h2>
+      <table>
+        <thead>
+          <tr><th>ディストリ</th><th>パッケージ管理</th><th>リリースモデル</th><th>libc</th><th>init/systemd</th><th>設計思想 / 特徴</th><th>主な用途</th><th>標準の権限昇格</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>openSUSE Tumbleweed</td><td>zypper (rpm)</td><td>ローリング</td><td>glibc</td><td>採用</td><td>安定性と最新のバランス（テスト重視）</td><td>デスクトップ、開発</td><td>sudo</td></tr>
+          <tr><td>openSUSE Leap</td><td>zypper (rpm)</td><td>固定</td><td>glibc</td><td>採用</td><td>安定志向（SUSE Linux Enterpriseベース）</td><td>サーバー、デスクトップ</td><td>sudo</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="sec-note">補足</h2>
+      <div class="note-box">
+        <p><strong>libc：</strong><br>
+        C言語の標準ライブラリ。多くのディストリビューションは glibc を採用するが、Alpine Linux のように軽量な musl を採用する例もある。</p>
+        <p><strong>init/systemd：</strong><br>
+        OS起動時の初期化やサービス管理を行う仕組み。現在は systemd が主流だが、OpenRC など別方式も存在する。</p>
+        <p><strong>リリースモデル：</strong><br>
+        固定（Stable）： 安定重視でバージョンを固定<br>
+        ローリング（Rolling）： 常に最新へ更新され続ける</p>
+      </div>
+
+      <div class="page-nav" style="justify-content:space-between;">
+        <a onclick="navigate('ch2-linux-mgmt1')">← 2. Linuxのシステム管理1</a>
+        <a onclick="navigate('ch2-a2-portforward')">A2.2. ポートフォワーディング設定方法 →</a>
+      </div>
+    `
   },
 
   'ch2-a2-portforward': {
