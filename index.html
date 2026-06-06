@@ -182,6 +182,89 @@
       color: #888;
     }
 
+    /* Architecture layer diagram */
+    .arch-diagram {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 16px;
+      background: #f9f9fb;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin: 16px 0;
+      min-width: 260px;
+    }
+    .arch-outer {
+      border: 2px solid #9985cc;
+      border-radius: 6px;
+      padding: 8px;
+      background: #f0edf9;
+    }
+    .arch-outer-label {
+      font-size: 11px;
+      color: #6650a4;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .arch-layer {
+      background: #e8e4f4;
+      border: 1px solid #b0a8d8;
+      border-radius: 4px;
+      padding: 6px 14px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.4;
+      margin: 3px 0;
+    }
+    .arch-layer.gray {
+      background: #e8e8e8;
+      border-color: #aaa;
+    }
+    .arch-layer.green {
+      background: #e4f4e8;
+      border-color: #8dc894;
+    }
+    .arch-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .arch-vm {
+      border: 1px dashed #9985cc;
+      border-radius: 4px;
+      padding: 8px;
+      background: #fafafa;
+      flex: 1;
+    }
+    .arch-vm-label {
+      font-size: 11px;
+      color: #6650a4;
+      font-weight: 600;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    .arch-arrow {
+      text-align: center;
+      color: #888;
+      font-size: 18px;
+      line-height: 1;
+      margin: 2px 0;
+    }
+    .arch-pod {
+      border: 1px solid #8dc894;
+      border-radius: 4px;
+      padding: 6px;
+      background: #f0faf2;
+      flex: 1;
+    }
+    .arch-pod-label {
+      font-size: 11px;
+      color: #2e7d32;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
     /* Note/callout box */
     .note-box {
       background: #fff8e1;
@@ -1788,8 +1871,339 @@ Enter ssh key or URL for root (or 'none') [none]⏎　※デフォルト　2026/
 
   'ch1-a3-app': {
     title: 'A1.3. アプリケーションの実行形態',
-    toc: [{ level: 1, label: 'A1.3. アプリケーションの実行形態', anchor: 'top' }],
-    content: `<h1 id="top">A1.3. アプリケーションの実行形態</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    toc: [
+      { level: 1, label: 'A1.3. アプリケーションの実行形態', anchor: 'top' },
+      { level: 2, label: '(1) 物理マシン（ベアメタル）上でのアプリケーション実行', anchor: 'sec1' },
+      { level: 2, label: '(2) 物理マシン（ベアメタル）上のOSを利用したアプリケーション実行', anchor: 'sec2' },
+      { level: 2, label: '(3) 仮想マシン（Virtual Machine: VM）を利用したアプリケーション実行1（Type2 ハイパーバイザー）', anchor: 'sec3' },
+      { level: 2, label: '(4) 仮想マシン（Virtual Machine: VM）を利用したアプリケーション実行2（Type1 ハイパーバイザー）', anchor: 'sec4' },
+      { level: 2, label: '(5) コンテナを利用したアプリケーション実行', anchor: 'sec5' },
+      { level: 2, label: '(6) VM + コンテナを利用したアプリケーション実行1（Type2 ハイパーバイザー VM上のコンテナ実行）', anchor: 'sec6' },
+      { level: 2, label: '(7) VM + コンテナを利用したアプリケーション実行2（Type1 ハイパーバイザー VM上のコンテナ実行）', anchor: 'sec7' },
+      { level: 2, label: '(8) Kubernetesを利用したコンテナ上のアプリケーション実行', anchor: 'sec8' },
+      { level: 2, label: '(9) サーバレス（FaaS）によるアプリケーション実行', anchor: 'sec9' },
+      { level: 2, label: '(10) アプリケーション実行形態の比較', anchor: 'sec10' },
+    ],
+    content: `
+      <h1 id="top">A1.3. アプリケーションの実行形態</h1>
+      <p class="meta">公開日： 2026年4月11日（土）</p>
+      <p class="meta">開講日： 2026年4月13日（月）</p>
+
+      <p>　仮想化技術の発展に伴い、コンピュータの実行環境には大きなパラダイムシフトが生じた。 本節では、このパラダイム転換に伴って変化したアプリケーションの実行形態について説明する。</p>
+
+      <h2 id="sec1">(1) 物理マシン（ベアメタル）上でのアプリケーション実行</h2>
+      <p>　物理マシン上で直接アプリケーションを実行する形態である。BASICなどを搭載した1980年代頃までのパーソナルコンピュータやマイコン（Micro Controller Unit: MCU）などを用いた組み込みシステムに見られる。 一般に単一の専用プログラムが実行され、起動後に別のプログラムを選択することはできない。また、BIOSやファームウェアとしてプログラムが格納されており、基本的には更新によってバージョンアップを行う。 IoT（Internet of Things）機器もこの形態を取ることが多いが、複数アプリケーションを実行する場合は後述の形態が用いられる。</p>
+      <p><strong>【図1. 物理マシン（ベアメタル）上でのアプリケーション実行】</strong></p>
+      <div class="arch-diagram">
+        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">アプリケーション</div>
+      </div>
+
+      <h2 id="sec2">(2) 物理マシン（ベアメタル）上のOSを利用したアプリケーション実行</h2>
+      <p>　物理マシン（ベアメタル）上にOS（Operating System）をインストールし、その上で複数のアプリケーションを実行する形態である。一般的なPCや従来型のサーバで用いられてきた方式である。</p>
+      <p><strong>【図2. 物理マシン（ベアメタル）上のOSを利用したアプリケーション実行】</strong></p>
+      <div class="arch-diagram">
+        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">OS</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-row">
+          <div class="arch-layer" style="flex:1">アプリケーション 1</div>
+          <div class="arch-layer" style="flex:1">アプリケーション 2</div>
+        </div>
+      </div>
+
+      <h2 id="sec3">(3) 仮想マシン（Virtual Machine: VM）を利用したアプリケーション実行1（Type2 ハイパーバイザー）</h2>
+      <p>　ベアメタル上のOS（ホストOS）に仮想マシン実行環境（ハイパーバイザソフトウェア）を導入し、その上で仮想マシンを動作させる形態である（Type2 ハイパーバイザ）。 仮想マシン上で動作するOSはゲストOSと呼ばれる。この方式により、1台の物理マシン上で複数のOSを同時に実行でき、開発・検証環境として広く利用される。</p>
+      <p><strong>【図3. 仮想マシン（Virtual Machine: VM）を利用したアプリケーション実行1（Type2 ハイパーバイザー）】</strong></p>
+      <div class="arch-diagram">
+        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">ホストOS</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-outer">
+          <div class="arch-outer-label">仮想マシン（VM）実行環境</div>
+          <div class="arch-row">
+            <div class="arch-vm">
+              <div class="arch-vm-label">仮想マシン（VM）1</div>
+              <div class="arch-layer" style="font-size:12px">ゲストOS 1</div>
+              <div class="arch-row" style="margin-top:4px">
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-1</div>
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-2</div>
+              </div>
+            </div>
+            <div class="arch-vm">
+              <div class="arch-vm-label">仮想マシン（VM）2</div>
+              <div class="arch-layer" style="font-size:12px">ゲストOS 2</div>
+              <div class="arch-row" style="margin-top:4px">
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-1</div>
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="sec4">(4) 仮想マシン（Virtual Machine: VM）を利用したアプリケーション実行2（Type1 ハイパーバイザー）</h2>
+      <p>　ベアメタル上に直接ハイパーバイザ（Type1 ハイパーバイザ）を配置し、その上で仮想マシンを実行する形態である。 この方式ではホストOSを介さないためオーバーヘッドが小さく、サーバやクラウド基盤で広く利用されている。なお、ホストOSが特別に遅くなるわけではなく、全体として効率的なリソース管理が可能となる点が重要である。</p>
+      <p><strong>【図4. 仮想マシン（Virtual Machine: VM）を利用したアプリケーション実行2（Type1 ハイパーバイザー）】</strong></p>
+      <div class="arch-diagram">
+        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">ハイパーバイザOS</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-outer">
+          <div class="arch-outer-label">仮想マシン（VM）実行環境</div>
+          <div class="arch-row">
+            <div class="arch-vm">
+              <div class="arch-vm-label">仮想マシン（VM）0</div>
+              <div class="arch-layer" style="font-size:11px">ホストOS<br>（ハイパーバイザOS）</div>
+            </div>
+            <div class="arch-vm">
+              <div class="arch-vm-label">仮想マシン（VM）1</div>
+              <div class="arch-layer" style="font-size:12px">ゲストOS 1</div>
+              <div class="arch-row" style="margin-top:4px">
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-1</div>
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-2</div>
+              </div>
+            </div>
+            <div class="arch-vm">
+              <div class="arch-vm-label">仮想マシン（VM）2</div>
+              <div class="arch-layer" style="font-size:12px">ゲストOS 2</div>
+              <div class="arch-row" style="margin-top:4px">
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-1</div>
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="sec5">(5) コンテナを利用したアプリケーション実行</h2>
+      <p>　Linuxではカーネルを共有しつつ、名前空間（namespace）やcgroupsといった仕組みによってプロセスを分離することで、軽量な仮想化環境（コンテナ）を実現する。 コンテナは仮想マシンのようにOS全体を仮想化するのではなく、ホストOSのカーネルを共有するため、起動が高速であり、リソース効率が高いという特徴を持つ。 ディストリビューション間の違いは主にユーザ空間の構成（ライブラリやツール群）であり、コンテナではカーネルを除いたファイルシステムを用意することで異なる環境を再現できる。</p>
+      <p><strong>【図5. コンテナを利用したアプリケーション実行】</strong></p>
+      <div class="arch-diagram">
+        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">OS（Linux）</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">コンテナランタイム</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-outer">
+          <div class="arch-outer-label">コンテナランタイム環境</div>
+          <div class="arch-row">
+            <div class="arch-vm">
+              <div class="arch-vm-label">コンテナ 1 環境</div>
+              <div class="arch-row">
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-1</div>
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-2</div>
+              </div>
+            </div>
+            <div class="arch-vm">
+              <div class="arch-vm-label">コンテナ 2 環境</div>
+              <div class="arch-row">
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-1</div>
+                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="sec6">(6) VM + コンテナを利用したアプリケーション実行1（Type2 ハイパーバイザー VM上のコンテナ実行）</h2>
+      <p>　IaaS（Infrastructure as a Service）環境では、ユーザはVM上に任意のOSを構築できる。 その上でコンテナランタイムを動作させることで、VM内にさらに柔軟な実行環境を構築できる。 この構成は「VM＋コンテナ」という多層構造となり、クラウド上での移植性や環境再現性を高めるために利用される。</p>
+      <p><strong>【図6. VM + コンテナを利用したアプリケーション実行1（Type2 ハイパーバイザー VM上のコンテナ実行）】</strong></p>
+      <div class="arch-diagram">
+        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">ホストOS</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-outer">
+          <div class="arch-outer-label">仮想マシン実行環境</div>
+          <div class="arch-row">
+            <div class="arch-vm">
+              <div class="arch-vm-label">仮想マシン（VM）1</div>
+              <div class="arch-layer" style="font-size:12px">ゲストOS 1（Linux）</div>
+              <div class="arch-layer" style="font-size:12px;margin-top:4px">コンテナランタイム</div>
+              <div class="arch-row" style="margin-top:4px">
+                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ1<br>アプリ</div>
+                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ2<br>アプリ</div>
+              </div>
+            </div>
+            <div class="arch-vm">
+              <div class="arch-vm-label">仮想マシン（VM）2</div>
+              <div class="arch-layer" style="font-size:12px">ゲストOS 2（Linux）</div>
+              <div class="arch-layer" style="font-size:12px;margin-top:4px">コンテナランタイム</div>
+              <div class="arch-row" style="margin-top:4px">
+                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ3<br>アプリ</div>
+                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ4<br>アプリ</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="sec7">(7) VM + コンテナを利用したアプリケーション実行2（Type1 ハイパーバイザー VM上のコンテナ実行）</h2>
+      <p>　Type1ハイパーバイザ上に構築されたVM上でコンテナを実行する構成である。 クラウド事業者の基盤ではこの形態が一般的である。 ハードウェア仮想化とコンテナの軽量性を組み合わせることで、スケーラビリティと効率性を両立できる。</p>
+      <p><strong>【図7. VM + コンテナを利用したアプリケーション実行2（Type1 ハイパーバイザー VM上のコンテナ実行）】</strong></p>
+      <div class="arch-diagram">
+        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">ハイパーバイザOS</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-outer">
+          <div class="arch-outer-label">仮想マシン実行環境</div>
+          <div class="arch-row">
+            <div class="arch-vm">
+              <div class="arch-vm-label">VM 0</div>
+              <div class="arch-layer" style="font-size:11px">ホストOS<br>（ハイパーバイザOS）</div>
+            </div>
+            <div class="arch-vm">
+              <div class="arch-vm-label">仮想マシン（VM）1</div>
+              <div class="arch-layer" style="font-size:12px">ゲストOS 1（Linux）</div>
+              <div class="arch-layer" style="font-size:12px;margin-top:4px">コンテナランタイム</div>
+              <div class="arch-row" style="margin-top:4px">
+                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ1<br>アプリ</div>
+                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ2<br>アプリ</div>
+              </div>
+            </div>
+            <div class="arch-vm">
+              <div class="arch-vm-label">仮想マシン（VM）2</div>
+              <div class="arch-layer" style="font-size:12px">ゲストOS 2（Linux）</div>
+              <div class="arch-layer" style="font-size:12px;margin-top:4px">コンテナランタイム</div>
+              <div class="arch-row" style="margin-top:4px">
+                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ3<br>アプリ</div>
+                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ4<br>アプリ</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="sec8">(8) Kubernetesを利用したコンテナ上のアプリケーション実行</h2>
+      <p>　Kubernetesはコンテナのオーケストレーションを行うシステムであり、複数ノードに分散配置されたコンテナ群を統合的に管理する。 コンテナは「ポッド」という単位で管理され、スケーリング、障害復旧、ロードバランシングなどを自動化できる。現代のクラウドネイティブアプリケーションの基盤技術である。</p>
+      <p><strong>【図8. Kubernetesを利用したコンテナ上のアプリケーション実行】</strong></p>
+      <div class="arch-diagram" style="min-width:400px">
+        <div class="arch-layer" style="background:#fff3e0;border-color:#ffb74d;font-weight:600">オーケストレータ（Kubernetes）</div>
+        <div class="arch-arrow">↓ 制御</div>
+        <div class="arch-row">
+          <div class="arch-vm" style="flex:1">
+            <div class="arch-vm-label">ノード1（物理マシン／仮想マシン）</div>
+            <div class="arch-layer" style="font-size:12px">OS（Linux）</div>
+            <div class="arch-layer" style="font-size:12px;margin-top:4px">コンテナランタイム</div>
+            <div class="arch-row" style="margin-top:4px">
+              <div class="arch-pod">
+                <div class="arch-pod-label">ポッド</div>
+                <div class="arch-row">
+                  <div class="arch-layer green" style="flex:1;font-size:10px">コンテナ<br>アプリ</div>
+                  <div class="arch-layer green" style="flex:1;font-size:10px">コンテナ<br>アプリ</div>
+                </div>
+              </div>
+              <div class="arch-pod">
+                <div class="arch-pod-label">ポッド</div>
+                <div class="arch-row">
+                  <div class="arch-layer green" style="flex:1;font-size:10px">コンテナ<br>アプリ</div>
+                  <div class="arch-layer green" style="flex:1;font-size:10px">コンテナ<br>アプリ</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="arch-vm" style="flex:1">
+            <div class="arch-vm-label">ノード2（物理マシン／仮想マシン）</div>
+            <div class="arch-layer" style="font-size:12px">OS（Linux）</div>
+            <div class="arch-layer" style="font-size:12px;margin-top:4px">コンテナランタイム</div>
+            <div class="arch-row" style="margin-top:4px">
+              <div class="arch-pod">
+                <div class="arch-pod-label">ポッド</div>
+                <div class="arch-row">
+                  <div class="arch-layer green" style="flex:1;font-size:10px">コンテナ<br>アプリ</div>
+                  <div class="arch-layer green" style="flex:1;font-size:10px">コンテナ<br>アプリ</div>
+                </div>
+              </div>
+              <div class="arch-pod">
+                <div class="arch-pod-label">ポッド</div>
+                <div class="arch-row">
+                  <div class="arch-layer green" style="flex:1;font-size:10px">コンテナ<br>アプリ</div>
+                  <div class="arch-layer green" style="flex:1;font-size:10px">コンテナ<br>アプリ</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="sec9">(9) サーバレス（FaaS）によるアプリケーション実行</h2>
+      <p>　サーバレス（Serverless）またはFaaS（Function as a Service）は、開発者がインフラ管理を意識せずにアプリケーションを実行できる形態である。 利用者は関数単位で処理を実装し、イベント駆動で実行される。実行基盤（サーバやコンテナ）はクラウド事業者が管理し、必要に応じて自動的にスケールする。 一方で、起動遅延（コールドスタート）や長時間処理への制約などの課題も存在する。</p>
+      <p><strong>【図9. サーバレス（FaaS）によるアプリケーション実行形態】</strong></p>
+      <div class="arch-diagram" style="min-width:360px">
+        <div class="arch-layer gray">ユーザ／外部サービス</div>
+        <div class="arch-arrow">↓ イベント（HTTP・メッセージ・スケジュール）</div>
+        <div class="arch-outer">
+          <div class="arch-outer-label">FaaSプラットフォーム</div>
+          <div class="arch-layer" style="margin-bottom:6px">実行制御・スケジューラ<br><small>（制御プレーン）</small></div>
+          <div class="arch-outer" style="border-color:#8dc894;background:#f0faf2">
+            <div class="arch-outer-label" style="color:#2e7d32">実行環境（ランタイム） / データプレーン</div>
+            <div class="arch-layer" style="background:#f0faf2;border-color:#8dc894">インフラ（VM・サーバ）</div>
+            <div class="arch-arrow">↓</div>
+            <div class="arch-row">
+              <div class="arch-layer green" style="flex:1;font-size:11px">関数インスタンス</div>
+              <div class="arch-layer green" style="flex:1;font-size:11px">関数インスタンス</div>
+              <div class="arch-layer green" style="flex:1;font-size:11px">関数インスタンス<br><small>（自動スケール）</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="arch-arrow">↓ レスポンス（同期時）</div>
+        <div class="arch-layer gray">ユーザ／外部サービス</div>
+      </div>
+
+      <h2 id="sec10">(10) アプリケーション実行形態の比較</h2>
+      <p>　前述の(1)～(9)の実行形態の違いをざっくり示すと次のようになる。</p>
+      <ul>
+        <li>(1)(2)：物理中心</li>
+        <li>(3)(4)：VM中心</li>
+        <li>(5)(6)(7)：コンテナ活用</li>
+        <li>(8)：コンテナ管理</li>
+        <li>(9)：完全抽象化（最もクラウドネイティブ）</li>
+      </ul>
+      <p>　これらを比較しやすいように整理したものを表1に示す。 単純に比較できるものではないものもあるが、全体像を把握するための参考情報として欲しい。</p>
+      <p><strong>【表1. (1)～(9)の実行形態に対する比較】</strong></p>
+      <table>
+        <thead>
+          <tr><th>No</th><th>実行形態</th><th>仮想化レベル</th><th>OSの扱い</th><th>起動速度</th><th>リソース効率</th><th>柔軟性</th><th>運用管理負荷</th><th>主な用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>(1)</td><td>ベアメタル</td><td>なし</td><td>なし／組込み</td><td>非常に速い</td><td>非常に高い</td><td>低い</td><td>低い</td><td>組込み機器、IoT</td></tr>
+          <tr><td>(2)</td><td>ベアメタル＋OS</td><td>なし</td><td>ホストOSのみ</td><td>速い</td><td>高い</td><td>中</td><td>中</td><td>PC、従来サーバ</td></tr>
+          <tr><td>(3)</td><td>VM（Type2型）</td><td>高い</td><td>ホストOS＋ゲストOS</td><td>遅い</td><td>低い</td><td>高い</td><td>高い</td><td>開発・検証環境</td></tr>
+          <tr><td>(4)</td><td>VM（Type1型）</td><td>高い</td><td>ゲストOS</td><td>中</td><td>中</td><td>高い</td><td>高い</td><td>クラウド基盤</td></tr>
+          <tr><td>(5)</td><td>コンテナ（単体）</td><td>中（OSレベル）</td><td>カーネル共有</td><td>非常に速い</td><td>非常に高い</td><td>高い</td><td>中</td><td>マイクロサービス</td></tr>
+          <tr><td>(6)</td><td>VM上コンテナ（Type2型）</td><td>高＋中</td><td>ゲストOS＋コンテナ</td><td>中</td><td>中</td><td>非常に高い</td><td>高い</td><td>IaaS上の構築</td></tr>
+          <tr><td>(7)</td><td>VM上コンテナ（Type1型）</td><td>高＋中</td><td>ゲストOS＋コンテナ</td><td>中</td><td>中〜高</td><td>非常に高い</td><td>高い</td><td>クラウド標準構成</td></tr>
+          <tr><td>(8)</td><td>Kubernetes</td><td>中（＋抽象化）</td><td>ノードOS共有</td><td>速い</td><td>高い</td><td>非常に高い</td><td>高い（自動化あり）</td><td>大規模分散システム</td></tr>
+          <tr><td>(9)</td><td>サーバレス（FaaS）</td><td>非常に高い（完全抽象化）</td><td>利用者が意識しない</td><td>非常に速い※</td><td>非常に高い</td><td>非常に高い</td><td>非常に低い</td><td>イベント駆動処理</td></tr>
+        </tbody>
+      </table>
+      <p><strong>【仮想化レベルの意味】</strong></p>
+      <ul>
+        <li>なし： 物理直結</li>
+        <li>中： OSレベル仮想化（コンテナ）</li>
+        <li>高： ハードウェア仮想化（VM）</li>
+        <li>非常に高い： 完全抽象化（FaaS）</li>
+      </ul>
+      <p><strong>【仮想化の考え方】</strong></p>
+      <ul>
+        <li>VM： OSごと仮想化</li>
+        <li>コンテナ： プロセス単位で分離</li>
+        <li>Kubernetes： コンテナの管理</li>
+        <li>FaaS： 実行環境の意識不要</li>
+      </ul>
+
+      <div class="page-nav" style="justify-content:space-between;">
+        <a onclick="navigate('ch1-a2-alpine')">← A1.2. OSのインストール手順（Alpine Linux）</a>
+        <a onclick="navigate('ch2-linux-mgmt1')">2. Linuxのシステム管理1 →</a>
+      </div>
+    `
   },
 
   'ch2-linux-mgmt1': {
