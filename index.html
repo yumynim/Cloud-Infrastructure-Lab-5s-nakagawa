@@ -1374,8 +1374,175 @@ Kubernetesノード
 
   'ch1-a1-virtualbox': {
     title: 'A1.1. 仮想マシンの作成手順（VirtualBox）',
-    toc: [{ level: 1, label: 'A1.1. 仮想マシンの作成手順（VirtualBox）', anchor: 'top' }],
-    content: `<h1 id="top">A1.1. 仮想マシンの作成手順（VirtualBox）</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    toc: [
+      { level: 1, label: 'A1.1. 初級編：仮想マシンの作成手順（VirtualBox）〜応用編（GUI）〜', anchor: 'top' },
+      { level: 2, label: '(1) Oracle VirtualBox マネージャーから新しい仮想マシンを作成', anchor: 'a11-1' },
+      { level: 2, label: '(2) 仮想マシンの名前とOSの設定', anchor: 'a11-2' },
+      { level: 2, label: '(3) 仮想ハードウェアの設定', anchor: 'a11-3' },
+      { level: 2, label: '(4) 仮想ハードディスクの設定', anchor: 'a11-4' },
+      { level: 2, label: '(5) Oracle VirtualBox マネージャー - 仮想マシン選択', anchor: 'a11-5' },
+      { level: 2, label: '(6) 仮想マシンの起動画面', anchor: 'a11-6' },
+      { level: 2, label: '(7) ISOイメージブートによるAlpine Linuxの初期起動画面', anchor: 'a11-7' },
+      { level: 1, label: 'A1.2. 仮想マシンの作成手順（VirtualBox）〜応用編（CUI）〜', anchor: 'a12' },
+      { level: 2, label: '(1) コマンドサーチパスの設定', anchor: 'a12-1' },
+      { level: 2, label: '(2) 仮想マシンの作成', anchor: 'a12-2' },
+      { level: 2, label: '(3) CPUの変更', anchor: 'a12-3' },
+      { level: 2, label: '(4) メモリの変更', anchor: 'a12-4' },
+      { level: 2, label: '(5) 仮想HDDの追加', anchor: 'a12-5' },
+      { level: 2, label: '(6) 光学ドライブの追加とディスクのマウント／アンマウント', anchor: 'a12-6' },
+    ],
+    content: `
+      <h1 id="top">A1.1. 初級編：仮想マシンの作成手順（VirtualBox）〜応用編（GUI）〜</h1>
+      <div class="meta">
+        公開日： 2026年4月11日（土）<br>
+        開講日： 2026年4月13日（月）
+      </div>
+      <p>　この資料では、Oracle VirtualBox バージョン 7.2.4 を例にして、仮想マシンの作成方法について手順を追って説明する。</p>
+
+      <h2 id="a11-1">(1) Oracle VirtualBox マネージャーから新しい仮想マシンを作成</h2>
+      <p>　図1.1のツールバー（アイコンのならび）から「新規」を選んで、新しい仮想マシンの作成を始める。</p>
+      <div class="figure">
+        <img src="images/a11-fig1-1-vbox-manager.png" alt="Oracle VirtualBox マネージャー 画面" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="figure-placeholder" style="display:none">［図1-1 画像］</div>
+        <div class="figure-caption">【図1-1. Oracle VirtualBox マネージャー 画面】</div>
+      </div>
+
+      <h2 id="a11-2">(2) 仮想マシンの名前とOSの設定</h2>
+      <p>　新たに、タイトルが「新しい仮想マシン」と書かれたウィンドウが表示されるので、次の4つのメニューがあることを確認する。</p>
+      <p>　　① 仮想マシンの名前とOS<br>
+      　　② 無人ゲストOSインストールの設定<br>
+      　　③ 仮想ハードウェアを指定<br>
+      　　④ 仮想ハードディスクを指定</p>
+      <p>　①のメニューが選択されている状態で、図2-1, 表2-1を参考に表で指定された内容を選択ないし入力する。</p>
+      <p><strong>【表2-1. 仮想マシンの名前とOS 設定内容】</strong></p>
+      <table>
+        <thead><tr><th>項目</th><th>値</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>VM名</td><td>alpine-k3s</td><td>これから利用する仮想マシンの名前</td></tr>
+          <tr><td>VMフォルダー</td><td>ノートPC：C:\Users\ユーザ名\Virtual VMs<br>演習室PC+SSD： E:¥VirtualBox VMs</td><td>「E:」はSSDが認識されたドライブ名へ適宜変更</td></tr>
+          <tr><td>OS</td><td>Linux</td><td>Alpine Linux を含む Linuxの場合に指定</td></tr>
+          <tr><td>OSディストリビューション</td><td>Other Linux</td><td>Alpine Linux が具体的な選択肢にないため指定</td></tr>
+          <tr><td>OSバージョン</td><td>Other Linux (64-bit)</td><td>64-bit CPUを利用するため</td></tr>
+        </tbody>
+      </table>
+      <div class="figure">
+        <img src="images/a11-fig2-1-vm-name-os.png" alt="仮想マシンの名前とOSの設定" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="figure-placeholder" style="display:none">［図2-1 画像］</div>
+        <div class="figure-caption">【図2-1. 仮想マシンの名前とOS 画面】</div>
+      </div>
+
+      <h2 id="a11-3">(3) 仮想ハードウェアの設定</h2>
+      <p>　次に、タイトルが「仮想ハードウェアを指定」と書かれたウィンドウを選択して、図3-1, 表3-1を参考に表で指定された内容を選択ないし入力する。 ※値は余裕も見越した上での推奨値</p>
+      <p><strong>【表3-1. 仮想ハードウェアを指定 設定内容】</strong></p>
+      <table>
+        <thead><tr><th>項目</th><th>値</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>メインメモリー</td><td>8192 MB</td><td>メモリ容量が少ないPCを利用している場合は「4096」でもOK</td></tr>
+          <tr><td>CPU数</td><td>4</td><td>コア数が少ないPCを利用している場合は「2」でもOK</td></tr>
+        </tbody>
+      </table>
+      <div class="figure">
+        <img src="images/a11-fig3-1-vm-hardware.png" alt="仮想ハードウェアの設定" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="figure-placeholder" style="display:none">［図3-1 画像］</div>
+        <div class="figure-caption">【図3-1. 仮想ハードウェアを指定 画面】</div>
+      </div>
+
+      <h2 id="a11-4">(4) 仮想ハードディスクの設定</h2>
+      <p>　次に、タイトルが「仮想ハードウェアを指定」と書かれたウィンドウを選択して、図4-1, 表4-1を参考に表で指定された内容を選択ないし入力する。 その後、ウィンドウ右下にある「完了」ボタンを押して、仮想マシンの作成を終了する。</p>
+      <p><strong>【表4-1. 仮想ハードディスクを指定 設定内容】</strong></p>
+      <table>
+        <thead><tr><th>項目</th><th>値</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>ディスクサイズ</td><td>30G</td><td>Alpine Linux / Kubernetes / docker 環境 + α</td></tr>
+        </tbody>
+      </table>
+      <div class="figure">
+        <img src="images/a11-fig4-1-vm-harddisk.png" alt="仮想ハードディスクの設定" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="figure-placeholder" style="display:none">［図4-1 画像］</div>
+        <div class="figure-caption">【図4-1. 仮想ハードディスクを指定 画面】</div>
+      </div>
+
+      <h2 id="a11-5">(5) Oracle VirtualBox マネージャー - 仮想マシン選択</h2>
+      <p>　すると、Oracle VirtualBox マネージャー のウィンドウに戻り、新たに作成された仮想マシンが表示される。 ウィンドウの左サイドと上部にツールバーがあり、その下が仮想マシンの設定となる。 このうち左ペイン（領域）に作成された仮想マシンの一覧が表示され、右ペインに左ペインで選択された仮想マシンのハードウェア構成が表示される。</p>
+      <p>　次にAlpine Linuxをインストールするために、光学ドライブにISOイメージを指定する。 具体的には右ペインの「ストレージ」内にある「光学ドライブ」をクリックすると、ファイル選択ダイアログ（問い合わせ画面）が表示されるので、 あらかじめダウンロードしたAlpine LinuxのISOイメージを選択する。</p>
+      <p>　図5-1, 5-2は光学ドライブ変更前と後の表示である。</p>
+      <div class="figure">
+        <img src="images/a11-fig5-1-optical-before.png" alt="光学ドライブ 変更前" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="figure-placeholder" style="display:none">［図5-1 画像］</div>
+        <div class="figure-caption">【図5-1. 光学ドライブ（ストレージ内） 変更前】</div>
+      </div>
+      <div class="figure">
+        <img src="images/a11-fig5-2-optical-after.png" alt="光学ドライブ 変更後" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="figure-placeholder" style="display:none">［図5-2 画像］</div>
+        <div class="figure-caption">【図5-2. 光学ドライブ（ストレージ内） 変更後】</div>
+      </div>
+
+      <h2 id="a11-6">(6) 仮想マシンの起動画面</h2>
+      <p>　そして、上部ツールバーの「起動」ボタンを押して、仮想マシンの起動を始める。 すると、図6.1のようなタイトルバーに「alpine-k3s [実行中] - Oracle VirtualBox」と書かれたウィンドウが表示される。</p>
+      <div class="figure">
+        <img src="images/a11-fig6-1-vbox-boot.png" alt="VirtualBoxの起動画面" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="figure-placeholder" style="display:none">［図6.1 画像］</div>
+        <div class="figure-caption">【図6.1. VirtualBoxの起動画面】</div>
+      </div>
+
+      <h2 id="a11-7">(7) ISOイメージブートによるAlpine Linuxの初期起動画面</h2>
+      <p>　そのまま起動を見守ると、図7.1のようなテキストベースの起動情報が表示される。 最後に「localhost login:」と表示されたら、Alpine Linuxの起動は完了である。 以降は、「A1.2.Alpine Linuxのインストール方法」に従って、Alpine Linuxのインストールを進める。</p>
+      <p>　　※ Alpine Linuxが起動しない場合、ISOイメージファイルの選択がうまくいっていない可能性がある。</p>
+      <div class="figure">
+        <img src="images/a11-fig7-1-alpine-boot.png" alt="ISOイメージブートによるAlpine Linuxの初期起動画面" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="figure-placeholder" style="display:none">［図7.1 画像］</div>
+        <div class="figure-caption">【図7.1. ISOイメージブートによるAlpine Linuxの初期起動画面】</div>
+      </div>
+
+      <hr>
+
+      <h1 id="a12">A1.2. 仮想マシンの作成手順（VirtualBox）〜応用編（CUI）〜</h1>
+      <p>　A1.1はGUIを利用して仮想マシンの作り方について説明した。 基本的にはA1.1の手法のみ使えれば実用上は問題ないが、コマンドライン操作に慣れている場合は次のような方法でも仮想マシンを作成することができる。</p>
+
+      <h2 id="a12-1">(1) コマンドサーチパスの設定（コマンドの実行を楽にする方法）</h2>
+      <p>　コマンド名を探すフォルダ（ディレクトリ）であるコマンドサーチパスを設定することで、コマンドライン操作を楽にすることができる。</p>
+      <pre class="cmd">PATH=%PATH%;C:\Program Files\Oracle\VirtualBox</pre>
+      <p>　上記の設定を行うことで、コマンド実行時に次のように絶対パスの指定を省くことができる。</p>
+      <p>コマンドサーチパス設定前のVboxManageコマンドの実行：</p>
+      <pre class="cmd">C:\Program Files\Oracle\VirtualBox\VBoxManage</pre>
+      <p>コマンドサーチパス設定後のVboxManageコマンドの実行：</p>
+      <pre class="cmd">VBoxManage</pre>
+
+      <h2 id="a12-2">(2) 仮想マシンの作成</h2>
+      <p>仮想マシンの作成：「alpine-k3s」という名前で作成する例</p>
+      <pre class="cmd">VBoxManage createvm --name "alpine-k3s" --ostype "Linux_64" --register</pre>
+
+      <h2 id="a12-3">(3) CPUの変更</h2>
+      <p>CPUのコア数の変更：「4」に指定する例</p>
+      <pre class="cmd">VBoxManage modifyvm "alpine-k3s" --cpus 4</pre>
+
+      <h2 id="a12-4">(4) メモリの変更</h2>
+      <p>メモリサイズの変更：「8192KB」に指定する例</p>
+      <pre class="cmd">VBoxManage modifyvm "alpine-k3s" --memory 8192</pre>
+
+      <h2 id="a12-5">(5) 仮想HDDの追加</h2>
+      <p>仮想HDD用ディスクコントローラーの追加</p>
+      <pre class="cmd">VBoxManage storagectl "alpine-k3s" --name "SATA" --add sata --controller IntelAhci</pre>
+      <p>仮想HDDを追加するフォルダ（ディレクトリ）への移動</p>
+      <pre class="cmd">cd C:\Users\nakagawa\VirtualBox VMs\alpine-k3s</pre>
+      <p>仮想HDDを追加： 30GB に指定する例</p>
+      <pre class="cmd">VBoxManage createmedium disk --filename alpine-k3s.vdi --size 30720
+VBoxManage storageattach alpine-k3s --storagectl "SATA" --port 0 --device 0 --type hdd --medium alpine-k3s.vdi</pre>
+
+      <h2 id="a12-6">(6) 光学ドライブの追加とディスクのマウント／アンマウント</h2>
+      <p>光学ドライブ用ディスクコントローラーの追加</p>
+      <pre class="cmd">VBoxManage storagectl "alpine-k3s" --name "IDE" --add ide</pre>
+      <p>ISOイメージのマウント</p>
+      <pre class="cmd">VBoxManage storageattach "alpine-k3s" --storagectl "IDE" --port 1 --device 0 --type dvddrive --medium E:\download\alpine-standard-3.23.3-x86_64.iso</pre>
+      <p>　　※ ISOディスクの保存場所に応じて「E:\download\alpine-standard-3.23.3-x86_64.iso」は置き換えること。</p>
+      <p>ISOイメージのアンマウント</p>
+      <pre class="cmd">VBoxManage storageattach "alpine-k3s" --storagectl "IDE" --port 1 --device 0 --type dvddrive --medium emptydrive</pre>
+
+      <div class="page-nav" style="justify-content:space-between;">
+        <a onclick="navigate('ch1-cloud-native')">← 1. クラウドネイティブ環境の構築</a>
+        <a onclick="navigate('ch1-a2-alpine')">A1.2. OSのインストール手順（Alpine Linux） →</a>
+      </div>
+    `
   },
 
   'ch1-a2-alpine': {
