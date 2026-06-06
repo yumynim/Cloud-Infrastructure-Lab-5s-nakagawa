@@ -121,6 +121,82 @@
 
     strong { font-weight: 700; }
 
+    /* Code blocks */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: #f0f0f0;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    pre {
+      background: #f6f8fa;
+      padding: 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      font-size: inherit;
+    }
+
+    pre.cmd {
+      background: #1e1e1e;
+      color: #d4d4d4;
+    }
+
+    pre.cmd .prompt { color: #888; }
+    pre.cmd .focus { color: #fff; font-weight: bold; }
+
+    /* Flow diagram */
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 20px 0;
+      padding: 20px;
+      background: #f9f9fb;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+    }
+
+    .flow-box {
+      background: #e8e4f4;
+      border: 1px solid #b0a8d8;
+      border-radius: 4px;
+      padding: 10px 16px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .flow-arrow {
+      font-size: 20px;
+      color: #888;
+    }
+
+    /* Note/callout box */
+    .note-box {
+      background: #fff8e1;
+      border-left: 4px solid #f0a500;
+      padding: 12px 16px;
+      margin: 16px 0;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .note-box .note-title {
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
     /* Tables */
     table {
       border-collapse: collapse;
@@ -781,9 +857,404 @@ const pages = {
   },
 
   'ch1-cloud-native': {
-    title: '1. クラウドネイティブ環境の構築',
-    toc: [{ level: 1, label: '1. クラウドネイティブ環境の構築', anchor: 'top' }],
-    content: `<h1 id="top">1. クラウドネイティブ環境の構築</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: '第1章　クラウドネイティブ環境の構築',
+    toc: [
+      { level: 1, label: '第1章　クラウドネイティブ環境の構築', anchor: 'top' },
+      { level: 2, label: '1.1. はじめに', anchor: 'sec11' },
+      { level: 3, label: '1.1.1. 概要', anchor: 'sec111' },
+      { level: 3, label: '1.1.2. 前提となる知識', anchor: 'sec112' },
+      { level: 3, label: '1.1.3. 到達目標', anchor: 'sec113' },
+      { level: 3, label: '1.1.4. ローカルクラウド環境とKubernetesについて', anchor: 'sec114' },
+      { level: 3, label: '1.1.5. ローカルクラウド環境の構成について', anchor: 'sec115' },
+      { level: 2, label: '1.2. ハンズオン1： VirtualBoxを利用した仮想マシン実行環境の構築', anchor: 'sec12' },
+      { level: 3, label: '1.2.1 BIOSの設定（BYOD PC対象，VirtualBoxが利用できない時に確認）', anchor: 'sec121' },
+      { level: 3, label: '1.2.2 Hyper-Vの無効化（BYOD PC対象，VirtualBoxが利用できない時に確認）', anchor: 'sec122' },
+      { level: 3, label: '1.2.3 VirtualBoxのインストール', anchor: 'sec123' },
+      { level: 3, label: '1.2.4 VirtualBoxを利用した仮想マシンの作成', anchor: 'sec124' },
+      { level: 3, label: '1.2.5 仮想マシンへのAlpine Linuxのインストール', anchor: 'sec125' },
+      { level: 2, label: '1.3. ハンズオン2： Kubernetesを利用したローカルクラウド（プライベートクラウド）環境の構築', anchor: 'sec13' },
+      { level: 3, label: '1.3.1 Dockerの導入', anchor: 'sec131' },
+      { level: 3, label: '1.3.2 Kubernetes（K3s）の導入', anchor: 'sec132' },
+      { level: 3, label: '1.3.3 Pod（コンテナ）の作成', anchor: 'sec133' },
+      { level: 3, label: '1.3.4 作動中のPodの確認', anchor: 'sec134' },
+      { level: 3, label: '1.3.5 Podの状態確認', anchor: 'sec135' },
+      { level: 3, label: '1.3.6 kubectlコマンドの補足', anchor: 'sec136' },
+      { level: 2, label: '1.4. 総合演習', anchor: 'sec14' },
+      { level: 3, label: '1.4.1. 演習： 仮想マシンの作成', anchor: 'sec141' },
+      { level: 3, label: '1.4.2. 演習： コンテナの作成と削除', anchor: 'sec142' },
+      { level: 3, label: '1.4.3. 演習： Docker Hub上のコンテナの確認', anchor: 'sec143' },
+    ],
+    content: \`
+      <h1 id="top">第1章　クラウドネイティブ環境の構築</h1>
+      <div class="meta">
+        公開日： 2026年4月11日（土）<br>
+        開講日： 2026年4月13日（月）<br>
+        修正日： 2026年5月08日（金）
+      </div>
+
+      <h2 id="sec11">1.1. はじめに</h2>
+
+      <h3 id="sec111">1.1.1. 概要</h3>
+      <p>　クラウドは単なる仮想マシン提供（IaaS）から進化し、現在は <strong>「Cloud-Smart」＋クラウドネイティブ</strong> が前提となっている。 その背景には、コンピュータ実行環境のパラダイム転換に伴い、計算機資源がスケーラブルに利用可能となったことが挙げられる。</p>
+
+      <div class="flow-diagram">
+        <div class="flow-box">物理マシン<br><small>（ベアメタル）</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">仮想マシン<br><small>（Virtual Machine: VM）</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">コンテナ</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">オーケストレータ</div>
+      </div>
+
+      <p>　これらの関係については、資料「A1.3.アプリケーションの実行形態」を参照すること。</p>
+      <p>　コンピュータの実行環境はアプリケーション（応用ソフトウェア）の実行環境に等しいと解釈できるので、この変化は、アプリケーション実行環境におけるパラダイム転換ともいえる。 このようなパラダイム転換により、次のような変化が生じている。</p>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>仮想化資源の節約によるコンテナの実現とそれらを管理するオーケストレーション環境の標準基盤化</li>
+        <li>コンテナの最小資源化によるソフトウェアのマイクロサービス化</li>
+        <li>サーバーレス／イベント駆動型開発によるソフトウェア機能の抽象化</li>
+        <li>エッジ分散化・AI統合</li>
+        <li>サービス提供における DevOps（開発の自動化）、FinOps（コストの最適化）</li>
+      </ul>
+      <p>　現時点では、これらのことを理解することは難しいかもしれない。ただ、インターネット上で展開されているソフトウェアサービスの基盤が、コンテナとオーケストレータによって実現されていることを知ることは重要である。</p>
+      <p>　本演習では、上記のことを踏まえて、従来の仮想マシン中心の演習ではなく、コンテナとオーケストレーションを中心に据えた実践的な学習を行う。 そして、これらの環境を BYOD PC ないし演習室 PC 上に構築することを通して、インフラエンジニア、ソフトウェアエンジニアに必要となるクラウド基盤技術について体系的に学ぶ。</p>
+
+      <h3 id="sec112">1.1.2. 前提となる知識</h3>
+      <p>　この章では、事前に次の知識があると望ましい。 解説の中で補足は加えるが、あまり親しみがない場合は事前に調べておくとより理解が深まる。</p>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>ファイル、フォルダ（ディレクトリ）の概念理解</li>
+        <li>コマンドラインオペレーション</li>
+      </ul>
+
+      <h3 id="sec113">1.1.3. 到達目標</h3>
+      <p>　この章の到達目標は次の通りである。</p>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>アプリケーション実行形態のパラダイムシフトについて説明できる</li>
+        <li>VirtualBox 上に Alpine Linux 仮想マシンを構築できる</li>
+        <li>Alpine Linux に Docker を導入できる</li>
+        <li>K3s（軽量 Kubernetes）を起動できる</li>
+        <li>Kubernetes 管理ツール kubectl で コンテナである Pod を確認できる</li>
+      </ul>
+
+      <h3 id="sec114">1.1.4. ローカルクラウド環境とKubernetesについて</h3>
+      <p>　本演習では、学習用にローカルクラウド環境を構築する。なお、この構築には次のものを利用する。</p>
+      <table>
+        <thead><tr><th>項目</th><th>プラットフォーム</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>物理マシン（ベアメタル）</td><td>Windows PC ( or Mac / Linux)</td><td>BYOD PC, 演習室 PC を利用</td></tr>
+          <tr><td>ホストOS</td><td>Windows 11 (macOS, Linux)</td><td>BYOD PC, 演習室 PC を利用</td></tr>
+          <tr><td>仮想マシン実行環境</td><td>Oracle VirtualBox</td><td>Oracle が提供する OSS の仮想マシン実行環境，世界中で広く利用されている</td></tr>
+          <tr><td>ゲストOS</td><td>Alpine Linux</td><td>数百 MB で動作するサーバ・コンテナ向け軽量 Linux，ノート PC でも快適に動作</td></tr>
+          <tr><td>コンテナランタイム</td><td>Docker</td><td>OSS，コンテナランタイムの業界標準</td></tr>
+          <tr><td>オーケストレータ</td><td>Kubernetes</td><td>Google が開発した OSS，オーケストレータツールの業界標準，省略して K8s とも呼ぶ</td></tr>
+          <tr><td>コンテナ</td><td>Docker Hub提供のコンテナ</td><td>必要に応じて用意</td></tr>
+          <tr><td>アプリ</td><td>随時指定</td><td></td></tr>
+        </tbody>
+      </table>
+      <p>　　※演習室 PC、学科指定 PC の仕様に準拠した BYOD PC を主な説明対象にする。macOS や Linux 利用者は適宜説明を読み替えること。</p>
+      <p>　Kubernetes はオーケストレータツールの業界標準であり、様々なクラウド上で実行することができる。 このツールはサーバ環境を構築するに際して次の利点を持つ。</p>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>環境に依存しない</li>
+        <li>構成やリソースをスケーラブルに変化できる</li>
+        <li>コンテナの自動復旧が可能である</li>
+      </ul>
+      <p>　これらの特徴はインターネット上でノンストップの継続的なサービスを実現する上で重要になる。また、現在の企業システムは次のような環境を用いて分散運用しているケースが多いが、Kubernetes はこれらを統一的に扱うことができる。</p>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>パブリッククラウド（仮想環境）： Amazon Web Services (AWS) / Microsoft Azure / Google Cloud (GCP) 他</li>
+        <li>プライベートクラウド（仮想環境）： Proxmox 他</li>
+        <li>オンプレミス（ベアメタル環境）： サーバ PC 他</li>
+        <li>エッジ環境： IoT 端末、小型 PC 他 （軽量Kubernetesの利用：K3s, MicroK8s, KubeEdge, OpenYurt）</li>
+      </ul>
+
+      <h3 id="sec115">1.1.5. ローカルクラウド環境の構成について</h3>
+      <p>　Kubernetes は本来、複数台のマシン（ノードと呼ぶ）で構成されるクラスタ上で動作する。 本演習では、1台の PC 上で Kubernetes の学習が行えるように、先ほど軽量 Kubernetes として紹介した Rancher 社開発の K3s を利用する。 この K3s を利用して構築する Kubernetes によるプライベートクラウド環境は次の通りである。</p>
+      <pre>ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            └─ Alpine Linux（軽量 Linux）
+                 ├─ Docker（コンテナ操作学習用）
+                 └─ K3s（Kubernetes）
+                      └─ containerd（コンテナランタイム）</pre>
+
+      <h2 id="sec12">1.2. ハンズオン 1： VirtualBox を利用した仮想マシン実行環境の構築</h2>
+      <p>　このハンズオンでは、クラウド構築基盤としてベアメタルマシンからAlpine Linuxまでの4つの環境について準備する。</p>
+      <pre>
+<strong>[ベアメタルマシン]</strong>
+   └─ <strong>[Windows]</strong>
+       └─ <strong>[Oracle VirtualBox]</strong>
+            └─ <strong>[Alpine Linux（軽量 Linux）]</strong>
+                 ├─ Docker（コンテナ操作学習用）
+                 └─ K3s（Kubernetes）
+                      └─ containerd（コンテナランタイム）</pre>
+
+      <h3 id="sec121">1.2.1 BIOS の設定（BYOD PC 対象，VirtualBox が利用できない時に確認）</h3>
+      <p>　まずは、ベアメタルマシンの準備である。</p>
+      <pre>
+<strong>[ベアメタルマシン]</strong>
+   └─ Windows
+       └─ Oracle VirtualBox
+            └─ Alpine Linux（軽量 Linux）
+                 ├─ Docker（コンテナ操作学習用）
+                 └─ K3s（Kubernetes）
+                      └─ containerd（コンテナランタイム）</pre>
+      <p>　BIOS の設定画面を開き、以下の二つの項目が有効化されているか確認する。 なお、BIOS 画面の開き方は PC によって異なるが、電源をオンにした後で「ESC」「DEL」「F2」「F5」「F8」キーなどを押すと開くことが多い。</p>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>VT-x</li>
+        <li>AMD-V</li>
+      </ul>
+      <p>　最近の PC は最初から有効化されているケースが多いが、万一無効化されている場合は有効化すること。</p>
+
+      <h3 id="sec122">1.2.2 Hyper-V の無効化（BYOD PC 対象，VirtualBox が利用できない時に確認）</h3>
+      <p>　次に、Windowsに関する設定である。</p>
+      <pre>
+ベアメタルマシン
+   └─ <strong>[Windows]</strong>
+       └─ Oracle VirtualBox
+            └─ Alpine Linux（軽量 Linux）
+                 ├─ Docker（コンテナ操作学習用）
+                 └─ K3s（Kubernetes）
+                      └─ containerd（コンテナランタイム）</pre>
+      <p>　VirtualBox の動作に干渉する Hyper-V は必要によって無効化する必要がある。 この設定はデフォルトでは Auto となっているが、Hyper-V を動かすアプリケーションなどを利用していると、パフォーマンスが落ちたり、VirtualBox が動かなかったりすることがある。 その場合は、Windowsのコマンドプロンプトからハイパーバイザーを停止する必要がある。 手順としては、まずスタートボタンを右クリックし、「ターミナル（管理者）」または「コマンドプロンプト（管理者）」を選択する。 次に、以下のコマンドを入力してエンターキーを押す。</p>
+      <pre class="cmd">bcdedit /set hypervisorlaunchtype off</pre>
+      <p>「この操作を正しく終了しました」と表示されたら、PC を再起動することで Hyper-V を無効にできる。</p>
+      <p>　　※ 他のアプリケーションに影響を与える可能性もあるので、Auto が利用できる場合はそのまま利用できた方が良い。</p>
+
+      <h3 id="sec123">1.2.3 VirtualBox のインストール</h3>
+      <pre>
+ベアメタルマシン
+   └─ Windows
+       └─ <strong>[Oracle VirtualBox]</strong>
+            └─ Alpine Linux（軽量 Linux）
+                 ├─ Docker（コンテナ操作学習用）
+                 └─ K3s（Kubernetes）
+                      └─ containerd（コンテナランタイム）</pre>
+      <p>　事前準備に指定された3つのファイルを取得する。 その後、以下の手順に従って VirtualBox をインストールする。</p>
+      <p>　　(1) <strong>実行：</strong> ダウンロードしたインストーラーファイル（.exe）をダブルクリックしてインストーラーを起動する。</p>
+      <p>　　(2) <strong>セットアップ：</strong> ウィザード画面で「Next」をクリックし、設定はデフォルトのまま進める。</p>
+      <p>　　(3) <strong>ネットワーク警告：</strong> インストール中に一時的にネットワーク接続が切れる旨の警告が出たら「Yes」をクリックする。</p>
+      <p>　　(4) <strong>インストール開始：</strong> 「Install」をクリックし、ユーザーアカウント制御が表示されたら「はい」を押す。</p>
+      <p>　　(5) <strong>完了：</strong> 「Finish」をクリックして完了する（必要に応じて再起動する）。</p>
+      <p>　その後、Oracle VirtualBox Extension Pack（.vbox-extpack）をダブルクリックしてインストールする。</p>
+
+      <h3 id="sec124">1.2.4 VirtualBox を利用した仮想マシンの作成</h3>
+      <pre>
+ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            └─ <strong>[Alpine Linux（軽量 Linux）]</strong>
+                 ├─ Docker（コンテナ操作学習用）
+                 └─ K3s（Kubernetes）
+                      └─ containerd（コンテナランタイム）</pre>
+      <p>　資料A1.1を参考にして、次の仕様で仮想マシンを作成する。</p>
+      <table>
+        <thead><tr><th>項目</th><th>値</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>仮想マシン名</td><td>alpine k3s</td><td></td></tr>
+          <tr><td>メインメモリー</td><td>8192 MB</td><td>メモリ容量が少ない PC を利用している場合は4096でもOK</td></tr>
+          <tr><td>CPU数</td><td>4</td><td>コア数が少ない PC を利用している場合は2でもOK</td></tr>
+          <tr><td>ディスクサイズ</td><td>30G</td><td>Alpine Linux / Kubernetes / Docker 環境 + α</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="sec125">1.2.5 仮想マシンへの Alpine Linux のインストール</h3>
+      <p>　資料A1.2を参考に Alpine Linux を次の仕様でインストールする。</p>
+      <table>
+        <thead><tr><th>内容</th><th>表示されるキーワード</th><th>選択肢</th></tr></thead>
+        <tbody>
+          <tr><td>キーボード</td><td>Keymap</td><td>日本語キーボード利用時：jp → jp<br>英語キーボード利用時： us → us</td></tr>
+          <tr><td>ホスト名</td><td>Hostname</td><td>localhost ※デフォルト</td></tr>
+          <tr><td>ネットワークインタフェース</td><td>Interface</td><td>「Which one」： eth0 ※デフォルト<br>「Ip address」： dhcp ※デフォルト</td></tr>
+          <tr><td>管理者パスワード</td><td>Root Password</td><td>※任意（必ず覚えておくこと）</td></tr>
+          <tr><td>タイムゾーン</td><td>Timezone</td><td>Japan</td></tr>
+          <tr><td>プロキシ</td><td>Proxy</td><td>none ※デフォルト</td></tr>
+          <tr><td>自動時刻同期</td><td>Network Time Protocol</td><td>busybox ※デフォルト</td></tr>
+          <tr><td>パッケージダウンロード先</td><td>APK Mirror</td><td>1 ※デフォルト</td></tr>
+          <tr><td>ユーザー情報</td><td>User</td><td>「Setup a user?」： no ※デフォルト<br>「ssh:」： openssh ※デフォルト<br>「root ssh login:」： prohibit-password ※デフォルト<br>「ssh key for root:」： none ※デフォルト</td></tr>
+          <tr><td>ディスクへのインストール</td><td>Disk &amp; Install</td><td>「use:」： sda<br>「how:」： sys<br>「erase:」：y</td></tr>
+        </tbody>
+      </table>
+      <p>　　※デフォルトのものはそのままエンターキーを押すだけでよい</p>
+
+      <h2 id="sec13">1.3. ハンズオン2： Kubernetesを利用したローカルクラウド（プライベートクラウド）環境の構築</h2>
+      <p>　このハンズオンでは、ローカルクラウド環境の要である Docker と K3s について準備する。</p>
+      <pre>
+ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            └─ Alpine Linux（軽量 Linux）
+                 ├─ <strong>[Docker（コンテナ操作学習用）]</strong>
+                 └─ <strong>[K3s（Kubernetes）]</strong>
+                      └─ <strong>[containerd（コンテナランタイム）]</strong></pre>
+
+      <h3 id="sec131">1.3.1 Docker の導入</h3>
+      <p>　まずは、Docker をインストールし、簡単な動作確認をする。</p>
+      <pre>
+ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            └─ Alpine Linux（軽量 Linux）
+                 ├─ <strong>[Docker（コンテナ操作学習用）]</strong>
+                 └─ K3s（Kubernetes）
+                      └─ containerd（コンテナランタイム）</pre>
+      <p>　なお、Docker の導入は以下の手順で行う。</p>
+
+      <p><strong>(1) Alpine Linux の起動と root によるログイン</strong></p>
+      <p>　まず、Alpine Linux を起動し、管理者ユーザrootでログインする。</p>
+      <pre class="cmd">login: root 　・・・ rootユーザでログインする（要パスワード）</pre>
+
+      <p><strong>(2) 利用するリポジトリにcommunityリポジトリを追加</strong></p>
+      <p>　Docker のインストールに先立ち、外部パッケージをインストールできるよう利用するリポジトリの一覧を更新する。</p>
+      <p>　そのために、カレントディレクトリを<code>/etc/apk</code>へ移す。</p>
+      <pre class="cmd"># cd /etc/apk</pre>
+      <p>　きちんと移動ができたか確認するため、pwd（Print Working Diretory）コマンドで現在のワーキングディレクトリを表示する。</p>
+      <pre class="cmd"># pwd
+/etc/apk　　← この表示がでれば成功</pre>
+      <p>　次に、変更するファイルの内容をcat（conCATenate）コマンドで確認する。</p>
+      <pre class="cmd"># cat repositories
+#/media/cdrom/apks　　← この行はrepositoriesの内容、「#」で始まる行となっているがコマンドではない
+http://dl-cdn.alpinelinux.org/alpine/v3.23/main
+#http://dl-cdn.alpinelinux.org/alpine/v3.23/community　　← 3行目の頭に<code>#</code>がついていることを確認</pre>
+
+      <div class="note-box">
+        <div class="note-title">トラブルシュート（※2026/4/18追記）</div>
+        <p>うまくいかない場合は資料のトラブルシュートを参照すること。</p>
+      </div>
+
+      <p>　その後、sed（Stream EDitor）コマンドを利用して、3行目の頭にあるコメントアウト記号<code>#</code>を削除する。</p>
+      <pre class="cmd"># sed -i '3s/^#//' repositories</pre>
+      <p>　そして、もう一度catコマンドを実行して、3行目の頭の「#」が消えたかどうかを確認する。</p>
+      <pre class="cmd"># cat repositories
+#/media/cdrom/apks　　← この行はrepositoriesの内容、「#」で始まる行となっているがコマンドではない
+http://dl-cdn.alpinelinux.org/alpine/v3.23/main
+http://dl-cdn.alpinelinux.org/alpine/v3.23/community　　← 3行目の頭の<code>#</code>が消えたことを確認</pre>
+
+      <p><strong>(3) パッケージ情報のアップデートと Docker 環境のインストール</strong></p>
+      <p>　次に、以下のコマンドで Alpine Linux のパッケージ情報を最新のものに更新する。</p>
+      <pre class="cmd"># apk update</pre>
+      <p>　そして、最後に次のコマンドで Docker 環境をインストールする。</p>
+      <pre class="cmd"># apk add docker</pre>
+
+      <p><strong>(4) Docker サービスの登録と起動</strong></p>
+      <p>　次に、以下のコマンドで Docker サービスを登録する。</p>
+      <pre class="cmd"># rc-update add docker</pre>
+      <p>　その後、次のコマンドで Docker サービスを起動する。</p>
+      <pre class="cmd"># service docker start</pre>
+
+      <p><strong>(4a) Docker Hub へのアカウント登録　　※ 2026/4/18追記</strong></p>
+      <p>　最後に、Docker Hub から少ない制約でコンテナイメージがダウンロードできるよう、資料 A1-4 の内容に従って Docker Hub のアカウント登録を行う。</p>
+
+      <p><strong>(5) Docker 環境の動作確認</strong></p>
+      <p>　hello-worldと表示されるプログラムだけが用意された hello-world イメージ（コンテナ）を起動する。（初回はコンテナイメージを自動ダウンロード）</p>
+      <pre class="cmd"># docker run hello-world</pre>
+      <p>ここで、hello-worldと表示されれば、Docker の準備は完了である。</p>
+
+      <h3 id="sec132">1.3.2 Kubernetes（K3s）の導入</h3>
+      <p>　続いて、軽量 Kubernetes 環境である K3s を導入する。</p>
+      <pre>
+ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            └─ Alpine Linux（軽量 Linux）
+                 ├─ Docker（コンテナ操作学習用）
+                 └─ <strong>[K3s（Kubernetes）]</strong>
+                      └─ <strong>[containerd（コンテナランタイム）]</strong></pre>
+      <p>　K3s は Kubernetes の軽量実装であり、内部にコンテナランタイムや各種コンポーネントを含んでいる。 そのため、単一ノード構成でも Kubernetes 環境を構築できる。また、K3s は内部で containerd を使用するため、必ずしも Docker を必要としない。 本演習ではコンテナ技術の理解を深めるために、Docker を先に導入している。なお、複数ノード構成に拡張することも可能であるが、本演習では単一ノード構成で学習を行う。</p>
+      <p>　この環境を作るための手順は次の通りである。</p>
+
+      <p><strong>(1) K3s のダウンロードとインストール</strong></p>
+      <p>　まず K3s のダウンロードに必要な<code>curl</code>コマンドをインストールする。</p>
+      <pre class="cmd"># apk add curl</pre>
+      <p>　次に、K3s をインストールするため、<code>curl</code>コマンドでインストーラーをダウンロードして実行する。</p>
+      <pre class="cmd"># curl -sfL https://get.K3s.io | sh -</pre>
+
+      <p><strong>(2) K3s によって用意されたノードの表示</strong></p>
+      <p>　Kubernetes のコントロールコマンドである kubectl を利用して、用意されたノードを表示する。</p>
+      <pre class="cmd"># kubectl get nodes</pre>
+      <p>　ここで、ノードが一つ表示されればインストールは成功である。</p>
+
+      <h3 id="sec133">1.3.3 Pod（コンテナ）の作成</h3>
+      <p>　次に Kubernetes によって管理される Pod（コンテナ）の作成を行う。 このコマンドを実行すると、nginx コンテナを含む Pod が1つ作成される。 Pod は Kubernetes における最小の実行単位であり、1つ以上のコンテナで構成される。</p>
+      <pre class="cmd"># kubectl run nginx --image=nginx　　※ 演習時は「--image」に「hub.enshu.aicit.jp/nginx:1.30-alpine」を指定（学内のみアクセス可）</pre>
+      <p>　ここで、<code>run</code> は kubectl に対するコマンドで、<code>nginx</code> という名前で <code>--image</code> の示す nginx というコンテナを実行する。 なお、nginx は インターネット上で広く使われている Web サーバ である。</p>
+
+      <h3 id="sec134">1.3.4 作動中の Pod の確認</h3>
+      <p>次のコマンドで起動中の Pod（コンテナ）を表示することができる。</p>
+      <pre class="cmd"># kubectl get pods</pre>
+      <p>　ちなみに、<code>get</code> コマンドは、指定したリソースの一覧を表示するコマンドであり、 上記の例ではポッドの一覧を表示してくれる。</p>
+
+      <h3 id="sec135">1.3.5 Pod の状態確認</h3>
+      <p>　稼働中の Pod について、より詳細な状態を確認したい場合は <code>describe</code> コマンドを利用すると良い。</p>
+      <pre class="cmd"># kubectl describe pod nginx</pre>
+      <p>　また、稼働中の Pod について <code>logs</code> コマンドでログの確認をすることができる。</p>
+      <pre class="cmd"># kubectl logs nginx</pre>
+
+      <h3 id="sec136">1.3.6 kubectl コマンドの補足</h3>
+      <p>　kubectl と Pod の関係、そして kubectl のコマンド実行例を以下に示す。 あらかじめ予習しておくと、今後の kubectl の実行の助けとなる。</p>
+      <pre style="background:#f6f8fa;font-size:12px;">
+Kubernetesノード
+├─ Kubernetes（K3s）
+│   ├─ APIサーバ
+│   ├─ スケジューラ
+│   ├─ コントローラ
+│   └─ kubelet
+│        └─ containerd
+│             └─ Pod（実行単位）
+│                  └─ nginxコンテナ
+└─ kubectlコマンド ← ユーザ操作</pre>
+      <table>
+        <thead><tr><th>コマンド</th><th>何をする？</th><th>よく使う例</th><th>補足</th></tr></thead>
+        <tbody>
+          <tr><td><code>kubectl get</code></td><td>リソースの一覧を見る</td><td><code>kubectl get pods</code></td><td>Pod・Service・Nodeなどを確認</td></tr>
+          <tr><td><code>kubectl describe</code></td><td>リソースの詳細を見る</td><td><code>kubectl describe pod &lt;名前&gt;</code></td><td>イベントや状態も確認できる</td></tr>
+          <tr><td><code>kubectl create</code></td><td>リソースを新規作成する</td><td><code>kubectl create -f app.yaml</code></td><td>YAMLファイルから作成</td></tr>
+          <tr><td><code>kubectl apply</code></td><td>リソースを作成・更新する</td><td><code>kubectl apply -f app.yaml</code></td><td>宣言的な管理におすすめ</td></tr>
+          <tr><td><code>kubectl delete</code></td><td>リソースを削除する</td><td><code>kubectl delete pod &lt;名前&gt;</code></td><td>ファイル指定も可能</td></tr>
+          <tr><td><code>kubectl logs</code></td><td>コンテナのログを見る</td><td><code>kubectl logs &lt;pod名&gt;</code></td><td>トラブルシュートに必須</td></tr>
+          <tr><td><code>kubectl exec</code></td><td>コンテナ内でコマンド実行</td><td><code>kubectl exec -it &lt;pod名&gt; -- bash</code></td><td>コンテナに入れる</td></tr>
+          <tr><td><code>kubectl port-forward</code></td><td>ローカルとPodを接続</td><td><code>kubectl port-forward pod/&lt;名前&gt; 8080:80</code></td><td>ローカルからアクセス可能</td></tr>
+          <tr><td><code>kubectl apply -f</code></td><td>設定ファイルを適用</td><td><code>kubectl apply -f deployment.yaml</code></td><td>よく使う基本操作</td></tr>
+          <tr><td><code>kubectl get all</code></td><td>主要リソースをまとめて表示</td><td><code>kubectl get all</code></td><td>全体の状況をざっと確認</td></tr>
+          <tr><td><code>kubectl config get-contexts</code></td><td>クラスタ一覧を見る</td><td><code>kubectl config get-contexts</code></td><td>接続先の確認</td></tr>
+          <tr><td><code>kubectl config use-context</code></td><td>クラスタを切り替える</td><td><code>kubectl config use-context &lt;名前&gt;</code></td><td>環境切替時に使用</td></tr>
+          <tr><td><code>kubectl top</code></td><td>リソース使用量を見る</td><td><code>kubectl top pod</code></td><td>CPUやメモリ確認（Metrics必要）</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="sec14">1.4. 総合演習</h2>
+      <p>　本章ではハンズオン1～2を通して、以下の内容を完了した。</p>
+      <ul style="padding-left:24px;line-height:2;">
+        <li>VirtualBox上にLinux環境構築</li>
+        <li>Docker導入</li>
+        <li>Kubernetes（K3s）起動</li>
+        <li>Pod操作の基礎</li>
+      </ul>
+      <p>　これまでの内容を振り返って、以下の総合演習に取り組め。</p>
+
+      <h3 id="sec141">1.4.1. 演習： 仮想マシンの作成</h3>
+      <p>　資料A1.1を参考にして、以下の仕様で仮想マシンを作成し、ISOイメージを外しても Alpine Linux が起動できることを確認せよ。</p>
+      <table>
+        <thead><tr><th>項目</th><th>値</th></tr></thead>
+        <tbody>
+          <tr><td>仮想マシン名</td><td>alpine base</td></tr>
+          <tr><td>メインメモリー</td><td>256 MB</td></tr>
+          <tr><td>CPU数</td><td>1</td></tr>
+          <tr><td>ディスクサイズ</td><td>10G</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="sec142">1.4.2. 演習： コンテナの作成と削除</h3>
+      <p>　ハンズオンで作成した仮想マシン「alpine k3s」上で、イメージ名 nginx の Pod（コンテナ）を「nginx-1」「nginx-2」の名前で作成せよ。 一覧表示によって Pod が作成されたことを確認したら、以下の手順でコンテナの確認と削除し、その後、一覧表示によって Pod が削除されたことを確認せよ。</p>
+      <pre class="cmd"># kubectl delete pod nginx-1
+# kubectl delete pod nginx-2</pre>
+
+      <h3 id="sec143">1.4.3. 演習： Docker Hub 上のコンテナの確認</h3>
+      <p>　コンテナイメージを管理する Docker Hub へアクセスし、nginx のコンテナイメージにどのような種類があるか確認せよ。</p>
+
+      <div class="page-nav" style="justify-content:space-between;">
+        <a onclick="navigate('guidance')">← ガイダンス</a>
+        <a onclick="navigate('ch1-a1-virtualbox')">A1.1. 仮想マシンの作成手順（VirtualBox） →</a>
+      </div>
+    \`
   },
 
   'ch1-a1-virtualbox': {
