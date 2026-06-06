@@ -2159,69 +2159,8 @@ Enter ssh key or URL for root (or 'none') [none]⏎　※デフォルト　2026/
       <h2 id="sec7">(7) VM + コンテナを利用したアプリケーション実行2（Type1 ハイパーバイザー VM上のコンテナ実行）</h2>
       <p>　Type1ハイパーバイザ上に構築されたVM上でコンテナを実行する構成である。 クラウド事業者の基盤ではこの形態が一般的である。 ハードウェア仮想化とコンテナの軽量性を組み合わせることで、スケーラビリティと効率性を両立できる。</p>
       <p><strong>【図7. VM + コンテナを利用したアプリケーション実行2（Type1 ハイパーバイザー VM上のコンテナ実行）】</strong></p>
-      <div class="tree-diagram">
-        <div class="tree-node">物理マシン（ベアメタル）<br>BIOS/ファームウェア</div>
-        <div class="tree-down">↓</div>
-        <div class="tree-node">ハイパーバイザOS<br>仮想マシン（VM）実行環境</div>
-        <div class="tree-down">↓</div>
-        <div class="tree-env">
-          <div class="tree-env-label">仮想マシン実行環境内</div>
-          <div class="tree-cols">
-            <div class="tree-col">
-              <div class="tree-node">仮想マシン（VM）</div>
-              <div class="tree-down">↓</div>
-              <div class="tree-node">ホストOS<br>（ハイパーバイザOS）</div>
-            </div>
-            <div class="tree-col">
-              <div class="tree-node">仮想マシン（VM）</div>
-              <div class="tree-down">↓</div>
-              <div class="tree-node">ゲストOS 2（Linux）</div>
-              <div class="tree-down">↓</div>
-              <div class="tree-node">コンテナランタイム</div>
-              <div class="tree-down">↓</div>
-              <div class="tree-cols">
-                <div class="tree-inner-env">
-                  <div class="tree-inner-label">コンテナ 1</div>
-                  <div class="tree-cols">
-                    <div class="tree-node">アプリ</div>
-                    <div class="tree-node">アプリ</div>
-                  </div>
-                </div>
-                <div class="tree-inner-env">
-                  <div class="tree-inner-label">コンテナ 2</div>
-                  <div class="tree-cols">
-                    <div class="tree-node">アプリ</div>
-                    <div class="tree-node">アプリ</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="tree-col">
-              <div class="tree-node">仮想マシン（VM）</div>
-              <div class="tree-down">↓</div>
-              <div class="tree-node">ゲストOS 1（Linux）</div>
-              <div class="tree-down">↓</div>
-              <div class="tree-node">コンテナランタイム</div>
-              <div class="tree-down">↓</div>
-              <div class="tree-cols">
-                <div class="tree-inner-env">
-                  <div class="tree-inner-label">コンテナ 3</div>
-                  <div class="tree-cols">
-                    <div class="tree-node">アプリ</div>
-                    <div class="tree-node">アプリ</div>
-                  </div>
-                </div>
-                <div class="tree-inner-env">
-                  <div class="tree-inner-label">コンテナ 4</div>
-                  <div class="tree-cols">
-                    <div class="tree-node">アプリ</div>
-                    <div class="tree-node">アプリ</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="figure">
+        <img src="images/a13-fig7.png" alt="VM + コンテナを利用したアプリケーション実行2（Type1 ハイパーバイザー VM上のコンテナ実行）" style="max-width:100%">
       </div>
 
       <h2 id="sec8">(8) Kubernetesを利用したコンテナ上のアプリケーション実行</h2>
