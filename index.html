@@ -2074,9 +2074,442 @@ Enter ssh key or URL for root (or 'none') [none]⏎　※デフォルト　2026/
   },
 
   'ch2-linux-mgmt1': {
-    title: '2. Linuxのシステム管理1',
-    toc: [{ level: 1, label: '2. Linuxのシステム管理1', anchor: 'top' }],
-    content: `<h1 id="top">2. Linuxのシステム管理1</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: '第2章　Linuxのシステム管理1 プロセス管理とユーザ管理',
+    toc: [
+      { level: 1, label: '第2章　Linuxのシステム管理1 プロセス管理とユーザ管理', anchor: 'top' },
+      { level: 2, label: '2.1. はじめに', anchor: 'sec21' },
+      { level: 3, label: '2.1.1. 概要', anchor: 'sec211' },
+      { level: 2, label: '2.2. ハンズオン1：テキスト処理', anchor: 'sec22' },
+      { level: 3, label: '2.2.1 vimtutorを利用したテキストエディタvimの利用法の習得', anchor: 'sec221' },
+      { level: 3, label: '2.2.2 テキストファイルの確認方法', anchor: 'sec222' },
+      { level: 2, label: '2.3. ハンズオン2：ユーザ管理とディレクトリ／ファイル操作', anchor: 'sec23' },
+      { level: 3, label: '2.3.1. ディレクトリ／ファイル操作', anchor: 'sec231' },
+      { level: 3, label: '2.3.2. ユーザ／グループ管理／アクセス管理', anchor: 'sec232' },
+      { level: 3, label: '2.3.3 ユーザアカウントと設定ファイル', anchor: 'sec233' },
+      { level: 3, label: '2.3.4 ユーザ管理（ユーザアカウントの作成・削除）', anchor: 'sec234' },
+      { level: 3, label: '2.3.5 管理者代行の設定とdoasコマンドの利用', anchor: 'sec235' },
+      { level: 3, label: '2.3.6 SSHによる遠隔ログイン', anchor: 'sec236' },
+      { level: 2, label: '2.4. ハンズオン3：プロセス管理', anchor: 'sec24' },
+      { level: 3, label: '2.4.1 プロセスの可視化', anchor: 'sec241' },
+      { level: 2, label: '2.5. 総合演習', anchor: 'sec25' },
+      { level: 3, label: '2.5.1. 演習：テキストファイルの作成と修正', anchor: 'sec251' },
+      { level: 3, label: '2.5.2. 演習：ユーザアカウントの作成と確認', anchor: 'sec252' },
+      { level: 3, label: '2.5.3. 演習：グループの作成とユーザの割り当て', anchor: 'sec253' },
+      { level: 3, label: '2.5.4. 演習：パーミッションによるアクセス制御', anchor: 'sec254' },
+    ],
+    content: `
+      <h1 id="top">第2章　Linuxのシステム管理1 プロセス管理とユーザ管理</h1>
+      <p class="meta">公開日： 2026年4月18日（土）</p>
+      <p class="meta">開講日： 2026年4月20日（月）</p>
+
+      <h2 id="sec21">2.1. はじめに</h2>
+      <h3 id="sec211">2.1.1. 概要</h3>
+      <p>　この章では、前章で構築した Alpine Linux VM 上で、プロセスの見え方、ユーザと権限の分離、そしてテキスト処理に取り組み、Linux の利用方法の基礎について学ぶ。</p>
+
+      <h4>前提となる知識</h4>
+      <div class="note-box">
+        <p>－ ファイル、フォルダ（ディレクトリ）の概念理解</p>
+        <p>－ コマンドラインオペレーション</p>
+        <p>－ VirtualBox を利用した Alpine Linux の起動と終了</p>
+      </div>
+
+      <h4>到達目標</h4>
+      <ol>
+        <li>テキストファイルの操作が行える。</li>
+        <li>ファイル・ディレクトリ操作が行える。</li>
+        <li><code>adduser</code>, <code>addgroup</code>, <code>doas</code> を使って <strong>最小権限の管理ユーザ</strong>を作れる。</li>
+        <li>sshで遠隔ログインができる。</li>
+        <li><code>ps</code>, <code>pstree</code>, <code>top</code> で <strong>プロセス階層を可視化</strong>できる。</li>
+      </ol>
+
+      <h4>第2章の操作対象</h4>
+      <p>　第2章は主にクラウドのプラットフォームのベースとなるAlpine Linuxを中心に学習する。</p>
+      <pre style="background:#f6f8fa;padding:16px;border-radius:4px;font-size:13px;line-height:1.7;overflow-x:auto;">ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            └─ [Alpine Linux（軽量 Linux）]
+                 ├─ Docker（コンテナ操作学習用）
+                 └─ K3s（Kubernetes）
+                      └─ containerd（コンテナランタイム）</pre>
+
+      <h2 id="sec22">2.2. ハンズオン1： テキスト処理</h2>
+      <p>　Linux では Kubernetes や Docker なども含めて設定ファイルの多くがテキスト形式で保存されている。 そのため、テキストファイルの操作スキルを高めることは、これらの管理スキルを上げることにもつながる。</p>
+      <p>　Linux の標準テキストエディタは <code>vi</code> である。Windows のメモ帳感覚で利用できる <code>nano</code> というテキストエディタも存在するが、最小限の環境で動作するコンテナなどではインストールされていないことも多い（軽量コンテナの場合は <code>vi</code> すらインストールされていないこともある）。</p>
+      <p>　<code>vi</code> は初学者にはやや難しめなテキストエディタだが、いったん慣れると高度な使い方ができる高機能テキストエディタでもある。</p>
+
+      <h3 id="sec221">2.2.1 vimtutorを利用したテキストエディタvimの利用法の習得</h3>
+      <p>　<code>vi</code> には次のようなモードが用意されている。</p>
+      <table>
+        <thead><tr><th>モード</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>ノーマルモード</td><td>vi起動直後の状態、カーソル移動・削除・コピーなどの操作専用、文字は直接入力されない</td></tr>
+          <tr><td>インサートモード</td><td>文字入力を行うモード（普通のテキストエディタに近い）</td></tr>
+          <tr><td>コマンドラインモード</td><td>保存・終了・検索などの指示を行うモード</td></tr>
+        </tbody>
+      </table>
+      <p>　GUI環境のテキストエディタとは歴史的な経緯から操作体系は異なるが、 使いこなせれば思考のスピードでテキストを扱うことができるエディタとして、ソフトウェア開発者を中心に評価の高いソフトウェアとなっている。</p>
+
+      <h4>日本語環境を利用したvimのチュートリアル学習</h4>
+      <p>　学習の第1段階では、演習室 PC の GUI 付き Linux 環境を利用して、日本語環境のチュートリアルを実施する。 Alpine Linux上でもチュートリアル機能は使えるが、全て英語となるため、本演習では演習室PCの環境で操作方法を習得する。</p>
+      <p>　具体的な学習手順は次の通りである。</p>
+      <ol>
+        <li>演習室用PCにログインする。</li>
+        <li>VirtualBoxを起動する。</li>
+        <li>高度応用情報科学科用共通仮想マシン「AI-VM」を起動する。</li>
+        <li>managerアカウントでログインする（パスワード：「Welcome*」）。</li>
+        <li>Terminalソフトウェアを起動する。</li>
+        <li>vimtutorコマンドを起動し、チュートリアルに従ってvimの利用法を習得する。</li>
+      </ol>
+
+      <h4>Alpine Linux上 における vi の利用</h4>
+      <p>　第2段階では、Alpine Linux 上で <code>vi</code> を利用して、次のテキストファイルを作成し、別の環境でもテキストファイルが作成できることを確認する。</p>
+      <div class="cmd">$ vi sample.txt</div>
+      <p>［sample.txt の内容］</p>
+      <pre style="background:#f6f8fa;padding:12px;border-radius:4px;font-size:13px;line-height:1.7;">Hello, world!
+This ia a sample.txt file.</pre>
+      <p>　なお、<code>vi</code> の系列エディタとして、vi の機能を拡張した <code>vim</code>（Vi Improved）や、さらに機能を進化させた <code>neovim</code> というソフトウェアも存在する。 このうち、多くの Linux ディストリビューションには、デフォルトのテキストエディタとして <code>vim</code> がプリインストールされている。書式のカラー表示など視認性を向上する機能もあるので必要に応じて利用してみると良い。</p>
+      <p>［vim のインストール］</p>
+      <div class="cmd">$ doas apk add vim</div>
+      <p>［テンプレートファイルのコピー（保存先：ユーザホームディレクトリ）］</p>
+      <div class="cmd">$ cp /usr/share/vim/vim92/vimrc_example.vim ~/.vimrc</div>
+
+      <h3 id="sec222">2.2.2 テキストファイルの確認方法</h3>
+      <p>　前にも触れたが、Linux の設定ファイルはテキスト形式で書かれることが多い。 また、OSやプログラムの動作を記録するログファイルも同様にテキスト形式で出力されることが多い。 そのため、テキストファイルを作成・編集したりする以外にも、ファイルを閲覧したり、部分的に情報を抽出するスキルを身に着けることは有用である。</p>
+      <p>　以下に、代表的なテキストファイルの操作方法を示す。</p>
+      <div class="cmd">$ cat sample.txt
+$ cat -n sample.txt
+$ grep world sample.txt
+grep -i hello sample.txt
+grep -n world sample.txt
+grep -in hello sample.txt</div>
+      <table>
+        <thead><tr><th>コマンド</th><th>用途</th><th>使用例</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td><code>cat</code></td><td>内容表示・連結</td><td><code>cat file.txt</code></td><td>ファイルの内容をそのまま表示</td></tr>
+          <tr><td><code>less</code></td><td>ページ表示</td><td><code>less file.txt</code></td><td>スクロールしながら閲覧（検索可）、qで終了</td></tr>
+          <tr><td><code>more</code></td><td>簡易ページ表示</td><td><code>more file.txt</code></td><td>1画面ずつ表示（lessの簡易版）</td></tr>
+          <tr><td><code>head</code></td><td>先頭表示</td><td><code>head -n 10 file.txt</code></td><td>先頭10行を表示</td></tr>
+          <tr><td><code>tail</code></td><td>末尾表示</td><td><code>tail -n 10 file.txt</code></td><td>末尾10行を表示</td></tr>
+          <tr><td><code>wc</code></td><td>文字のカウント</td><td><code>wc -l file.txt</code></td><td>行数、単語数、文字数をカウント</td></tr>
+          <tr><td><code>grep</code></td><td>検索</td><td><code>grep "error" file.txt</code></td><td>指定した文字列を検索</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="sec23">2.3. ハンズオン2： ユーザ管理とディレクトリ／ファイル操作</h2>
+      <p>　コンピュータシステムを安全かつ効率的に運用するためには、ユーザ管理とディレクトリ・ファイル操作の理解が不可欠である。 ユーザ管理は、誰がシステムにアクセスできるか、またどのような権限を持つかを制御する仕組みであり、不正アクセスの防止や情報保護の観点から重要な役割を果たす。</p>
+      <p>　一方、ディレクトリおよびファイル操作は、データの整理・保存・検索を適切に行うための基本的な技術であり、日常的なシステム利用において欠かせない要素である。 これらを適切に運用することで、複数の利用者が同一システムを安全に共有できるだけでなく、データの一貫性や作業効率の向上も実現できる。</p>
+
+      <h3 id="sec231">2.3.1. ディレクトリ／ファイル操作</h3>
+      <p>　OSの主な機能はプロセスの選択的実行である。また、この選択のためには何かしらの方法でプログラムを識別する必要がある。 そこで、各プログラムに名前を付けてファイルとして管理する。ファイルは数が多くなると表示した際に画面に収まらなくなり一覧性が下がる。 そのため、ファイルを格納する場所を作ることで管理を容易にする。この場所のことをディレクトリないしフォルダと呼ぶ。 ここで、ディレクトリに階層構造を持たせることで、より効率的にファイルを管理することができるようになる。 この階層構造は樹木の枝葉の分岐に似ていることから、ディレクトリの構造のことをディレクトリツリーと呼ぶ。</p>
+      <p>　以下に、Linux を例に作成したディレクトリツリーの一例を示す。</p>
+      <div class="figure">
+        <img src="images/ch2-fig1.png" alt="ディレクトリツリー" style="max-width:100%">
+      </div>
+      <p>　コマンドラインでは、的確かつ正確にこれらのディレクトリやファイルの場所を示す必要がある。 そのため、一意に場所が確定する絶対パスと、あるディレクトリからの相対位置を示す相対パスの二つの指定方法が用意されている。</p>
+      <p>［sample.txt の絶対パス記述例］</p>
+      <div class="cmd">/home/user/sample.txt</div>
+      <p>［sample.txt の相対パス記述例 (現在位置が/homeの場合)］</p>
+      <div class="cmd">user/hello.txt　または　./user/hello.txt　※「.」はカレントディレクトリ（現在のディレクトリ）</div>
+
+      <h3 id="sec232">2.3.2. ユーザ／グループ管理／アクセス管理</h3>
+      <p>　シングルユーザ環境の時はあまり意識する必要はないが、マルチユーザ環境では資源の適切な管理を考慮する必要性が出てくる。例えば、別のユーザが勝手にファイルを変更したり、削除したりすると問題になるため、アクセスを管理する手法が必要になる。また、開発などの現場では、特定のグループにだけ操作を許可したいなどのニーズも出てくるため、ユーザ管理とアクセス管理に合わせてグループ管理も行われる。</p>
+      <p>　Linux では、次のようにファイルやディレクトリを所有者とパーミッション（許可）の二つの観点から制限する。</p>
+      <table>
+        <thead><tr><th>管理内容</th><th>対象</th><th>指定文字</th></tr></thead>
+        <tbody>
+          <tr><td>所有者</td><td>所有者<br>グループ<br>その他のユーザ</td><td>u: User<br>g: Group<br>o: Others</td></tr>
+          <tr><td>パーミッション</td><td>読み込み<br>書き込み<br>実行</td><td>r: Read<br>w: Write<br>x: eXecute</td></tr>
+        </tbody>
+      </table>
+      <p>　　※ オーナ ・・・ ディレクトリ、ファイルの作成者</p>
+
+      <h3 id="sec233">2.3.3 ユーザアカウントと設定ファイル</h3>
+      <p>　Linux では、ユーザやグループに関する情報を次の3つのファイルで管理している。</p>
+      <table>
+        <thead><tr><th>ファイル名</th><th>主な役割</th><th>主な内容項目</th><th>権限・特徴</th></tr></thead>
+        <tbody>
+          <tr><td><code>/etc/passwd</code></td><td>ユーザの基本情報を管理</td><td>ユーザ名、UID、GID、ホームディレクトリ、シェルなど</td><td>全ユーザが読み取り可能（公開情報）</td></tr>
+          <tr><td><code>/etc/shadow</code></td><td>パスワード情報を管理</td><td>暗号化パスワード、有効期限、最終変更日など</td><td>rootのみ読み取り可能（高セキュリティ）</td></tr>
+          <tr><td><code>/etc/group</code></td><td>グループ情報を管理</td><td>グループ名、GID、所属ユーザ一覧</td><td>一般ユーザも読み取り可能</td></tr>
+        </tbody>
+      </table>
+      <p>　これらのファイルを用いてユーザ・グループ管理を分担することで、セキュリティと管理のしやすさを両立している。 ユーザアカウントを作成した際に上の三つのファイルに情報が追加されることを次の取り組みで確認する。</p>
+
+      <h3 id="sec234">2.3.4 ユーザ管理（ユーザアカウントの作成・削除）</h3>
+      <p>　ユーザ管理にはユーザ情報の追加・削除・修正があるが、本演習では時間の都合上、追加・削除およびグループ管理に絞って説明する。</p>
+
+      <h4>ユーザアカウントの追加</h4>
+      <p>　ユーザアカウントの追加には <code>adduser</code> コマンドを利用する。</p>
+      <div class="cmd"># adduser myuser　※「myuser」は適当に置き換えて良い
+　※ パスワードを聞かれるので入力</div>
+      <p>　ユーザの作成はこれで終了である。</p>
+      <p>　次に、catコマンドで各ファイルを表示して、myuserの情報が追加されたか確認する。</p>
+      <div class="cmd"># cat /etc/passwd
+# cat /etc/shadow
+# cat /etc/group</div>
+      <p>　実際には最後に1行レコードが追加されるだけなので、tailコマンドを利用して1行だけ表示しても良い。</p>
+      <div class="cmd"># tail -n 1 /etc/passwd
+# tail -n 1 /etc/shadow
+# tail -n 1 /etc/group</div>
+      <p>　設定ファイルに情報が追加されたことが確認できたら、rootユーザをログアウトし、myuserでシェルへログインできることを確かめる。</p>
+
+      <h4>ユーザアカウントの削除</h4>
+      <p>　ユーザを削除したい場合は<code>deluser</code>コマンドで削除できる。</p>
+      <div class="cmd"># deluser --remove-home myuser　※「myuser」は削除するユーザ
+　※「deluser: can't find myuser in /etc/group」と表示される場合があるが、基本的には問題ない</div>
+      <p>　もし、ユーザホームディレクトリを削除したくない場合は<code>--remove-home</code>オプションは付けずにコマンドを実行する。</p>
+      <p>　なお、以降の取り組みで myuser を利用するので、ユーザアカウントを削除した場合は、もう一度 myuser を追加すること。</p>
+
+      <h4>グループの追加・削除</h4>
+      <p>　Linuxでは、ユーザをまとめて管理するために「グループ」を利用する。</p>
+      <p><strong>グループの追加</strong></p>
+      <p>　<code>addgroup</code>コマンドで新しいグループを作成する。</p>
+      <div class="cmd"># addgroup mygroup</div>
+      <p>　作成後、/etc/groupにエントリが追加されていることを確認する。</p>
+      <div class="cmd"># tail -n 1 /etc/group</div>
+      <p><strong>グループの削除</strong></p>
+      <p>　不要になったグループは<code>delgroup</code>コマンドで削除する。</p>
+      <div class="cmd"># delgroup mygroup</div>
+      <p>　なお、以降の取り組みで mygroup を利用するので、グループを削除した場合は、もう一度 mygroup を追加すること。</p>
+
+      <h4>ユーザのグループへの割り当て</h4>
+      <p>　ユーザを特定のグループに所属させることで、ファイルのアクセス権限などをまとめて管理できる。</p>
+      <p><strong>既存ユーザをグループに追加</strong></p>
+      <div class="cmd"># adduser myuser mygroup</div>
+      <p>　この操作により、myuserがmygroupに所属する。設定が反映されているかは、/etc/groupを確認することで分かる。</p>
+      <div class="cmd"># grep mygroup /etc/group</div>
+      <p><strong>ユーザをグループから削除</strong></p>
+      <div class="cmd"># deluser myuser mygroup</div>
+
+      <h4>パーミッション（アクセス権）の設定</h4>
+      <p>　Linux では、ファイルやディレクトリへのアクセス制御は「ユーザ」と「グループ」、そして「パーミッション」によって実現される。グループを設定することで、複数ユーザに対してまとめてアクセス権を付与できる。</p>
+      <p><strong>パーミッションの確認</strong></p>
+      <p>　<code>ls -l</code>コマンドを使用すると、ファイルやディレクトリの所有者とパーミッションを確認できる。</p>
+      <div class="cmd"># ls -l
+-rw-r--r-- 1 myuser mygroup 0 Apr 16 12:00 sample.txt　　※ 表示例</div>
+      <table>
+        <thead><tr><th>表示例</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td><code>-rw-r--r--</code></td><td>パーミッション</td></tr>
+          <tr><td><code>myuser</code></td><td>所有ユーザ（オーナ）</td></tr>
+          <tr><td><code>mygroup</code></td><td>所属グループ</td></tr>
+        </tbody>
+      </table>
+      <p>　パーミッション表示の解釈は次の通りである。</p>
+      <table>
+        <thead><tr><th>パーミッション表示の位置</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td>最初の1文字</td><td>ファイル種別（「-」は通常ファイル、「d」はディレクトリ）</td></tr>
+          <tr><td>次の3文字</td><td>オーナの権限（u）</td></tr>
+          <tr><td>次の3文字</td><td>グループの権限（g）</td></tr>
+          <tr><td>最後の3文字</td><td>その他ユーザの権限（o）</td></tr>
+        </tbody>
+      </table>
+      <p><strong>パーミッションの変更（chmod）</strong></p>
+      <p>　パーミッションを変更する場合、<code>chmod</code> コマンドを利用して次のようにアクセス権を変更することができる。</p>
+      <div class="cmd"># chmod 755 sample.txt</div>
+      <p>　3桁のそれぞれの数値は以下の権限を表す数値を足したものとなっている。</p>
+      <table>
+        <thead><tr><th>権限</th><th>数値</th></tr></thead>
+        <tbody>
+          <tr><td>r（読み込み）</td><td>4</td></tr>
+          <tr><td>w（書き込み）</td><td>2</td></tr>
+          <tr><td>x（実行）</td><td>1</td></tr>
+        </tbody>
+      </table>
+      <p>　例えば 755 は以下を意味する。</p>
+      <ul>
+        <li>オーナ：7（4+2+1）→ 読み・書き・実行可能</li>
+        <li>グループ：5（4+1）→ 読み・実行可能</li>
+        <li>その他のユーザ：5（4+1）→ 読み・実行可能</li>
+      </ul>
+      <p><strong>所有者・グループの変更</strong></p>
+      <div class="cmd"># chown myuser sample.txt        　※ 所有ユーザの変更
+# chown myuser:mygroup sample.txt　※ ユーザとグループの同時変更
+# chgrp mygroup sample.txt       　※ グループのみ変更</div>
+
+      <h3 id="sec235">2.3.5 管理者代行の設定とdoasコマンドの利用</h3>
+      <p>　Linux の管理者ユーザは <code>root</code> となっている。このユーザはスーパユーザとも呼ばれ、パーミッションの設定に寄らず、すべての操作が可能である。しかも、ユーザ名が固定のため、不正アクセス時には root ユーザの権限奪取を狙って様々な試行が行われる。</p>
+      <p>　このような背景から、root ユーザの遠隔ログインは通常無効にされることが多い。ちなみに、Alpine Linux でも遠隔接続はデフォルト禁止である。しかし、コンピュータへ直接接続するコンソール上のログインは無効となっておらず、システムの潜在的なリスクにつながるため、対策が必要である。</p>
+      <p>　他のディストリビューションの状況を見ると、Ubuntu などの業務利用を想定したものでは、<code>sudo</code> コマンドと呼ばれる権限昇格コマンドを特定のユーザに対して割り当て、同時に root ユーザのログイン自体を禁止する。Alpine Linux の場合は、<code>doas</code> というコマンドを利用して同様のことを実現できる（Alpine 3.15以降では sudo に代わり doas が推奨される）。Linux ディストリビューションの違いを資料 A2-1 に簡単にまとめたので、興味のある者は参考にしてみると良い。</p>
+
+      <h4>権限昇格のための設定</h4>
+      <p>　権限昇格を許可するユーザを、管理者グループ <code>wheel</code> へ追加する。ここでは、すでに作成済みのユーザ myuser を対象に説明する。</p>
+      <div class="cmd"># adduser myuser wheel</div>
+      <p>　次に、<code>apk</code> コマンドを利用して、doas コマンドをインストールする。</p>
+      <div class="cmd"># apk -U add doas　　※ 「-U」オプションを付けることでupdateを同時に実行</div>
+      <p>　最後に、wheel グループの権限昇格許可を設定する。 次のいずれかの手法で <code>/etc/doas.d/20-wheel.conf</code> へ許可設定を書き込む。</p>
+      <p>［手法1： コマンドラインからの設定］</p>
+      <div class="cmd"># echo "permit persist :wheel" > /etc/doas.d/20-wheel.conf</div>
+      <p>［手法2： テキストエディタを利用した設定］</p>
+      <div class="cmd"># vi /etc/doas.d/20-wheel.conf</div>
+      <p>［追加するテキストの内容（初めての登録なので、初期状態ではテキストは何も表示されない）］</p>
+      <div class="cmd">permit persist :wheel</div>
+
+      <h4>権限昇格の確認</h4>
+      <p>　確認のため、実際に myuser でシェルにログインし、次のコマンドで root になれることを確認する（プロンプトが $ から # に代わる）。 また、<code>exit</code> コマンドでログアウトし、元の一般ユーザへ戻ることを確認する（プロンプトが # から $ に代わる）。</p>
+      <div class="cmd">$ doas su -
+# exit
+$</div>
+      <p>　一方で、doas コマンドを利用することで、root ユーザにならなくても管理者権限でコマンドを実行できることを確認する。</p>
+      <div class="cmd">$ ls -a /root
+ls: can't open '/root': Permission denied
+$ doas ls -a /root
+.        ..        .ash_history</div>
+
+      <h4>root ユーザのログイン不許可設定</h4>
+      <p>　セキュリティの観点からは最小権限での運用が望ましい。 具体的には、不用意に管理者権限でコマンドを実行しないよう、root ユーザにならずに必要なコマンドだけ doas で実行するようにする。</p>
+      <p>　ところで、この状態では root ユーザはまだ普通にログインが可能である。 root ユーザをログインできなくするためには、パスワードを保存する shadow ファイルの内容を変更する必要がある。 内容としては、shadow ファイルの root ユーザの定義行のうち、パスワードハッシュ値を <code>!</code> に変更することでログインを無効化できる。 なお、この変更には vi エディタを利用する。</p>
+      <p>［/etc/shadow より一部抜粋（記述はパスワードハッシュ値を ! へ置き換え後のもの）］</p>
+      <div class="cmd">root:!:0:::::</div>
+      <p>　以降、root ユーザによる直接ログインはできなくなるので、root ユーザをログアウトした後でログインができなくなったことを確認する。 その後、myuser でログインし直してから、先ほどと同じように root ユーザへ切り替えられることを確認する。</p>
+      <div class="cmd">$ doas su -
+#</div>
+
+      <h3 id="sec236">2.3.6 SSHによる遠隔ログイン</h3>
+      <p>　Linux では、遠隔からシェルを利用してログインする SSH（Secure SHell）というサービスを利用できる。Alpine Linux でも SSH を利用できるが、サーバー側の機能は必要に応じてパッケージを追加して有効化する。なお、運用上は root で直接ログインするのではなく、権限昇格可能な管理用ユーザを作成して利用する。</p>
+      <div class="cmd">$ doas apk -U add openssh-server　　※ sshd のインストール
+$ doas rc-update add sshd　　※ サービスの登録
+$ doas service sshd start　　※ サービスの起動</div>
+
+      <h4>Windows 上の SSH クライアントからゲストOSのホストへ遠隔ログインする方法</h4>
+      <p>　VirtualBox 上で動作するゲスト OS はデフォルトでは Windows 上に用意された仮想 NAT ルータを通して外部と通信するようになっている。 そのため、ホスト OS を含む NAT ルータ外とホストと通信するためには、このNATルータにポートフォワーディング（転送）の設定をする必要がある。 ここで、sshのデフォルトのポート番号（サービス番号）は 22 番である。 そこで、本演習では、ホスト OS の 10022 番をゲストOSの 22 番へ転送する設定をする。</p>
+      <p>　このホスト OS からゲスト OS へのポートフォワーディングの様子を以下に示す。</p>
+      <div class="figure">
+        <img src="images/ch2-fig2.png" alt="ポートフォワーディングの構成図" style="max-width:100%">
+      </div>
+      <div class="note-box">
+        <p>※ ホストOSのWindowsと仮想ルータは同一のネットワークインタフェースを共用。</p>
+        <p>※ ネットワークから見ると、見かけ上同じコンピュータに見える。</p>
+      </div>
+      <p>　この時の VirtualBox のポートフォワーディングの設定方法は資料A2-2を参照すること。</p>
+      <p>　実際に Windows からゲスト OS へ SSH 接続するときは、Tera Term を利用する。 このソフトウェアは業務用途でも利用されている比較的有名な SSH クライアントソフトウェアである。 Tera Term のインストーラープログラムは以下の URL からダウンロードできるので、BYOD PC を利用する学習者は必要に応じて、ダウンロード・インストールすること。</p>
+      <p>［Tera Term ダウンロード URL］</p>
+      <div class="cmd">https://github.com/TeraTermProject/teraterm/releases</div>
+      <p>　Tera Term を利用してゲスト OS へ接続する時に入力する情報は次の通りである。</p>
+      <table>
+        <thead><tr><th>項目</th><th>値</th></tr></thead>
+        <tbody>
+          <tr><td>ホスト名</td><td>localhost</td></tr>
+          <tr><td>ポート番号</td><td>10022</td></tr>
+          <tr><td>ユーザ名</td><td>myuser</td></tr>
+        </tbody>
+      </table>
+      <p>　また、macOS, Linux などを利用する場合は、次のように ssh コマンドで接続する。</p>
+      <div class="cmd">$ ssh myuser@localhost:10022</div>
+
+      <h2 id="sec24">2.4. ハンズオン3： プロセス管理</h2>
+      <p>　プログラムを実行する際、OS はプログラムを構成するバイナリコードを二次記憶装置（HDD, SSD 等）から一時記憶装置（RAM）へロードする。 その後、このプログラムをプロセスとして管理する。 このとき、プロセスを実行するきっかけとなったプロセスを「親プロセス」と呼び、実行されたプロセスを「子プロセス」と呼ぶ。 親プロセスから起動された子プロセスが OS により管理される様子を以下に示す。</p>
+      <div class="figure">
+        <img src="images/ch2-fig3.png" alt="プロセス状態遷移図" style="max-width:100%">
+      </div>
+      <p>　マルチタスクOSでは、上の図にも出てくるタイムスライス（実行用に与えられた時間）をプロセスへ割り当て、時分割で複数のプロセスを切り替えることで、疑似的にプロセスの同時実行を実現している。</p>
+      <p>　CUI（Character User Interface）環境では、ユーザがプログラムを実行する時、シェルが親プロセスの役割を担う。 シェルは複数のプロセスを組み合わせて機能をまとめることも可能であり、この一つ以上のプロセスの組み合わせをジョブと呼ぶ。</p>
+      <p>　ちなみに、プロセスの同時実行はOSが管理する並列処理の仕組みであるが、プログラム内でもコーディングによって並列処理ができると便利である。 そのため、プロセス内でも並列処理が可能な仕組みが作られており、この処理の単位をスレッドと呼ぶ。</p>
+      <p>　OSによってジョブ, プロセス, スレッドを CPU に割り当てる様子を以下に示す。 この図から、CPUのコア数が多ければ多いほど、ハードウェア的に同時に処理できるスレッドが多くなることがわかる。</p>
+      <div class="figure">
+        <img src="images/ch2-fig4.png" alt="マルチコアCPUとプロセス・スレッドの関係" style="max-width:100%">
+      </div>
+      <p>　なお、ジョブについては別の章で改めて紹介することとし、本章ではプロセスの管理についてのみ説明する。 スレッドについてはプログラミングの領域となるので、この演習では説明を割愛する。</p>
+
+      <h3 id="sec241">2.4.1 プロセスの可視化</h3>
+      <h4>プロセス情報の静的表示</h4>
+      <p>　現在起動しているシェル上で実行されているプロセスは <code>ps</code> コマンドを利用して次のように実行できる。 一般ユーザとして OS を利用する際に多用される。</p>
+      <div class="cmd">$ ps　※Alpine Linux では Busybox が使われている関係で挙動が異なる（すべてのプロセスが表示される）</div>
+      <p>　OS上で動作するすべてのプロセスを表示するには、同じく <code>ps</code> コマンドを利用して次のように実行できる。</p>
+      <div class="cmd">$ ps -ef</div>
+      <p>　プロセスの親子関係をツリー構造で可視化するには、<code>pstree</code> コマンドを利用して次のように実行できる。</p>
+      <div class="cmd">$ pstree　　　※ プロセス番号無しの簡易表示
+$ pstree -p　※ プロセス番号付き表示</div>
+
+      <h4>プロセス情報の動的表示</h4>
+      <p>　上記のコマンドはコマンドを実行した瞬間の情報を表示したものであるが、CPU使用率やメモリ使用量など、プロセスの状態をリアルタイムで確認したい場合は、<code>top</code>コマンドを利用すると便利である。</p>
+      <div class="cmd">$ top　　※「q」で終了</div>
+      <p>　また、<code>htop</code> コマンドを用いると、top コマンドの情報を見やすく表示してくれるだけでなく、コアごとの負荷も同時に表示してくれるため、マルチコア環境でのプロセスの動作状況を調べるのに便利である。</p>
+      <div class="cmd">$ doas apk -U add htop
+$ htop　　※「F5」キーでツリー表示、「q」で終了</div>
+
+      <h2 id="sec25">2.5. 総合演習</h2>
+      <p>　本章ではハンズオン1～3を通して、以下の内容を完了した。</p>
+      <ul>
+        <li>テキスト処理</li>
+        <li>ディレクトリ／ファイル操作</li>
+        <li>ユーザ／グループ管理／アクセス管理</li>
+        <li>管理者代行の設定とdoasコマンドの利用</li>
+        <li>SSHによる遠隔ログイン</li>
+      </ul>
+      <p>　これまでの内容を振り返って、以下の総合演習に取り組め。</p>
+
+      <h3 id="sec251">2.5.1. 演習： テキストファイルの作成と修正</h3>
+      <h4>テキストファイルの作成</h4>
+      <p>　<code>vi</code> コマンドを利用して、以下のテキストファイルを作成せよ。</p>
+      <p>［練習用テキスト1（enshu2-1.txt）］</p>
+      <pre style="background:#f6f8fa;padding:12px;border-radius:4px;font-size:13px;line-height:1.7;">this is a sample text for vim practice.
+vim is very powerful but difficult at first.
+dont worry you will get used to it soon.
+here are some tasks:
+1 fix capitalization
+2 add punctuation
+3 delete unnecessary words
+4 reorder a sentence
+vim lets you edit text quickly if you know the commands
+practice makes perfect so keep going</pre>
+      <h4>テキストファイルの修正</h4>
+      <p>［修正課題］</p>
+      <ol>
+        <li>1行目の文頭を大文字にする</li>
+        <li>2行目の「very」を削除する</li>
+        <li>3行目にアポストロフィを追加して「don't」にする</li>
+        <li>4行目の末尾に「!」を追加する</li>
+        <li>2行続く空行を1つにする</li>
+        <li>「here are some tasks:」を文頭大文字＋末尾にピリオド追加</li>
+        <li>リストの数字の後に「. 」を入れる（例: 1.）</li>
+        <li>最後の2行を入れ替える</li>
+        <li>最終行の末尾に「.」を追加する</li>
+      </ol>
+      <p>［コマンドのヒント］</p>
+      <table>
+        <thead><tr><th>内容</th><th>コマンド</th></tr></thead>
+        <tbody>
+          <tr><td>削除</td><td><code>x, dw, dd</code></td></tr>
+          <tr><td>挿入</td><td><code>i, a, A</code></td></tr>
+          <tr><td>大文字化</td><td><code>~, gU</code></td></tr>
+          <tr><td>貼り付け</td><td><code>p</code></td></tr>
+          <tr><td>並び替え</td><td><code>J や行移動</code></td></tr>
+          <tr><td>繰り返し</td><td><code>.</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="sec252">2.5.2. 演習： ユーザアカウントの作成と確認</h3>
+      <ol>
+        <li><code>adduser</code>コマンドを用いて新しいユーザ <code>userA</code> を作成せよ。</li>
+        <li><code>/etc/passwd</code>、<code>/etc/shadow</code>、<code>/etc/group</code> を確認し、ユーザ情報が追加されていることを確認せよ。</li>
+        <li><code>tail</code>コマンドを用いて、追加された行のみを表示せよ。</li>
+        <li>作成した userA でログインできることを確認せよ。</li>
+      </ol>
+
+      <h3 id="sec253">2.5.3. 演習： グループの作成とユーザの割り当て</h3>
+      <ol>
+        <li><code>addgroup</code>コマンドを用いて新しいグループ <code>groupA</code> を作成せよ。</li>
+        <li>新たにユーザ <code>userB</code> を作成せよ。</li>
+        <li>userB を groupA に追加せよ。</li>
+        <li><code>/etc/group</code> を確認し、groupA に userB が含まれていることを確認せよ。</li>
+      </ol>
+
+      <h3 id="sec254">2.5.4. 演習： パーミッションによるアクセス制御</h3>
+      <ol>
+        <li>userBでログインし、<code>sample.txt</code> を作成せよ。</li>
+        <li><code>ls -l</code>コマンドでパーミッションと所有者を確認せよ。</li>
+        <li><code>chmod</code>コマンドを用いて、以下のようにパーミッションを変更せよ。<ul><li>オーナ：読み・書き・実行可能</li><li>グループ：読み取りのみ</li><li>その他：アクセス不可</li></ul></li>
+        <li>ファイルのグループを groupA に変更せよ。</li>
+        <li>同じ groupA に所属する別ユーザでログインし、ファイルのアクセス可否を確認せよ。</li>
+      </ol>
+
+      <div class="page-nav" style="justify-content:space-between;">
+        <a onclick="navigate('ch1-a3-app')">← A1.3. アプリケーションの実行形態</a>
+        <a onclick="navigate('ch2-a1-distro')">A2.1. ディストリビューションの違い →</a>
+      </div>
+    `
   },
 
   'ch2-a1-distro': {
