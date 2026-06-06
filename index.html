@@ -182,6 +182,71 @@
       color: #888;
     }
 
+    /* Tree-style architecture diagram */
+    .tree-diagram {
+      padding: 20px 16px;
+      background: #f6f6fa;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin: 16px 0;
+      text-align: center;
+      overflow-x: auto;
+    }
+    .tree-node {
+      display: inline-block;
+      background: #e8e4f4;
+      border: 1px solid #b0a8d8;
+      border-radius: 4px;
+      padding: 8px 20px;
+      font-size: 13px;
+      line-height: 1.5;
+      min-width: 120px;
+    }
+    .tree-down {
+      text-align: center;
+      color: #555;
+      font-size: 20px;
+      line-height: 1.2;
+      margin: 2px 0;
+    }
+    .tree-env {
+      background: #fefde8;
+      border: 2px solid #e0d870;
+      border-radius: 4px;
+      padding: 12px 12px 12px;
+      margin-top: 4px;
+      display: inline-block;
+      min-width: 90%;
+    }
+    .tree-env-label {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+    .tree-cols {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .tree-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .tree-inner-env {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 8px;
+      background: #fff;
+      margin-top: 4px;
+    }
+    .tree-inner-label {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
     /* Architecture layer diagram */
     .arch-diagram {
       display: inline-flex;
@@ -1917,28 +1982,34 @@ Enter ssh key or URL for root (or 'none') [none]⏎　※デフォルト　2026/
       <h2 id="sec3">(3) 仮想マシン（Virtual Machine: VM）を利用したアプリケーション実行1（Type2 ハイパーバイザー）</h2>
       <p>　ベアメタル上のOS（ホストOS）に仮想マシン実行環境（ハイパーバイザソフトウェア）を導入し、その上で仮想マシンを動作させる形態である（Type2 ハイパーバイザ）。 仮想マシン上で動作するOSはゲストOSと呼ばれる。この方式により、1台の物理マシン上で複数のOSを同時に実行でき、開発・検証環境として広く利用される。</p>
       <p><strong>【図3. 仮想マシン（Virtual Machine: VM）を利用したアプリケーション実行1（Type2 ハイパーバイザー）】</strong></p>
-      <div class="arch-diagram">
-        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
-        <div class="arch-arrow">↓</div>
-        <div class="arch-layer">ホストOS</div>
-        <div class="arch-arrow">↓</div>
-        <div class="arch-outer">
-          <div class="arch-outer-label">仮想マシン（VM）実行環境</div>
-          <div class="arch-row">
-            <div class="arch-vm">
-              <div class="arch-vm-label">仮想マシン（VM）1</div>
-              <div class="arch-layer" style="font-size:12px">ゲストOS 1</div>
-              <div class="arch-row" style="margin-top:4px">
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-1</div>
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-2</div>
+      <div class="tree-diagram">
+        <div class="tree-node">物理マシン（ベアメタル）<br>BIOS/ファームウェア</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-node">ホストOS</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-node">仮想マシン（VM）実行環境</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-env">
+          <div class="tree-env-label">仮想マシン実行環境内</div>
+          <div class="tree-cols">
+            <div class="tree-col">
+              <div class="tree-node">仮想マシン（VM）1</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">ゲストOS 1</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-cols">
+                <div class="tree-node">アプリ 1-1</div>
+                <div class="tree-node">アプリ 1-2</div>
               </div>
             </div>
-            <div class="arch-vm">
-              <div class="arch-vm-label">仮想マシン（VM）2</div>
-              <div class="arch-layer" style="font-size:12px">ゲストOS 2</div>
-              <div class="arch-row" style="margin-top:4px">
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-1</div>
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-2</div>
+            <div class="tree-col">
+              <div class="tree-node">仮想マシン（VM）</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">ゲストOS 2</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-cols">
+                <div class="tree-node">アプリ 2-1</div>
+                <div class="tree-node">アプリ 2-2</div>
               </div>
             </div>
           </div>
@@ -1948,32 +2019,37 @@ Enter ssh key or URL for root (or 'none') [none]⏎　※デフォルト　2026/
       <h2 id="sec4">(4) 仮想マシン（Virtual Machine: VM）を利用したアプリケーション実行2（Type1 ハイパーバイザー）</h2>
       <p>　ベアメタル上に直接ハイパーバイザ（Type1 ハイパーバイザ）を配置し、その上で仮想マシンを実行する形態である。 この方式ではホストOSを介さないためオーバーヘッドが小さく、サーバやクラウド基盤で広く利用されている。なお、ホストOSが特別に遅くなるわけではなく、全体として効率的なリソース管理が可能となる点が重要である。</p>
       <p><strong>【図4. 仮想マシン（Virtual Machine: VM）を利用したアプリケーション実行2（Type1 ハイパーバイザー）】</strong></p>
-      <div class="arch-diagram">
-        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
-        <div class="arch-arrow">↓</div>
-        <div class="arch-layer">ハイパーバイザOS</div>
-        <div class="arch-arrow">↓</div>
-        <div class="arch-outer">
-          <div class="arch-outer-label">仮想マシン（VM）実行環境</div>
-          <div class="arch-row">
-            <div class="arch-vm">
-              <div class="arch-vm-label">仮想マシン（VM）0</div>
-              <div class="arch-layer" style="font-size:11px">ホストOS<br>（ハイパーバイザOS）</div>
+      <div class="tree-diagram">
+        <div class="tree-node">物理マシン（ベアメタル）<br>BIOS/ファームウェア</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-node">ハイパーバイザOS<br>仮想マシン（VM）実行環境</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-env">
+          <div class="tree-env-label">仮想マシン実行環境内</div>
+          <div class="tree-cols">
+            <div class="tree-col">
+              <div class="tree-node">仮想マシン（VM）0</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">ホストOS<br>（ハイパーバイザOS）</div>
             </div>
-            <div class="arch-vm">
-              <div class="arch-vm-label">仮想マシン（VM）1</div>
-              <div class="arch-layer" style="font-size:12px">ゲストOS 1</div>
-              <div class="arch-row" style="margin-top:4px">
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-1</div>
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-2</div>
+            <div class="tree-col">
+              <div class="tree-node">仮想マシン（VM）1</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">ゲストOS 1</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-cols">
+                <div class="tree-node">アプリ 1-1</div>
+                <div class="tree-node">アプリ 1-2</div>
               </div>
             </div>
-            <div class="arch-vm">
-              <div class="arch-vm-label">仮想マシン（VM）2</div>
-              <div class="arch-layer" style="font-size:12px">ゲストOS 2</div>
-              <div class="arch-row" style="margin-top:4px">
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-1</div>
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-2</div>
+            <div class="tree-col">
+              <div class="tree-node">仮想マシン（VM）</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">ゲストOS 2</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-cols">
+                <div class="tree-node">アプリ 2-1</div>
+                <div class="tree-node">アプリ 2-2</div>
               </div>
             </div>
           </div>
@@ -1983,28 +2059,32 @@ Enter ssh key or URL for root (or 'none') [none]⏎　※デフォルト　2026/
       <h2 id="sec5">(5) コンテナを利用したアプリケーション実行</h2>
       <p>　Linuxではカーネルを共有しつつ、名前空間（namespace）やcgroupsといった仕組みによってプロセスを分離することで、軽量な仮想化環境（コンテナ）を実現する。 コンテナは仮想マシンのようにOS全体を仮想化するのではなく、ホストOSのカーネルを共有するため、起動が高速であり、リソース効率が高いという特徴を持つ。 ディストリビューション間の違いは主にユーザ空間の構成（ライブラリやツール群）であり、コンテナではカーネルを除いたファイルシステムを用意することで異なる環境を再現できる。</p>
       <p><strong>【図5. コンテナを利用したアプリケーション実行】</strong></p>
-      <div class="arch-diagram">
-        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
-        <div class="arch-arrow">↓</div>
-        <div class="arch-layer">OS（Linux）</div>
-        <div class="arch-arrow">↓</div>
-        <div class="arch-layer">コンテナランタイム</div>
-        <div class="arch-arrow">↓</div>
-        <div class="arch-outer">
-          <div class="arch-outer-label">コンテナランタイム環境</div>
-          <div class="arch-row">
-            <div class="arch-vm">
-              <div class="arch-vm-label">コンテナ 1 環境</div>
-              <div class="arch-row">
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-1</div>
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 1-2</div>
+      <div class="tree-diagram">
+        <div class="tree-node">物理マシン（ベアメタル）<br>BIOS/ファームウェア</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-node">OS（Linux）</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-node">コンテナランタイム</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-env">
+          <div class="tree-env-label">コンテナランタイム環境</div>
+          <div class="tree-cols">
+            <div class="tree-col">
+              <div class="tree-inner-env">
+                <div class="tree-inner-label">コンテナ 2 環境</div>
+                <div class="tree-cols">
+                  <div class="tree-node">アプリ 2-1</div>
+                  <div class="tree-node">アプリ 2-2</div>
+                </div>
               </div>
             </div>
-            <div class="arch-vm">
-              <div class="arch-vm-label">コンテナ 2 環境</div>
-              <div class="arch-row">
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-1</div>
-                <div class="arch-layer" style="flex:1;font-size:11px">アプリ 2-2</div>
+            <div class="tree-col">
+              <div class="tree-inner-env">
+                <div class="tree-inner-label">コンテナ 1 環境</div>
+                <div class="tree-cols">
+                  <div class="tree-node">アプリ 1-1</div>
+                  <div class="tree-node">アプリ 1-2</div>
+                </div>
               </div>
             </div>
           </div>
@@ -2014,30 +2094,62 @@ Enter ssh key or URL for root (or 'none') [none]⏎　※デフォルト　2026/
       <h2 id="sec6">(6) VM + コンテナを利用したアプリケーション実行1（Type2 ハイパーバイザー VM上のコンテナ実行）</h2>
       <p>　IaaS（Infrastructure as a Service）環境では、ユーザはVM上に任意のOSを構築できる。 その上でコンテナランタイムを動作させることで、VM内にさらに柔軟な実行環境を構築できる。 この構成は「VM＋コンテナ」という多層構造となり、クラウド上での移植性や環境再現性を高めるために利用される。</p>
       <p><strong>【図6. VM + コンテナを利用したアプリケーション実行1（Type2 ハイパーバイザー VM上のコンテナ実行）】</strong></p>
-      <div class="arch-diagram">
-        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
-        <div class="arch-arrow">↓</div>
-        <div class="arch-layer">ホストOS</div>
-        <div class="arch-arrow">↓</div>
-        <div class="arch-outer">
-          <div class="arch-outer-label">仮想マシン実行環境</div>
-          <div class="arch-row">
-            <div class="arch-vm">
-              <div class="arch-vm-label">仮想マシン（VM）1</div>
-              <div class="arch-layer" style="font-size:12px">ゲストOS 1（Linux）</div>
-              <div class="arch-layer" style="font-size:12px;margin-top:4px">コンテナランタイム</div>
-              <div class="arch-row" style="margin-top:4px">
-                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ1<br>アプリ</div>
-                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ2<br>アプリ</div>
+      <div class="tree-diagram">
+        <div class="tree-node">物理マシン（ベアメタル）<br>BIOS/ファームウェア</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-node">ホストOS</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-node">仮想マシン（VM）実行環境</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-env">
+          <div class="tree-env-label">仮想マシン実行環境内</div>
+          <div class="tree-cols">
+            <div class="tree-col">
+              <div class="tree-node">仮想マシン（VM）</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">ゲストOS 2（Linux）</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">コンテナランタイム</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-cols">
+                <div class="tree-inner-env">
+                  <div class="tree-inner-label">コンテナ1</div>
+                  <div class="tree-cols">
+                    <div class="tree-node">アプリ</div>
+                    <div class="tree-node">アプリ</div>
+                  </div>
+                </div>
+                <div class="tree-inner-env">
+                  <div class="tree-inner-label">コンテナ2</div>
+                  <div class="tree-cols">
+                    <div class="tree-node">アプリ</div>
+                    <div class="tree-node">アプリ</div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="arch-vm">
-              <div class="arch-vm-label">仮想マシン（VM）2</div>
-              <div class="arch-layer" style="font-size:12px">ゲストOS 2（Linux）</div>
-              <div class="arch-layer" style="font-size:12px;margin-top:4px">コンテナランタイム</div>
-              <div class="arch-row" style="margin-top:4px">
-                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ3<br>アプリ</div>
-                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ4<br>アプリ</div>
+            <div class="tree-col">
+              <div class="tree-node">仮想マシン（VM）</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">ゲストOS 1（Linux）</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">コンテナランタイム</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-cols">
+                <div class="tree-inner-env">
+                  <div class="tree-inner-label">コンテナ3</div>
+                  <div class="tree-cols">
+                    <div class="tree-node">アプリ</div>
+                    <div class="tree-node">アプリ</div>
+                  </div>
+                </div>
+                <div class="tree-inner-env">
+                  <div class="tree-inner-label">コンテナ4</div>
+                  <div class="tree-cols">
+                    <div class="tree-node">アプリ</div>
+                    <div class="tree-node">アプリ</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2047,34 +2159,65 @@ Enter ssh key or URL for root (or 'none') [none]⏎　※デフォルト　2026/
       <h2 id="sec7">(7) VM + コンテナを利用したアプリケーション実行2（Type1 ハイパーバイザー VM上のコンテナ実行）</h2>
       <p>　Type1ハイパーバイザ上に構築されたVM上でコンテナを実行する構成である。 クラウド事業者の基盤ではこの形態が一般的である。 ハードウェア仮想化とコンテナの軽量性を組み合わせることで、スケーラビリティと効率性を両立できる。</p>
       <p><strong>【図7. VM + コンテナを利用したアプリケーション実行2（Type1 ハイパーバイザー VM上のコンテナ実行）】</strong></p>
-      <div class="arch-diagram">
-        <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
-        <div class="arch-arrow">↓</div>
-        <div class="arch-layer">ハイパーバイザOS</div>
-        <div class="arch-arrow">↓</div>
-        <div class="arch-outer">
-          <div class="arch-outer-label">仮想マシン実行環境</div>
-          <div class="arch-row">
-            <div class="arch-vm">
-              <div class="arch-vm-label">VM 0</div>
-              <div class="arch-layer" style="font-size:11px">ホストOS<br>（ハイパーバイザOS）</div>
+      <div class="tree-diagram">
+        <div class="tree-node">物理マシン（ベアメタル）<br>BIOS/ファームウェア</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-node">ハイパーバイザOS<br>仮想マシン（VM）実行環境</div>
+        <div class="tree-down">↓</div>
+        <div class="tree-env">
+          <div class="tree-env-label">仮想マシン実行環境内</div>
+          <div class="tree-cols">
+            <div class="tree-col">
+              <div class="tree-node">仮想マシン（VM）</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">ホストOS<br>（ハイパーバイザOS）</div>
             </div>
-            <div class="arch-vm">
-              <div class="arch-vm-label">仮想マシン（VM）1</div>
-              <div class="arch-layer" style="font-size:12px">ゲストOS 1（Linux）</div>
-              <div class="arch-layer" style="font-size:12px;margin-top:4px">コンテナランタイム</div>
-              <div class="arch-row" style="margin-top:4px">
-                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ1<br>アプリ</div>
-                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ2<br>アプリ</div>
+            <div class="tree-col">
+              <div class="tree-node">仮想マシン（VM）</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">ゲストOS 2（Linux）</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">コンテナランタイム</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-cols">
+                <div class="tree-inner-env">
+                  <div class="tree-inner-label">コンテナ 1</div>
+                  <div class="tree-cols">
+                    <div class="tree-node">アプリ</div>
+                    <div class="tree-node">アプリ</div>
+                  </div>
+                </div>
+                <div class="tree-inner-env">
+                  <div class="tree-inner-label">コンテナ 2</div>
+                  <div class="tree-cols">
+                    <div class="tree-node">アプリ</div>
+                    <div class="tree-node">アプリ</div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="arch-vm">
-              <div class="arch-vm-label">仮想マシン（VM）2</div>
-              <div class="arch-layer" style="font-size:12px">ゲストOS 2（Linux）</div>
-              <div class="arch-layer" style="font-size:12px;margin-top:4px">コンテナランタイム</div>
-              <div class="arch-row" style="margin-top:4px">
-                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ3<br>アプリ</div>
-                <div class="arch-layer" style="flex:1;font-size:11px">コンテナ4<br>アプリ</div>
+            <div class="tree-col">
+              <div class="tree-node">仮想マシン（VM）</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">ゲストOS 1（Linux）</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-node">コンテナランタイム</div>
+              <div class="tree-down">↓</div>
+              <div class="tree-cols">
+                <div class="tree-inner-env">
+                  <div class="tree-inner-label">コンテナ 3</div>
+                  <div class="tree-cols">
+                    <div class="tree-node">アプリ</div>
+                    <div class="tree-node">アプリ</div>
+                  </div>
+                </div>
+                <div class="tree-inner-env">
+                  <div class="tree-inner-label">コンテナ 4</div>
+                  <div class="tree-cols">
+                    <div class="tree-node">アプリ</div>
+                    <div class="tree-node">アプリ</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
