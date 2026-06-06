@@ -1614,6 +1614,7 @@ let currentPage = 'jizen-junbi';
 function navigate(pageId) {
   if (!pages[pageId]) return;
   currentPage = pageId;
+  localStorage.setItem('lastPage', pageId);
 
   // Update main content
   document.getElementById('main').innerHTML = pages[pageId].content;
@@ -1717,7 +1718,7 @@ function closeAll() {
 // =============================================
 // INIT
 // =============================================
-navigate('jizen-junbi');
+navigate(localStorage.getItem('lastPage') || 'jizen-junbi');
 </script>
 </body>
 </html>
