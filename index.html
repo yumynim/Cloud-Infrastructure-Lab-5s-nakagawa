@@ -1547,8 +1547,243 @@ VBoxManage storageattach alpine-k3s --storagectl "SATA" --port 0 --device 0 --ty
 
   'ch1-a2-alpine': {
     title: 'A1.2. OSのインストール手順（Alpine Linux）',
-    toc: [{ level: 1, label: 'A1.2. OSのインストール手順（Alpine Linux）', anchor: 'top' }],
-    content: `<h1 id="top">A1.2. OSのインストール手順（Alpine Linux）</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    toc: [
+      { level: 1, label: 'A1.2. OSのインストール手順（Alpine Linux）', anchor: 'top' },
+      { level: 2, label: '(1) Alpine Linux の起動（ISOイメージ）', anchor: 'sec1' },
+      { level: 2, label: '(2) Alpine Linux へのログイン', anchor: 'sec2' },
+      { level: 2, label: '(3) Alpine Linux のインストール', anchor: 'sec3' },
+      { level: 2, label: '(4) キーマップの設定（Keymap）', anchor: 'sec4' },
+      { level: 2, label: '(5) ホスト名の設定（Hostname）', anchor: 'sec5' },
+      { level: 2, label: '(6) ネットワークインタフェースの設定（Interface）', anchor: 'sec6' },
+      { level: 2, label: '(7) 管理者ユーザ root のパスワード設定（Root Password）', anchor: 'sec7' },
+      { level: 2, label: '(8) タイムゾーンの設定（Timezone）', anchor: 'sec8' },
+      { level: 2, label: '(9) プロキシサーバの設定（Proxy）', anchor: 'sec9' },
+      { level: 2, label: '(10) ネットワークタイムプロトコル NTP の設定（Network Time Protocol）', anchor: 'sec10' },
+      { level: 2, label: '(11) パッケージマネージャ APK ミラーの設定（APK Mirror）', anchor: 'sec11' },
+      { level: 2, label: '(12) 一般ユーザの設定（User）', anchor: 'sec12' },
+      { level: 2, label: '(13) 起動ディスクの設定とインストールの開始（Disk & Install）', anchor: 'sec13' },
+      { level: 2, label: '(14) Alpine Linux の停止（シャットダウン）', anchor: 'sec14' },
+      { level: 2, label: '(15) ISOイメージの取り外し', anchor: 'sec15' },
+      { level: 2, label: '(16) Alpine Linux の起動（HDDイメージ）', anchor: 'sec16' },
+    ],
+    content: `
+      <h1 id="top">A1.2. OSのインストール手順（Alpine Linux）</h1>
+      <p class="meta">公開日： 2026年4月11日（土）</p>
+      <p class="meta">開講日： 2026年4月13日（月）</p>
+      <p class="meta">修正日： 2026年4月18日（土）</p>
+      <p class="meta">修正日： 2026年5月11日（月）</p>
+
+      <p>　この資料では、Alpine Linux バージョン 3.23.3 を例に、OSのインストール手順について簡単に紹介する。 Alpine Linux は <code>setup-alpine</code> コマンドを利用してインストールすることができる。</p>
+      <p>　本演習では、次の内容でセットアップを行う。</p>
+
+      <p><strong>【表1. 本演習における Alpine Linux のセットアップ内容】</strong></p>
+      <table>
+        <thead>
+          <tr><th>内容</th><th>表示されるキーワード</th><th>選択肢</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>キーボード</td><td>Keymap</td><td>日本語キーボード利用時：<strong>jp → jp</strong><br>英語キーボード利用時：<strong>us → abort</strong></td></tr>
+          <tr><td>ホスト名</td><td>Hostname</td><td><strong>localhost</strong> ※デフォルト</td></tr>
+          <tr><td>ネットワークインタフェース</td><td>Interface</td><td>「Which one」：<strong>eth0</strong> ※デフォルト<br>「Ip address」：<strong>dhcp</strong> ※デフォルト</td></tr>
+          <tr><td>管理者パスワード</td><td>Root Password</td><td>※任意（必ず覚えておくこと）</td></tr>
+          <tr><td>タイムゾーン</td><td>Timezone</td><td><strong>Japan</strong></td></tr>
+          <tr><td>プロキシ</td><td>Proxy</td><td><strong>none</strong> ※デフォルト</td></tr>
+          <tr><td>自動時刻同期</td><td>Network Time Protocol</td><td><strong>busybox</strong> ※デフォルト</td></tr>
+          <tr><td>パッケージダウンロード先</td><td>APK Mirror</td><td><strong>1</strong> ※デフォルト</td></tr>
+          <tr><td>ユーザー情報</td><td>User</td><td>「Setup a user?」：<strong>no</strong> ※デフォルト<br>「ssh:」：<strong>openssh</strong> ※デフォルト<br>「root ssh login:」：<strong>prohibit-password</strong> ※デフォルト<br>「ssh key for root:」：<strong>none</strong> ※デフォルト</td></tr>
+          <tr><td>ディスクへのインストール</td><td>Disk &amp; Install</td><td>「use:」：<strong>sda</strong><br>「how:」：<strong>sys</strong><br>「erase:」：<strong>y</strong></td></tr>
+        </tbody>
+      </table>
+
+      <p>　設定内容：　※デフォルトのものはそのままエンターキーを押すだけでよい</p>
+      <p>　上記の内容では伝わりづらいケースもあるので、以下に具体的な手順を示す。</p>
+      <div class="note-box">
+        <p>※ 本文中に出てくるコマンド入力例の行頭にある「#」「&gt;」はシステムがユーザに入力を促すプロンプト（ユーザは入力しない）</p>
+        <p>※ コマンド入力例の「⏎」はエンターキーを押す場所</p>
+        <p>※ コマンド入力例の「デフォルト」と書かれた行は入力せず、そのままエンターキーを押す</p>
+      </div>
+
+      <h2 id="sec1">(1) Alpine Linux の起動（ISOイメージ）</h2>
+      <p>　ISOイメージが接続されていることを確認してから、仮想マシン alpine-k3s を起動する。 図1.1は Alpine Linux の起動が完了し、ログインプロンプトが表示されている様子を示している。</p>
+      <div class="figure">
+        <img src="images/a12-fig1-alpine-boot.png" alt="Alpine Linux の起動" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図1. Alpine Linux の起動）</div>
+        <p class="fig-caption">【図1. Alpine Linux の起動】</p>
+      </div>
+
+      <h2 id="sec2">(2) Alpine Linux へのログイン</h2>
+      <p>　次に管理者ユーザ root にてログインする。</p>
+      <div class="cmd">localhost login: root⏎</div>
+      <p>　図2は Alpine Linux ログイン後の画面を表している。</p>
+      <div class="figure">
+        <img src="images/a12-fig2-alpine-login.png" alt="Alpine Linux へのログイン" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図2. Alpine Linux へのログイン）</div>
+        <p class="fig-caption">【図2. Alpine Linux へのログイン】</p>
+      </div>
+
+      <h2 id="sec3">(3) Alpine Linux のインストール</h2>
+      <p>　ログインが完了した後、プロンプト記号「#」が現れることを確認する。 次に、プロンプト記号に続いて setup-alpine コマンドを入力し、Alpine Linuxのインストールを開始する。</p>
+      <div class="cmd"># setup-alpine⏎</div>
+      <p>　このコマンドを入力し、セットアップが始まる様子を図3に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig3-setup-alpine.png" alt="Alpine Linux のインストール" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図3. Alpine Linux のインストール）</div>
+        <p class="fig-caption">【図3. Alpine Linux のインストール】</p>
+      </div>
+
+      <h2 id="sec4">(4) キーマップの設定（Keymap）</h2>
+      <p>　Alpine Linux のセットアップが始まったら、まず最初にキーマップの設定を行う。 日本語キーボードを利用している場合は、次のように layout に jp 、variant に jp を入力する。</p>
+      <div class="cmd">Select keyboard layout: [none] jp⏎
+Select variant (or 'abort'): jp⏎</div>
+      <p>　この入力の様子を図4に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig4-keymap.png" alt="キーマップの設定（Keymap）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図4. キーマップの設定（Keymap））</div>
+        <p class="fig-caption">【図4. キーマップの設定（Keymap）】</p>
+      </div>
+
+      <h2 id="sec5">(5) ホスト名の設定（Hostname）</h2>
+      <p>　次に、ホスト名の設定を行う。明確な設計情報を持たない場合は何も入力せず、そのままエンターキーを押す。 すると、デフォルトの「localhost」が選択される。</p>
+      <div class="cmd">Enter system hostname (fully qualified form, e.g. 'foo.example.org') [localhost]⏎</div>
+      <p>　この入力の様子を図5に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig5-hostname.png" alt="ホスト名の設定（Hostname）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図5. ホスト名の設定（Hostname））</div>
+        <p class="fig-caption">【図5. ホスト名の設定（Hostname）】</p>
+      </div>
+
+      <h2 id="sec6">(6) ネットワークインタフェースの設定（Interface）</h2>
+      <p>　続いて、ネットワークインタフェースの設定を行う。ここでも明確な設計情報を持たない場合は何も入力せずに3回エンターキーを押す。 すると、ネットワークインタフェース eth0 が自動設定である DHCP（Dynamic Host Configuration Protocol）となる。</p>
+      <div class="cmd">Which one do you want to initialize? (or '?' or 'done') [eth0]⏎　※デフォルト
+Ip address for eth0? (or 'dhcp', 'none', '?') [dhcp]⏎　※デフォルト
+Do you want to do any manual network configuration? [n]⏎　※デフォルト</div>
+      <p>　この入力の様子を図6に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig6-interface.png" alt="ネットワークインタフェースの設定（Interface）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図6. ネットワークインタフェースの設定（Interface））</div>
+        <p class="fig-caption">【図6. ネットワークインタフェースの設定（Interface）】</p>
+      </div>
+
+      <h2 id="sec7">(7) 管理者ユーザ root のパスワード設定（Root Password）</h2>
+      <p>　次は、管理者ユーザのパスワードを入力する。確認も含めて2回入力する。 このパスワードを忘れると、ログインできなくなる可能性があるので注意する。</p>
+      <div class="cmd">New password: XXXXXXXX⏎　※Xの部分にパスワードを入力（タイプ内容は表示されないので注意）
+Retype password: XXXXXXXX⏎　※パスワードの再入力（タイプ内容は表示されないので注意）</div>
+      <p>　この入力の様子を図7に示す。強度の低いパスワードを入力するとこの図のように１回目のパスワードを入力した後で「Bad password: too weak」と表示される。</p>
+      <div class="note-box">※演習時は強度の低いパスワードでも良いが、本番環境では必ず強固なパスワードを用いる。</div>
+      <div class="figure">
+        <img src="images/a12-fig7-root-password.png" alt="管理者ユーザ root のパスワード設定（Root Password）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図7. 管理者ユーザ root のパスワード設定（Root Password））</div>
+        <p class="fig-caption">【図7. 管理者ユーザ root のパスワード設定（Root Password）】</p>
+      </div>
+
+      <h2 id="sec8">(8) タイムゾーンの設定（Timezone）</h2>
+      <p>　ここで、またシステム系の設定に戻る。 次は、時刻表示を正確に行うためのタイムゾーンの設定を行う。 デフォルトの「UTC」は協定世界時であり、グリニッジ標準時（GMT）とほぼ一致し、世界中の時刻の基準となる。 日本時間JSTはUTCより9時間進んでいる。 他のシステムでは「Asia/Tokyo」と入力することが多いが、Alpine Linux では「Japan」と入力する。</p>
+      <div class="cmd">Which timezone are you in? (or '?' or 'none') [UTC] Japan⏎</div>
+      <p>　この入力の様子を図8に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig8-timezone.png" alt="タイムゾーンの設定（Timezone）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図8. タイムゾーンの設定（Timezone））</div>
+        <p class="fig-caption">【図8. タイムゾーンの設定（Timezone）】</p>
+      </div>
+
+      <h2 id="sec9">(9) プロキシサーバの設定（Proxy）</h2>
+      <p>　また、ネットワーク関連の設定に戻り、今度はプロキシサーバと呼ばれる通信を代理するサーバの設定を行う。 デフォルトは利用しない「none」になっており、本演習でもデフォルト値を使うので、そのままエンターキーを押す。</p>
+      <div class="cmd">HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none') [none]⏎　※デフォルト</div>
+      <p>　この入力の様子を図9に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig9-proxy.png" alt="プロキシの設定（Proxy）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図9. プロキシの設定（Proxy））</div>
+        <p class="fig-caption">【図9. プロキシの設定（Proxy）】</p>
+      </div>
+
+      <h2 id="sec10">(10) ネットワークタイムプロトコル NTP の設定（Network Time Protocol）</h2>
+      <p>　次はネットワークと時刻に関連した設定となる。ネットワークタイムプロトコル NTP は、 ネットワークを利用した時刻同期プロトコルであり、携帯電話を始めとするインターネットに つながる世界中のホスト（通信機能を持つコンピュータ）の時刻を正確に合わせることができる。 インストール時に三つの NTP クライアントから一つ選択することができる。ここでは、 デフォルトの「busybox」を選択する。</p>
+      <div class="cmd">Which NTP client to run? ('busybox', 'openntpd', 'chrony' or 'none') [busybox]⏎　※デフォルト</div>
+      <p>　この入力の様子を図10に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig10-ntp.png" alt="ネットワークタイムプロトコル NTP の設定（Network Time Protocol）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図10. ネットワークタイムプロトコル NTP の設定（Network Time Protocol））</div>
+        <p class="fig-caption">【図10. ネットワークタイムプロトコル NTP の設定（Network Time Protocol）】</p>
+      </div>
+
+      <h2 id="sec11">(11) パッケージマネージャ APK ミラーの設定（APK Mirror）</h2>
+      <p>　次もネットワークに関連した設定である。 新たにソフトウェアパッケージをインストールしたり、更新したりするサーバを選択する。 基本的にはデフォルトの「1」を選ぶと適切なサーバを自動選択してくれる。</p>
+      <div class="cmd">Enter mirror number or URL: [1]⏎　※デフォルト</div>
+      <p>　この入力の様子を図11に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig11-apk-mirror.png" alt="パッケージマネージャ APK ミラーの設定（APK Mirror）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図11. パッケージマネージャ APK ミラーの設定（APK Mirror））</div>
+        <p class="fig-caption">【図11. パッケージマネージャ APK ミラーの設定（APK Mirror）】</p>
+      </div>
+
+      <h2 id="sec12">(12) 一般ユーザの設定（User）</h2>
+      <p>　(7)は管理者ユーザの設定であったが、ここでは一般ユーザの設定を行う。 本演習では、演習内でユーザを作成するため、デフォルトの「no」を選択するだけで良い。</p>
+      <div class="cmd">Setup a user? (enter a lower-case loginname, or 'no'): [no]⏎　※デフォルト
+Which ssh server? ('openssh', 'drophear' or 'none''): [openssh]⏎　※デフォルト　2026/4/16追記
+Allow root ssh login? ('?' for help) [prohibit-password]⏎　※デフォルト　2026/4/16追記
+Enter ssh key or URL for root (or 'none') [none]⏎　※デフォルト　2026/4/16追記</div>
+      <p>　この入力の様子を図12に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig12-user.png" alt="一般ユーザの設定（User）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図12. 一般ユーザの設定（User））</div>
+        <p class="fig-caption">【図12. 一般ユーザの設定（User）】</p>
+      </div>
+
+      <h2 id="sec13">(13) 起動ディスクの設定とインストールの開始（Disk &amp; Install）</h2>
+      <p>　設定はこの項目で最後となる。 Alpine Linux を実際にインストールし、コンピュータ起動時に読み込むディスクを選択する。 まず、ディスクの選択には「sda」を入力する。</p>
+      <div class="cmd">Which disk(s) would you like to use? (or '?' for help or 'none') [none] sda⏎</div>
+      <p>　次に、どのような形態で利用するか質問されたら「sys」を選び、システム全体をインストールするよう指定する。</p>
+      <div class="cmd">How would you like to use it? ('sys', 'data', 'crypt', 'lvm' or '?' for help) [?] sys⏎</div>
+      <p>　最後に、これ以上先に進むとディスクを消去すると警告が出る。 演習では新規に作成した仮想マシンにインストールするため、もともと仮想ディスクには何も記録されていない。 そのため、「y」を入力して手続きを前に進める。</p>
+      <div class="cmd">WARNING: Erase the above disk(s) and continue? (y/n) [n] y⏎</div>
+      <p>　この入力の様子を図13に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig13-disk-install.png" alt="起動ディスクの設定とインストールの開始（Disk & Install）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図13. 起動ディスクの設定とインストールの開始（Disk &amp; Install））</div>
+        <p class="fig-caption">【図13. 起動ディスクの設定とインストールの開始（Disk &amp; Install）】</p>
+      </div>
+
+      <h2 id="sec14">(14) Alpine Linux の停止（シャットダウン）</h2>
+      <p>　次のメッセージが表示され、コマンドプロンプト「#」が表示されたら、インストールは完了である。</p>
+      <div class="cmd">Installation is complete. Please reboot.</div>
+      <p>　同時に再起動（リブート）するよう促されるが、指示通りに再起動させると、ISOイメージがマウントされたままISOイメージからまた起動してしまう。 そのため、次の poweroff コマンドで Alpine Linux を一旦停止する。</p>
+      <div class="cmd"># poweroff⏎</div>
+      <p>　この入力の様子を図14に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig14-poweroff.png" alt="Alpine Linux の停止（シャットダウン）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図14. Alpine Linux の停止（シャットダウン））</div>
+        <p class="fig-caption">【図14. Alpine Linux の停止（シャットダウン）】</p>
+      </div>
+
+      <h2 id="sec15">(15) ISOイメージの取り外し</h2>
+      <p>　仮想マシンの画面を表示していたウィンドウが閉じて、VirtualBox マネージャー 画面が全面に表示されたことを確認する。 次に、Alpine Linux の ISO イメージを取り外す。 具体的には、右ペインから「ストレージ」「光学ドライブ」の順に選択し、表示されたメニューから「仮想ドライブからディスクを除去」を選択する。 すると、「光学ドライブ」の項目が「空」と表示され、ISOイメージが取り外したことが確認できる。</p>
+      <p>　この時の取り外しの様子を図15に示す。</p>
+      <div class="figure">
+        <img src="images/a12-fig15-iso-remove.png" alt="ISOイメージの取り外し" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図15. ISOイメージの取り外し）</div>
+        <p class="fig-caption">【図15. ISOイメージの取り外し】</p>
+      </div>
+
+      <h2 id="sec16">(16) Alpine Linux の起動（HDDイメージ）</h2>
+      <p>　次に「起動」ボタンを押して、Alpine Linux を HDD イメージから起動する。 無事に起動が完了すると、ログイン画面が表示される。 その後、root ユーザで、インストール時に設定したパスワードを用いてログインする。</p>
+      <p>　このログインの際にパスワードを尋ねられなかった時はISOイメージから起動している可能性が高い。 その時は手順15をもう一度確認する。</p>
+      <p>　ISO イメージと HDD イメージで起動メッセージが異なるので、図16-1, 16-2から状況を判断することもできる。</p>
+      <div class="figure">
+        <img src="images/a12-fig16-1-iso-boot.png" alt="Alpine Linux の起動（ISOイメージ）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図16-1. Alpine Linux の起動（ISOイメージ））</div>
+        <p class="fig-caption">【図16-1. Alpine Linux の起動（ISOイメージ）】</p>
+      </div>
+      <div class="figure">
+        <img src="images/a12-fig16-2-hdd-boot.png" alt="Alpine Linux の起動（HDDイメージ）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="img-placeholder" style="display:none">（図16-2. Alpine Linux の起動（HDDイメージ））</div>
+        <p class="fig-caption">【図16-2. Alpine Linux の起動（HDDイメージ）】</p>
+      </div>
+
+      <div class="page-nav" style="justify-content:space-between;">
+        <a onclick="navigate('ch1-a1-virtualbox')">← A1.1. 仮想マシンの作成手順（VirtualBox）</a>
+        <a onclick="navigate('ch1-a3-app')">A1.3. アプリケーションの実行形態 →</a>
+      </div>
+    `
   },
 
   'ch1-a3-app': {
