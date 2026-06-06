@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>クラウド構築演習</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      color: #1a1a1a;
+      background: #fff;
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+
+    /* ========== LAYOUT ========== */
+    .layout {
+      display: flex;
+      flex: 1;
+    }
+
+    /* ========== LEFT SIDEBAR ========== */
+    #sidebar {
+      width: 260px;
+      min-width: 260px;
+      border-right: 1px solid #e0e0e0;
+      padding: 16px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: #fff;
+    }
+
+    #search-box {
+      margin: 0 12px 16px;
+    }
+
+    #search-input {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    #search-input:focus {
+      border-color: #4a90d9;
+    }
+
+    .nav-chapter-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      padding: 8px 16px 4px;
+      display: block;
+    }
+
+    .nav-item {
+      display: block;
+      padding: 4px 16px 4px 24px;
+      font-size: 13px;
+      color: #333;
+      text-decoration: none;
+      cursor: pointer;
+      line-height: 1.4;
+    }
+
+    .nav-item:hover { background: #f0f4f8; }
+
+    .nav-item.active {
+      color: #2a7ae2;
+      font-weight: 500;
+    }
+
+    /* ========== MAIN CONTENT ========== */
+    #main {
+      flex: 1;
+      padding: 40px 48px;
+      max-width: 860px;
+      min-width: 0;
+    }
+
+    #main h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+    }
+
+    .meta {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 24px;
+      line-height: 2;
+    }
+
+    #main p {
+      margin-bottom: 16px;
+      line-height: 1.75;
+    }
+
+    #main h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 32px 0 12px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    #main h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 24px 0 10px;
+    }
+
+    strong { font-weight: 700; }
+
+    /* Tables */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    th {
+      background: #f5f5f5;
+      font-weight: 600;
+    }
+
+    /* Links */
+    a { color: #2a7ae2; }
+    a:hover { text-decoration: underline; }
+
+    /* Figure */
+    .figure {
+      margin: 20px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .figure-caption {
+      font-size: 13px;
+      color: #555;
+      padding: 8px 12px;
+      background: #f9f9f9;
+      border-top: 1px solid #ddd;
+    }
+
+    .figure img {
+      width: 100%;
+      display: block;
+    }
+
+    .figure-placeholder {
+      background: #f0f0f0;
+      color: #888;
+      text-align: center;
+      padding: 60px 20px;
+      font-size: 14px;
+    }
+
+    /* Highlighted notice */
+    .notice {
+      background: #fff8e1;
+      border-left: 4px solid #f0a500;
+      padding: 12px 16px;
+      margin: 16px 0;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    hr { border: none; border-top: 1px solid #e0e0e0; margin: 24px 0; }
+
+    /* nav prev/next */
+    .page-nav {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .page-nav a {
+      font-size: 14px;
+      color: #2a7ae2;
+      text-decoration: none;
+    }
+
+    .page-nav a:hover { text-decoration: underline; }
+
+    /* Search highlight */
+    mark { background: #fff176; }
+
+    /* ========== RIGHT SIDEBAR (TOC) ========== */
+    #toc {
+      width: 220px;
+      min-width: 220px;
+      padding: 16px 12px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+
+    #toc .toc-page-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    #toc a {
+      display: block;
+      color: #2a7ae2;
+      text-decoration: none;
+      padding: 2px 0;
+      line-height: 1.5;
+    }
+
+    #toc a:hover { text-decoration: underline; }
+
+    #toc .toc-l2 { padding-left: 10px; }
+    #toc .toc-l3 { padding-left: 20px; }
+
+    /* ========== FOOTER ========== */
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      padding: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    /* ========== SEARCH RESULTS OVERLAY ========== */
+    #search-results {
+      display: none;
+      position: absolute;
+      top: 44px;
+      left: 12px;
+      right: 12px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 100;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    #search-results .result-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+    }
+
+    #search-results .result-item:hover { background: #f0f4f8; }
+    #search-results .result-item .result-page { color: #888; font-size: 11px; }
+
+    #sidebar { position: relative; }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav id="sidebar">
+    <div id="search-box">
+      <input type="text" id="search-input" placeholder="検索">
+      <div id="search-results"></div>
+    </div>
+
+    <span class="nav-chapter-label">第0章</span>
+    <a class="nav-item" onclick="navigate('jizen-junbi')">事前準備</a>
+    <a class="nav-item" onclick="navigate('guidance')">ガイダンス</a>
+
+    <span class="nav-chapter-label">第1章</span>
+    <a class="nav-item" onclick="navigate('ch1-cloud-native')">1. クラウドネイティブ環境の構築</a>
+    <a class="nav-item" onclick="navigate('ch1-a1-virtualbox')">A1.1. 仮想マシンの作成手順（VirtualBox）</a>
+    <a class="nav-item" onclick="navigate('ch1-a2-alpine')">A1.2. OSのインストール手順（Alpine Linux）</a>
+    <a class="nav-item" onclick="navigate('ch1-a3-app')">A1.3. アプリケーションの実行形態</a>
+
+    <span class="nav-chapter-label">第2章</span>
+    <a class="nav-item" onclick="navigate('ch2-linux-mgmt1')">2. Linuxのシステム管理1</a>
+    <a class="nav-item" onclick="navigate('ch2-a1-distro')">A2.1. ディストリビューションの違い</a>
+    <a class="nav-item" onclick="navigate('ch2-a2-portforward')">A2.2. ポートフォワーディング設定方法</a>
+
+    <span class="nav-chapter-label">第3章</span>
+    <a class="nav-item" onclick="navigate('ch3-linux-mgmt2')">3. Linuxのシステム管理2</a>
+    <a class="nav-item" onclick="navigate('ch3-a1-snapshot')">A3.1. スナップショット機能のすすめ</a>
+
+    <span class="nav-chapter-label">第4章</span>
+    <a class="nav-item" onclick="navigate('ch4-lan1')">4. LANの設計1</a>
+    <a class="nav-item" onclick="navigate('ch4-a1-ipv4')">A4.1. IPv4 アドレッシング</a>
+
+    <span class="nav-chapter-label">第5章</span>
+    <a class="nav-item" onclick="navigate('ch5-lan2')">5. LANの設計2</a>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main id="main"></main>
+
+  <!-- RIGHT SIDEBAR (TOC) -->
+  <aside id="toc"></aside>
+
+</div>
+
+<footer>
+  クラウド構築演習 - (c) 千葉工業大学 情報変革科学部 高度応用情報科学科 中川研究室, 2026-
+</footer>
+
+<script>
+// =============================================
+// PAGE DATA
+// =============================================
+const pages = {
+
+  'jizen-junbi': {
+    title: '事前準備',
+    toc: [
+      { level: 1, label: '事前準備', anchor: 'top' },
+      { level: 2, label: '(1) 仮想マシン環境の準備', anchor: 'vbox-prep' },
+      { level: 3, label: '【Oracle VirtualBox Platform Packages】・・・①', anchor: 'vbox-packages' },
+      { level: 3, label: '【Oracle VirtualBox Extension Pack】・・・②', anchor: 'vbox-extpack' },
+      { level: 2, label: '(2) Alpine Linux の準備', anchor: 'alpine-prep' },
+      { level: 3, label: '【Alpine Linux ISO イメージ】・・・③', anchor: 'alpine-iso' },
+    ],
+    content: `
+      <h1 id="top">事前準備</h1>
+      <div class="meta">
+        公開日： 2026年4月11日（土）<br>
+        開講日： 2026年4月13日（月）<br>
+        更新日： 2026年4月18日（土）
+      </div>
+
+      <p>この演習では授業中にISOイメージ（CD/DVDのイメージの元）のダウンロードを行ったり、ソフトウェアの追加インストールを行ったりする。特にISOイメージのダウンロードは通信量が増大するため、事前に自宅で準備することが望ましい。</p>
+
+      <p><strong>そのため、授業開始前に必要なファイルをダウンロードしておくことを推奨する。</strong></p>
+
+      <p>なお、以下の手順に従ってダウンロードしたファイルは第1回のガイダンス終了後に利用するので忘れないこと。</p>
+
+      <hr>
+
+      <p>OSならびにCPUアーキテクチャに注意して、次の中から該当する①～③の3つのファイルをダウンロードすること。</p>
+
+      <h2 id="vbox-prep">(1) 仮想マシン環境の準備</h2>
+
+      <h3 id="vbox-packages">【Oracle VirtualBox Platform Packages】 ・・・ ①</h3>
+      <p>いずれか一つのインストーラファイルをダウンロードする<br>
+      　　※学科指定PCはOSが「Windows」、CPUアーキテクチャが「Intel」に該当</p>
+
+      <table>
+        <thead>
+          <tr><th>OS</th><th>CPU アーキテクチャ</th><th>ダウンロードURL</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Windows</td>
+            <td>Intel / amd64</td>
+            <td><a href="https://download.virtualbox.org/virtualbox/7.2.4/VirtualBox-7.2.4-170995-Win.exe" target="_blank">https://download.virtualbox.org/virtualbox/7.2.4/VirtualBox-7.2.4-170995-Win.exe</a></td>
+          </tr>
+          <tr>
+            <td>macOS</td>
+            <td>Apple Silicon</td>
+            <td><a href="https://download.virtualbox.org/virtualbox/7.2.4/VirtualBox-7.2.4-170995-macOSArm64.dmg" target="_blank">https://download.virtualbox.org/virtualbox/7.2.4/VirtualBox-7.2.4-170995-macOSArm64.dmg</a></td>
+          </tr>
+          <tr>
+            <td>Linux</td>
+            <td>Intel / amd64</td>
+            <td><a href="https://www.virtualbox.org/wiki/Linux_Downloads" target="_blank">https://www.virtualbox.org/wiki/Linux_Downloads</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="vbox-extpack">【Oracle VirtualBox Extension Pack】 ・・・ ②</h3>
+      <p>次のファイルをダウンロードする</p>
+
+      <table>
+        <thead>
+          <tr><th>ダウンロードURL</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://download.virtualbox.org/virtualbox/7.2.4/Oracle_VirtualBox_Extension_Pack-7.2.4.vbox-extpack" target="_blank">https://download.virtualbox.org/virtualbox/7.2.4/Oracle_VirtualBox_Extension_Pack-7.2.4.vbox-extpack</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>上記に示した方法は直接ダウンロードとなっているが、図1に示したリンクからWebページ経由でもダウンロードすることもできる。</p>
+
+      <div class="figure" id="fig1">
+        <img src="images/fig1-virtualbox-download.png" alt="Oracle VirtualBox ダウンロードページ" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="figure-placeholder" style="display:none">［図1 画像］</div>
+        <div class="figure-caption">【図1. Oracle VirtualBox ダウンロードページ (<a href="https://www.virtualbox.org/wiki/Downloads" target="_blank">https://www.virtualbox.org/wiki/Downloads</a>)】</div>
+      </div>
+
+      <h2 id="alpine-prep">(2) Alpine Linux の準備</h2>
+
+      <h3 id="alpine-iso">【Alpine Linux ISO イメージ】 ・・・ ③</h3>
+      <p>いずれか一つのISOイメージファイルをダウンロード<br>
+      ※上記で指定したバージョン以外を利用した場合、表示が異なったり、演習中の挙動が異なったりすることがあるので注意する。</p>
+
+      <table>
+        <thead>
+          <tr><th>OS</th><th>CPU アーキテクチャ</th><th>ダウンロードURL</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Windows</td>
+            <td>Intel / amd64</td>
+            <td><a href="https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/x86_64/alpine-standard-3.23.3-x86_64.iso" target="_blank">https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/x86_64/alpine-standard-3.23.3-x86_64.iso</a></td>
+          </tr>
+          <tr>
+            <td>Windows</td>
+            <td>Snapdragon / AArch64</td>
+            <td><a href="https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/aarch64/alpine-standard-3.23.3-aarch64.iso" target="_blank">https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/aarch64/alpine-standard-3.23.3-aarch64.iso</a> <small>※2026-04-18追記</small></td>
+          </tr>
+          <tr>
+            <td>macOS</td>
+            <td>Apple Silicon / AArch64</td>
+            <td><a href="https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/aarch64/alpine-standard-3.23.3-aarch64.iso" target="_blank">https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/aarch64/alpine-standard-3.23.3-aarch64.iso</a></td>
+          </tr>
+          <tr>
+            <td>Linux</td>
+            <td>Intel / amd64</td>
+            <td><a href="https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/x86_64/alpine-standard-3.23.3-x86_64.iso" target="_blank">https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/x86_64/alpine-standard-3.23.3-x86_64.iso</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>上記に示した方法は直接ダウンロードとなっているが、図2に示したリンクからダウンロードページへ移動することにより、Webページ経由でもダウンロードすることもできる。</p>
+
+      <div class="figure" id="fig2">
+        <img src="images/fig2-alpine-linux.png" alt="Alpine Linux 公式ページ" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="figure-placeholder" style="display:none">［図2 画像］</div>
+        <div class="figure-caption">【図2. Alpine Linux 公式ページ (<a href="https://alpinelinux.org/" target="_blank">https://alpinelinux.org/</a>)】</div>
+      </div>
+
+      <div class="page-nav">
+        <a onclick="navigate('guidance')">ガイダンス →</a>
+      </div>
+    `
+  },
+
+  'guidance': {
+    title: 'ガイダンス',
+    toc: [{ level: 1, label: 'ガイダンス', anchor: 'top' }],
+    content: `<h1 id="top">ガイダンス</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch1-cloud-native': {
+    title: '1. クラウドネイティブ環境の構築',
+    toc: [{ level: 1, label: '1. クラウドネイティブ環境の構築', anchor: 'top' }],
+    content: `<h1 id="top">1. クラウドネイティブ環境の構築</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch1-a1-virtualbox': {
+    title: 'A1.1. 仮想マシンの作成手順（VirtualBox）',
+    toc: [{ level: 1, label: 'A1.1. 仮想マシンの作成手順（VirtualBox）', anchor: 'top' }],
+    content: `<h1 id="top">A1.1. 仮想マシンの作成手順（VirtualBox）</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch1-a2-alpine': {
+    title: 'A1.2. OSのインストール手順（Alpine Linux）',
+    toc: [{ level: 1, label: 'A1.2. OSのインストール手順（Alpine Linux）', anchor: 'top' }],
+    content: `<h1 id="top">A1.2. OSのインストール手順（Alpine Linux）</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch1-a3-app': {
+    title: 'A1.3. アプリケーションの実行形態',
+    toc: [{ level: 1, label: 'A1.3. アプリケーションの実行形態', anchor: 'top' }],
+    content: `<h1 id="top">A1.3. アプリケーションの実行形態</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch2-linux-mgmt1': {
+    title: '2. Linuxのシステム管理1',
+    toc: [{ level: 1, label: '2. Linuxのシステム管理1', anchor: 'top' }],
+    content: `<h1 id="top">2. Linuxのシステム管理1</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch2-a1-distro': {
+    title: 'A2.1. ディストリビューションの違い',
+    toc: [{ level: 1, label: 'A2.1. ディストリビューションの違い', anchor: 'top' }],
+    content: `<h1 id="top">A2.1. ディストリビューションの違い</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch2-a2-portforward': {
+    title: 'A2.2. ポートフォワーディング設定方法',
+    toc: [{ level: 1, label: 'A2.2. ポートフォワーディング設定方法', anchor: 'top' }],
+    content: `<h1 id="top">A2.2. ポートフォワーディング設定方法</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch3-linux-mgmt2': {
+    title: '3. Linuxのシステム管理2',
+    toc: [{ level: 1, label: '3. Linuxのシステム管理2', anchor: 'top' }],
+    content: `<h1 id="top">3. Linuxのシステム管理2</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch3-a1-snapshot': {
+    title: 'A3.1. スナップショット機能のすすめ',
+    toc: [{ level: 1, label: 'A3.1. スナップショット機能のすすめ', anchor: 'top' }],
+    content: `<h1 id="top">A3.1. スナップショット機能のすすめ</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch4-lan1': {
+    title: '4. LANの設計1',
+    toc: [{ level: 1, label: '4. LANの設計1', anchor: 'top' }],
+    content: `<h1 id="top">4. LANの設計1</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch4-a1-ipv4': {
+    title: 'A4.1. IPv4 アドレッシング',
+    toc: [{ level: 1, label: 'A4.1. IPv4 アドレッシング', anchor: 'top' }],
+    content: `<h1 id="top">A4.1. IPv4 アドレッシング</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+
+  'ch5-lan2': {
+    title: '5. LANの設計2',
+    toc: [{ level: 1, label: '5. LANの設計2', anchor: 'top' }],
+    content: `<h1 id="top">5. LANの設計2</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+  },
+};
+
+// =============================================
+// NAVIGATION
+// =============================================
+let currentPage = 'jizen-junbi';
+
+function navigate(pageId) {
+  if (!pages[pageId]) return;
+  currentPage = pageId;
+
+  // Update main content
+  document.getElementById('main').innerHTML = pages[pageId].content;
+
+  // Update TOC
+  const toc = document.getElementById('toc');
+  const tocItems = pages[pageId].toc;
+  toc.innerHTML = `<div class="toc-page-title">${pages[pageId].title}</div>` +
+    tocItems.map(item => {
+      const cls = item.level === 1 ? '' : item.level === 2 ? 'toc-l2' : 'toc-l3';
+      return `<a class="${cls}" href="#${item.anchor}" onclick="scrollToAnchor('${item.anchor}'); return false;">${item.label}</a>`;
+    }).join('');
+
+  // Update active nav item
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => {
+    if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(`'${pageId}'`)) {
+      el.classList.add('active');
+    }
+  });
+
+  // Scroll to top
+  document.getElementById('main').scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
+function scrollToAnchor(anchor) {
+  const el = document.getElementById(anchor);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// =============================================
+// SEARCH
+// =============================================
+const searchInput = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim();
+  if (!q) { searchResults.style.display = 'none'; return; }
+
+  const results = [];
+  for (const [id, page] of Object.entries(pages)) {
+    const text = page.content.replace(/<[^>]+>/g, '');
+    const idx = text.indexOf(q);
+    if (idx !== -1) {
+      const snippet = text.slice(Math.max(0, idx - 20), idx + 60).replace(/\n/g, ' ');
+      results.push({ id, title: page.title, snippet });
+    }
+  }
+
+  if (!results.length) {
+    searchResults.innerHTML = '<div class="result-item">見つかりませんでした</div>';
+  } else {
+    searchResults.innerHTML = results.map(r =>
+      `<div class="result-item" onclick="navigate('${r.id}'); searchInput.value=''; searchResults.style.display='none';">
+        <div class="result-page">${r.title}</div>
+        <div>…${r.snippet}…</div>
+      </div>`
+    ).join('');
+  }
+  searchResults.style.display = 'block';
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#search-box')) searchResults.style.display = 'none';
+});
+
+// =============================================
+// INIT
+// =============================================
+navigate('jizen-junbi');
+</script>
+</body>
+</html>
