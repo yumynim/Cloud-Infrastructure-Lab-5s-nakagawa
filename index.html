@@ -6576,9 +6576,208 @@ dev# kubectl delete -f namespace.yaml</pre></div>
   },
 
   'ref-vi-cmd': {
-    title: 'vi コマンド',
-    toc: [{ level: 1, label: 'vi コマンド', anchor: 'top' }],
-    content: `<h1 id="top">vi コマンド</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: 'vi コマンドリファレンス',
+    toc: [
+      { level: 1, label: '1. vi エディタのモード遷移', anchor: 'vi1' },
+      { level: 1, label: '2. 初学者向け必須コマンド', anchor: 'vi2' },
+      { level: 2, label: '2.1. 入力から保存までの流れ', anchor: 'vi21' },
+      { level: 2, label: '2.2. 覚えるキー操作', anchor: 'vi22' },
+      { level: 1, label: '3. コマンドリファレンス', anchor: 'vi3' },
+      { level: 2, label: '3.1. モード', anchor: 'vi31' },
+      { level: 2, label: '3.2. 最低限セット', anchor: 'vi32' },
+      { level: 2, label: '3.3. モード切り替え', anchor: 'vi33' },
+      { level: 2, label: '3.4. 移動', anchor: 'vi34' },
+      { level: 2, label: '3.5. 編集（変更・削除）', anchor: 'vi35' },
+      { level: 2, label: '3.6. コピー & ペースト', anchor: 'vi36' },
+      { level: 2, label: '3.7. Undo / Redo', anchor: 'vi37' },
+      { level: 2, label: '3.8. 選択（ビジュアルモード）', anchor: 'vi38' },
+      { level: 2, label: '3.9. 検索', anchor: 'vi39' },
+      { level: 2, label: '3.10. 置換', anchor: 'vi310' },
+      { level: 2, label: '3.11. 保存・終了', anchor: 'vi311' },
+      { level: 2, label: '3.12. 便利な操作', anchor: 'vi312' },
+    ],
+    content: `<h1 id="top">vi コマンドリファレンス</h1>
+<p class="meta">公開日： 2026年4月25日（土）</p>
+
+<h2 id="vi1">1. vi エディタのモード遷移</h2>
+<div class="fig-wrap"><img src="images/ref-vi-fig1.png" alt="viモード遷移図" class="fig-img" style="max-width:600px;"></div>
+
+<h2 id="vi2">2. 初学者向け必須コマンド</h2>
+<h3 id="vi21">2.1. 入力から保存までの流れ</h3>
+<p>　「入る → 編集 → 出る」　 <strong>i → Esc → :wq</strong></p>
+
+<h3 id="vi22">2.2. 覚えるキー操作</h3>
+<table>
+<thead><tr><th>キー</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>i</td><td>挿入モードに入る（入力開始）</td></tr>
+<tr><td>Esc</td><td>ノーマルモードに戻る</td></tr>
+<tr><td>:wq</td><td>保存して終了</td></tr>
+<tr><td>:q!</td><td>保存せず終了</td></tr>
+<tr><td>h / j / k / l</td><td>左 / 下 / 上 / 右に移動</td></tr>
+<tr><td>dd</td><td>1行削除</td></tr>
+<tr><td>yy</td><td>1行コピー</td></tr>
+<tr><td>p</td><td>貼り付け</td></tr>
+<tr><td>u</td><td>Undo（戻す）</td></tr>
+<tr><td>/文字列</td><td>検索</td></tr>
+</tbody>
+</table>
+
+<h2 id="vi3">3. コマンドリファレンス</h2>
+<h3 id="vi31">3.1. モード</h3>
+<table>
+<thead><tr><th>モード</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>ノーマルモード</td><td>コマンド操作の基本</td></tr>
+<tr><td>挿入モード</td><td>文字入力</td></tr>
+<tr><td>ビジュアルモード</td><td>範囲選択</td></tr>
+<tr><td>コマンドラインモード</td><td>保存・検索・置換など</td></tr>
+</tbody>
+</table>
+
+<h3 id="vi32">3.2. 最低限セット（まず覚える）</h3>
+<table>
+<thead><tr><th>キー</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>i</td><td>挿入モードへ</td></tr>
+<tr><td>Esc</td><td>ノーマルモードへ戻る</td></tr>
+<tr><td>:</td><td>コマンドラインモードへ</td></tr>
+<tr><td>:wq</td><td>保存して終了</td></tr>
+<tr><td>dd</td><td>1行削除</td></tr>
+<tr><td>yy</td><td>1行コピー</td></tr>
+<tr><td>p</td><td>貼り付け</td></tr>
+<tr><td>u</td><td>Undo</td></tr>
+<tr><td>/</td><td>検索</td></tr>
+<tr><td>n</td><td>次を検索</td></tr>
+</tbody>
+</table>
+
+<h3 id="vi33">3.3. モード切り替え</h3>
+<table>
+<thead><tr><th>キー</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>i</td><td>挿入モード</td></tr>
+<tr><td>I</td><td>行頭から挿入</td></tr>
+<tr><td>a</td><td>カーソル後ろに挿入</td></tr>
+<tr><td>A</td><td>行末から挿入</td></tr>
+<tr><td>o</td><td>下に新しい行を追加</td></tr>
+<tr><td>O</td><td>上に新しい行を追加</td></tr>
+<tr><td>Esc</td><td>ノーマルモードへ</td></tr>
+</tbody>
+</table>
+
+<h3 id="vi34">3.4. 移動</h3>
+<table>
+<thead><tr><th>種類</th><th>キー</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>基本移動</td><td>h / j / k / l</td><td>左 / 下 / 上 / 右</td></tr>
+<tr><td>行移動</td><td>gg / G / :n</td><td>先頭 / 最終行 / n行目</td></tr>
+<tr><td>単語移動</td><td>w / b / e</td><td>次 / 前 / 単語末尾</td></tr>
+<tr><td>行内移動</td><td>0 / ^ / $</td><td>行頭 / 最初の文字 / 行末</td></tr>
+<tr><td>画面移動</td><td>Ctrl-f / Ctrl-b</td><td>1画面下 / 上</td></tr>
+<tr><td>半画面</td><td>Ctrl-d / Ctrl-u</td><td>半画面下 / 上</td></tr>
+</tbody>
+</table>
+
+<h3 id="vi35">3.5. 編集（変更・削除）</h3>
+<table>
+<thead><tr><th>種類</th><th>キー</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td rowspan="4">変更</td><td>r&lt;char&gt;</td><td>1文字置換</td></tr>
+<tr><td>cw</td><td>単語変更</td></tr>
+<tr><td>cc</td><td>行変更</td></tr>
+<tr><td>C</td><td>カーソル以降変更</td></tr>
+<tr><td rowspan="4">削除</td><td>x</td><td>1文字削除</td></tr>
+<tr><td>dd</td><td>1行削除</td></tr>
+<tr><td>dw</td><td>単語削除</td></tr>
+<tr><td>D</td><td>カーソル以降削除</td></tr>
+</tbody>
+</table>
+
+<h3 id="vi36">3.6. コピー &amp; ペースト</h3>
+<table>
+<thead><tr><th>キー</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>yy</td><td>1行コピー</td></tr>
+<tr><td>yw</td><td>単語コピー</td></tr>
+<tr><td>p</td><td>後ろに貼り付け</td></tr>
+<tr><td>P</td><td>前に貼り付け</td></tr>
+</tbody>
+</table>
+
+<h3 id="vi37">3.7. Undo / Redo</h3>
+<table>
+<thead><tr><th>キー</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>u</td><td>Undo</td></tr>
+<tr><td>Ctrl-r</td><td>Redo</td></tr>
+</tbody>
+</table>
+
+<h3 id="vi38">3.8. 選択（ビジュアルモード）</h3>
+<table>
+<thead><tr><th>キー</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>v</td><td>文字単位選択</td></tr>
+<tr><td>V</td><td>行単位選択</td></tr>
+<tr><td>Ctrl-v</td><td>矩形選択</td></tr>
+<tr><td>d / y / p</td><td>削除 / コピー / 貼り付け</td></tr>
+</tbody>
+</table>
+
+<h3 id="vi39">3.9. 検索</h3>
+<table>
+<thead><tr><th>キー</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>/pattern</td><td>前方検索</td></tr>
+<tr><td>?pattern</td><td>後方検索</td></tr>
+<tr><td>n</td><td>次へ</td></tr>
+<tr><td>N</td><td>前へ</td></tr>
+<tr><td>*</td><td>単語前方検索</td></tr>
+<tr><td>#</td><td>単語後方検索</td></tr>
+</tbody>
+</table>
+
+<h3 id="vi310">3.10. 置換</h3>
+<table>
+<thead><tr><th>コマンド</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>:s/old/new/</td><td>現在行の1件置換</td></tr>
+<tr><td>:s/old/new/g</td><td>現在行すべて</td></tr>
+<tr><td>:%s/old/new/g</td><td>全体置換</td></tr>
+<tr><td>:%s/old/new/gc</td><td>確認しながら置換</td></tr>
+</tbody>
+</table>
+
+<h3 id="vi311">3.11. 保存・終了</h3>
+<table>
+<thead><tr><th>コマンド</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>:w</td><td>保存</td></tr>
+<tr><td>:q</td><td>終了</td></tr>
+<tr><td>:q!</td><td>保存せず終了</td></tr>
+<tr><td>:wq</td><td>保存して終了</td></tr>
+<tr><td>ZZ</td><td>保存して終了</td></tr>
+<tr><td>ZQ</td><td>保存せず終了</td></tr>
+</tbody>
+</table>
+
+<h3 id="vi312">3.12. 便利な操作</h3>
+<table>
+<thead><tr><th>キー / コマンド</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>.</td><td>直前の操作を繰り返す</td></tr>
+<tr><td>&gt;&gt;</td><td>インデント</td></tr>
+<tr><td>&lt;&lt;</td><td>インデント戻し</td></tr>
+<tr><td>:set number</td><td>行番号表示</td></tr>
+<tr><td>:set relativenumber</td><td>相対行番号</td></tr>
+</tbody>
+</table>
+
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ref-linux-cmd')">← Linux コマンド（Alpine版）</a>
+  <a onclick="navigate('ref-docker-cmd')">Docker コマンド →</a>
+</div>`
   },
 
   'ref-docker-cmd': {
