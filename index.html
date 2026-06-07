@@ -2697,9 +2697,730 @@ practice makes perfect so keep going</pre>
   },
 
   'ch3-linux-mgmt2': {
-    title: '3. Linuxのシステム管理2',
-    toc: [{ level: 1, label: '3. Linuxのシステム管理2', anchor: 'top' }],
-    content: `<h1 id="top">3. Linuxのシステム管理2</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: '第3章 Linuxのシステム管理2 ネットワーク設定',
+    toc: [
+      { level: 1, label: '3.1 はじめに', anchor: 's31' },
+      { level: 2, label: '3.1.1. 概要', anchor: 's311' },
+      { level: 1, label: '3.2. ネットワークインタフェースとIPアドレス', anchor: 's32' },
+      { level: 2, label: '3.2.1. K3s利用時のネットワークインタフェース', anchor: 's321' },
+      { level: 2, label: '3.2.2. IPアドレスとアドレス空間', anchor: 's322' },
+      { level: 1, label: '3.3. ハンズオン1：ネットワーク設定', anchor: 's33' },
+      { level: 2, label: '3.3.1 インタフェースの状態確認', anchor: 's331' },
+      { level: 2, label: '3.3.2 ルーティング情報の確認', anchor: 's332' },
+      { level: 2, label: '3.3.3 DHCPの設定', anchor: 's333' },
+      { level: 2, label: '3.3.4 静的IP設定（命令型）', anchor: 's334' },
+      { level: 2, label: '3.3.5 静的IP設定の永続化（宣言型）', anchor: 's335' },
+      { level: 2, label: '3.3.6 DHCPの再設定（宣言型）', anchor: 's336' },
+      { level: 1, label: '3.4. ハンズオン2：通信の可視化', anchor: 's34' },
+      { level: 2, label: '3.4.1 pingによる疎通確認', anchor: 's341' },
+      { level: 2, label: '3.4.2 netstatによるソケット確認', anchor: 's342' },
+      { level: 2, label: '3.4.3 tcpdumpによるパケット解析', anchor: 's343' },
+      { level: 1, label: '3.5. ハンズオン3：Kubernetesネットワーク', anchor: 's35' },
+      { level: 2, label: '3.5.1 Podの確認', anchor: 's351' },
+      { level: 2, label: '3.5.2 ホスト（ノード）側ネットワークの確認', anchor: 's352' },
+      { level: 1, label: '3.6. 総合演習', anchor: 's36' },
+      { level: 2, label: '3.6.1. IPアドレスの割り当て', anchor: 's361' },
+      { level: 2, label: '3.6.2. pingコマンドによる通信の可視化', anchor: 's362' },
+      { level: 2, label: '3.6.3. tcpdumpによる通信の可視化（HTTPS）', anchor: 's363' },
+      { level: 2, label: '3.6.4. ネットワークインタフェース情報の確認', anchor: 's364' },
+      { level: 2, label: '3.6.5. サービス情報の確認', anchor: 's365' },
+      { level: 2, label: '3.6.6. ルート情報の確認', anchor: 's366' },
+    ],
+    content: `
+<h1 id="top">第3章　Linuxのシステム管理2 ネットワーク設定</h1>
+<p class="meta">公開日： 2026年4月25日（土）<br>開講日： 2026年4月27日（月）</p>
+
+<h2 id="s31">3.1 はじめに</h2>
+<h3 id="s311">3.1.1. 概要</h3>
+<p>　この章では、Alpine Linuxを例に、Linuxのネットワークの設定方法について学ぶ。</p>
+
+<h4>前提となる知識</h4>
+<div class="cmd"><pre>- VirtualBox を利用した Alpine Linux の起動と終了
+- コマンドラインオペレーション
+- ファイル、フォルダ（ディレクトリ）の概念理解
+- vi コマンドの利用法
+- SSH による Alpine Linux への遠隔接続
+- TCP/IP の基礎知識</pre></div>
+
+<h4>到達目標</h4>
+<ol>
+<li>ip link / addr / route を使ってネットワーク情報を確認したり、設定したりできる。</li>
+<li>Alpine Linux で 静的 IP / DHCP の設定が行える。</li>
+<li>ping, netstat / ss, tcpdump で通信の様子を可視化できる。</li>
+<li>Kubernetes の Podネットワークの状態を確認できる。</li>
+</ol>
+
+<h4>第3章の操作対象</h4>
+<p>　第3章は主にクラウドのプラットフォームのベースとなる Alpine Linux と、その上で動作するコンテナ環境のネットワークについて学習する。</p>
+<p class="fig-caption">【演習環境の構成（Alpine Linux・Docker・K3s）】</p>
+<div class="cmd"><pre>ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            └─ [Alpine Linux（軽量 Linux）]
+                 ├─ [Docker（コンテナ操作学習用）]
+                 └─ [K3s（Kubernetes）]
+                      └─ [containerd（コンテナランタイム）]</pre></div>
+
+<h4>事前準備</h4>
+<p class="fig-caption">【授業開始時】</p>
+<ul>
+<li>スナップショット機能の確認</li>
+<li>追加パッケージのインストール（iproute2, tcpdump, nano）</li>
+</ul>
+<p class="fig-caption">【追加パッケージのインストール手順】</p>
+<div class="cmd"><pre>$ doas apk update  　     # パッケージデータベースの更新
+$ doas apk add iproute2　 # ネットワークツール（ip / ss コマンド）
+　　※ デフォルトの ip コマンドは busybox 版（簡易版）
+$ doas apk add tcpdump　　# パケットダンプツール（tcpdump コマンド）
+$ doas apk add nano　　   # テキストエディタ（nano コマンド）</pre></div>
+
+<h2 id="s32">3.2. ネットワークインタフェースとIP アドレスについて</h2>
+<h3 id="s321">3.2.1. K3s 利用時のネットワークインタフェース</h3>
+<p>　本演習で利用する Alpine Linux には、デフォルトで二つのネットワークインタフェース（lo, eth0）が用意されている。また、第1章の取り組みによって、Docker をインストールするとdocker0というインタフェースも追加される。K3s のインストールによって多くのネットワークインタフェースが作られるが、lo, eth0, docker0の関係を把握することで理解しやすくなる。そのため、この節ではこの3つのインタフェースに限定して、ホスト上で動作するネットワークインタフェースの扱いについて説明する。</p>
+<p>　これら三つのインタフェースの特徴は以下の通りである。</p>
+<p class="fig-caption">【主要ネットワークインタフェース（lo / eth0 / docker0）の比較】</p>
+<table>
+<thead><tr><th>インタフェース名</th><th>扱うレイヤー</th><th>MACアドレス</th><th>IP アドレス</th><th>役割</th></tr></thead>
+<tbody>
+<tr><td>lo</td><td>L3</td><td>×</td><td>〇</td><td>内部通信に利用されるループバックインタフェース（loopback, localhost）</td></tr>
+<tr><td>eth0</td><td>L2 + L3</td><td>〇</td><td>〇</td><td>外部通信に利用されるネットワークインタフェース（Ethernet）</td></tr>
+<tr><td>docker0</td><td>L2 + L3</td><td>〇</td><td>〇</td><td>ホスト・コンテナ間通信に使用される仮想ブリッジインタフェース（Dockerが作成）</td></tr>
+</tbody>
+</table>
+
+<p>　上記三つのインタフェースについて順を追って説明する。</p>
+<p>　一つ目のloはループバックインタフェース（ないしローカルループバックインタフェース）と呼ばれ、内部通信の用途に使われる。このインタフェースは、物理インタフェースの状況に左右されずに通信が行えるよう、論理アドレスである IP アドレスのみが与えられている。そのため、L2 のアドレスである MAC アドレスは疑似的に00:00:00:00:00:00と表示されるが実際の通信には利用されない。</p>
+<p>　イメージを把握してもらうために、このloを利用したプロセス間通信の様子を図に示す。ここで、loを利用した通信は、外部ネットワークから隔離された状態で行われる。その特徴から、通信確認やホスト上で完結するサーバ間通信などに利用される。なお、ネットワークインタフェースloには、IP アドレスとして127.0.0.1、ホスト名としてlocalhostが一般的に割り当てられる。</p>
+<p class="fig-caption">【ループバックインタフェースによる内部通信】</p>
+<div class="fig-img"><img src="images/ch3-fig1.png" alt="ループバックインタフェースによる内部通信" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch3-fig1.png</div></div>
+
+<p>　二つ目のeth0は物理インタフェースである。このインタフェースは名前からも推測できるとおり、Ethernet インタフェースのことを指しており、有線LANのネットワークインタフェースとして広く普及している。名前は装置が増設されるごとにeth1, eth2のように番号が増えていく。近年では物理的な位置を対応づけたeno（オンボード）, enp（PCIバス）などの名前が利用されるケースも多い。しかし、Alpine Linux では古くから Linux で用いられてきたeth0という名称をそのまま利用している。</p>
+<p>　用途としては、主に外部との通信に利用されるが、ホスト内のプロセス間通信にも利用される。イメージの把握のため、ホスト上で動作するプロセスがeth0を利用して外部のホストと通信する様子を図に示す。</p>
+<p class="fig-caption">【物理インタフェース（eth0）による外部通信】</p>
+<div class="fig-img"><img src="images/ch3-fig2.png" alt="物理インタフェース（eth0）による外部通信" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch3-fig2.png</div></div>
+
+<p>　最後に、コンテナの通信に利用するdocker0について説明する。ホストがEthernetのインタフェースeth0を持つように、コンテナも仮想的なEthernetであるeth0という名前のネットワークインタフェースを持つ。ホストOSのプロセス同様、コンテナ側のeth0も通信を行う時にコンテナ内のプロセスと接続する。最終的には、ホスト内に二つのコンピュータが独立して存在することになるため、ホスト同士を接続するためのハブとしてL2ブリッジが必要となる。この役割を持つのがdocker0である。ここで、docker0をハブとした場合にeth0とvethをdocker0のLANポートに見立てると実際のLANとの比較ができるのでわかりやすい。実際は、docker0, veth, eth0のいずれもMACアドレスを持つ独立したインタフェースであるが、ブリッジ接続することでハブに見せかけている。ここで、vethとコンテナのeth0はペア接続となるため、仮想のEthernetケーブル（いわゆるLANケーブル）と捉えることができる。</p>
+<p class="fig-caption">【Docker ブリッジネットワークの構成】</p>
+<div class="fig-img"><img src="images/ch3-fig3.png" alt="Dockerブリッジネットワークの構成" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch3-fig3.png</div></div>
+
+<p>　全体像を把握するため、これまで説明した全ての要素を一つの図にまとめたものを以下に示す。この図を見ると、ループバックインタフェースloが同じ IP アドレスで二つ存在していることに気づく。通常、IP アドレスは同じアドレスを使ってはいけないことになっているが、自分自身を表すlo, localhost, 127.0.0.1は常に自分を指すことから、他のホストの通信に干渉しない。そのため、すべてのホストは必ず自身のループバックインタフェースを持っている。</p>
+<p class="fig-caption">【ホスト・コンテナを含めたネットワーク全体構成】</p>
+<div class="fig-img"><img src="images/ch3-fig4.png" alt="ホスト・コンテナを含めたネットワーク全体構成" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch3-fig4.png</div></div>
+
+<h3 id="s322">3.2.2. IP アドレスとアドレス空間</h3>
+<p>　これまで説明してきたネットワークインタフェースを利用してホスト間の通信をするためには、IP アドレスの割り当てが必要となる。現在のインターネットはIPのバージョン4（IPv4）の利用が前提となっているが、IP アドレスの枯渇から、現在はIPバージョン6（IPv6）への移行が徐々に進んでいる。</p>
+<p>　ここで、IPv4とIPv6の主な特徴の違いを表に示す。いずれも重要な内容ではあるが、初めはアドレス長、アドレス表記、プレフィックス長、ループバックアドレス、リンクローカルアドレスの違いについて把握できていれば十分である。</p>
+<p class="fig-caption">【IPv4 と IPv6 の主な違い】</p>
+<table>
+<thead><tr><th>項目</th><th>IPv4</th><th>IPv6</th><th>項目の説明</th></tr></thead>
+<tbody>
+<tr><td>アドレス長</td><td>32ビット</td><td>128ビット</td><td>IP アドレス全体のビット数（表現できる範囲の大きさ）</td></tr>
+<tr><td>アドレス表記</td><td>10進数（ドット区切り）例：192.168.1.1</td><td>16進数（コロン区切り）例：2001:0db8:85a3::8a2e:0370:7334</td><td>IP アドレスの書き方・表記形式</td></tr>
+<tr><td>アドレス数</td><td>約4.3 × 10⁹</td><td>約3.4 × 10³⁸</td><td>利用可能なIP アドレスの総数</td></tr>
+<tr><td>プレフィックス長</td><td>可変 /8〜/32</td><td>標準 /64</td><td>ネットワーク部の長さを示す値</td></tr>
+<tr><td>NAT</td><td>一般的に使用される</td><td>基本的に不要（エンドツーエンド通信を推奨）実際の実務ではNAT66, NPTv6も存在</td><td>プライベートIPとグローバルIPを変換する仕組み</td></tr>
+<tr><td>ブロードキャスト</td><td>あり</td><td>なし（代わりにマルチキャスト）</td><td>同一ネットワーク内の全端末へ送信する通信方式</td></tr>
+<tr><td>セキュリティ</td><td>IPsec（オプション）</td><td>IPsec（標準）</td><td>通信の暗号化や認証に関する機能</td></tr>
+<tr><td>ヘッダ構造</td><td>可変長で複雑</td><td>固定長でシンプル</td><td>パケットの制御情報の構造</td></tr>
+<tr><td>設定方法</td><td>手動 or DHCP</td><td>手動 or SLAAC（自動設定）or DHCPv6</td><td>IP アドレスの割り当て方法</td></tr>
+<tr><td>ループバックアドレス</td><td>127.0.0.1</td><td>::1</td><td>自分自身を指すための特別なアドレス</td></tr>
+</tbody>
+</table>
+
+<p>　なお、IP アドレスの設計はIPv4もIPv6も似通っており、ネットワークとそこに所属するホストを表す、ネットワーク部・ホスト部の二つの情報からアドレスが構成されている。ここで、ネットワーク部のビット数はプレフィックス長（/24 や /64）に等しい。IPv4は32ビットのアドレス空間を有効に使うために、ネットワーク部とホスト部が可変長となっていてややわかりづらいが、IPv6ではネットワーク部、ホスト部共に64ビットを標準としているため、扱うビット数は多いものの構造がシンプルになっている。</p>
+<p>　以下、IPv4とIPv6のアドレス空間について簡単に紹介する。</p>
+
+<h4>IPv4 のアドレス空間</h4>
+<p>　IPv4のアドレス空間は下図のように、「グローバルアドレス」「プライベートアドレス」「特殊用途アドレス」の主に3つのアドレスから構成される。このうち、インターネットへルーティングして良いのは、グローバルアドレスのみである。しかし、アドレス枯渇問題からグローバルアドレスが不足する事態が生じたことを受けて指針が変更されている。具体的には、NAT(Network Address Translation)というアドレス書き換え技術を利用して、LAN内はプライベートアドレスで設計しつつ、外部と通信する時にIP アドレスをグローバルアドレスへ変換することで、プライベートアドレスのインターネットアクセスを実現した。この手法はIPv4の延命に貢献した。また、副次的な効果としてLAN内への侵入が難しくなることから、セキュリティ対策も兼ねて組織・個人のネットワークを問わず広く利用されている。</p>
+<p class="fig-caption">【IPv4のアドレス空間】</p>
+<div class="fig-img"><img src="images/ch3-fig5.png" alt="IPv4のアドレス空間" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch3-fig5.png</div></div>
+<p class="fig-caption">【IPv4 グローバルアドレスのクラス分類】</p>
+<div class="fig-img"><img src="images/ch3-fig6.png" alt="IPv4グローバルアドレスのクラス分類" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch3-fig6.png</div></div>
+<p class="fig-caption">【IPv4 プライベートアドレスと特殊用途アドレス】</p>
+<div class="fig-img"><img src="images/ch3-fig7.png" alt="IPv4プライベートアドレスと特殊用途アドレス" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch3-fig7.png</div></div>
+
+<h4>IPv4アドレスの割り当て例</h4>
+<p class="fig-caption">【IPv4 アドレスの割り当て例（ネットワーク別）】</p>
+<table>
+<thead><tr><th>ネットワーク</th><th>サブネットマスク</th><th>割り当て可能ホスト数</th><th>開始アドレス</th><th>終了アドレス</th><th>ブロードキャスト</th><th>備考</th></tr></thead>
+<tbody>
+<tr><td>127.0.0.0/8</td><td>255.0.0.0</td><td>16,777,214</td><td>127.0.0.1</td><td>127.255.255.254</td><td>127.255.255.255</td><td>ループバックアドレス</td></tr>
+<tr><td>10.0.0.0/8</td><td>255.0.0.0</td><td>16,777,214</td><td>10.0.0.1</td><td>10.255.255.254</td><td>10.255.255.255</td><td>クラスAプライベート</td></tr>
+<tr><td>172.16.0.0/16</td><td>255.255.0.0</td><td>65,534</td><td>172.16.0.1</td><td>172.16.255.254</td><td>172.16.255.255</td><td>クラスBプライベート</td></tr>
+<tr><td>192.168.0.0/24</td><td>255.255.255.0</td><td>254</td><td>192.168.0.1</td><td>192.168.0.254</td><td>192.168.0.255</td><td>クラスCプライベート</td></tr>
+<tr><td>202.17.20.0/28</td><td>255.255.255.240</td><td>14</td><td>202.17.20.1</td><td>202.17.20.14</td><td>202.17.20.15</td><td>クラスレスグローバル</td></tr>
+</tbody>
+</table>
+
+<h4>IPv6 のアドレス空間</h4>
+<p>　IPv6 は IPv4 に代わる次世代のプロトコルである。</p>
+<p>　前の説明で IP アドレスの枯渇について触れたが、現在メインストリームとして利用されている IPv4 のアドレスはグローバル、リージョン問わずすでに枯渇状態となっている。</p>
+<p class="fig-caption">【IPv4 アドレスの枯渇状況（地域別）】</p>
+<table>
+<thead><tr><th>区分</th><th>組織</th><th>枯渇時期</th><th>状況</th><th>補足</th></tr></thead>
+<tbody>
+<tr><td>全世界（中央管理）</td><td>IANA</td><td>2011年</td><td>枯渇</td><td>未割当アドレスを全てRIRへ分配完了</td></tr>
+<tr><td>アジア太平洋</td><td>APNIC</td><td>2011年（制限運用開始）</td><td>実質枯渇</td><td>最終 /8 ポリシーで少量のみ配布</td></tr>
+<tr><td>北米</td><td>ARIN</td><td>2015年</td><td>枯渇</td><td>待ち行列・移転市場で対応</td></tr>
+<tr><td>欧州・中東・中央アジア</td><td>RIPE NCC</td><td>2019年</td><td>枯渇</td><td>小規模割当のみ継続</td></tr>
+<tr><td>中南米・カリブ</td><td>LACNIC</td><td>2020年</td><td>枯渇</td><td>段階的制限後に完全枯渇</td></tr>
+<tr><td>アフリカ</td><td>AFRINIC</td><td>2023年前後</td><td>実質枯渇</td><td>最終在庫段階（ほぼ終了）</td></tr>
+</tbody>
+</table>
+<p>　現在は、返却アドレスの再配布と組織間の売買等による移転によって、延命しながらIPv6へ移行している段階である。なお、IPv6アドレスの普及状況を表すデータには様々なものがあるが、代表的なものとして Google の公開する利用情報を以下に紹介する。</p>
+<p>　　Google IPv6統計データ　（2026年4月21日時点の利用率：45.32%）</p>
+<p>　本演習では現在のメインストリームである IPv4 をベースに学習を行うが、このような背景からオペレーション中に IPv6 のアドレスも多く目にするので、IPv6 のアドレス体系についても簡単に図表の形で紹介する。</p>
+<p>　IPv6 は IPv4 のクラス分類に対応するものはないが、代わりに用途（グローバル・ローカルなど）やプレフィックス構造（/64を基準）によってアドレスが体系化されている。以下、「用途による分類」と「プレフィックスによる体系」の観点からまとめたIPv6のアドレス体系を図に示す。</p>
+<p class="fig-caption">【IPv6 アドレス体系（用途分類）】</p>
+<div class="fig-img"><img src="images/ch3-fig8.png" alt="IPv6アドレス体系（用途分類）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch3-fig8.png</div></div>
+<p class="fig-caption">【IPv6 アドレス体系（プレフィックス構造）】</p>
+<div class="fig-img"><img src="images/ch3-fig9.png" alt="IPv6アドレス体系（プレフィックス構造）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch3-fig9.png</div></div>
+
+<h4>IPv6 アドレスの割り当て例</h4>
+<p class="fig-caption">【IPv6 アドレスの割り当て例】</p>
+<table>
+<thead><tr><th>ネットワークアドレス</th><th>割り当て可能ホスト数</th><th>開始アドレス</th><th>終了アドレス</th><th>備考</th></tr></thead>
+<tbody>
+<tr><td>2001:4860:4860::/64</td><td>2⁶⁴</td><td>2001:4860:4860::</td><td>2001:4860:4860::ffff:ffff:ffff:ffff</td><td>グローバルアドレス</td></tr>
+<tr><td>fc00::/64</td><td>2⁶⁴</td><td>fc00::</td><td>fc00::ffff:ffff:ffff:ffff</td><td>ユニークローカルアドレス</td></tr>
+<tr><td>fe80::/64</td><td>2⁶⁴</td><td>fe80::</td><td>fe80::ffff:ffff:ffff:ffff</td><td>リンクローカルアドレス</td></tr>
+<tr><td>::1/128</td><td>1</td><td>::1</td><td>::1</td><td>ループバックアドレス</td></tr>
+<tr><td>2001:db8::/64</td><td>2⁶⁴</td><td>2001:db8::</td><td>2001:db8::ffff:ffff:ffff:ffff</td><td>ドキュメント用</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【IPv6アドレスの省略ルール】</p>
+<ul>
+<li>各ブロック（16ビット）の先頭の0は省略可能（例：2001:0db8:0000:0000:0000:ff00:0042:8329 → 2001:db8:0:0:0:ff00:42:8329）</li>
+<li>連続する「0のブロック」は「::」でまとめて省略可能（例：2001:db8:0:0:0:0:0:1 → 2001:db8::1）</li>
+<li>「::」は1つのアドレス内で1回のみ（どこまでが省略されたか分からなくなるため）</li>
+<li>すべて0のアドレスは「::」と表記可能（例：0:0:0:0:0:0:0:0 → ::）</li>
+<li>省略しても全体で8ブロック（128ビット）になるように解釈（「::」は不足分の0ブロックを補う意味になる）</li>
+</ul>
+
+<h2 id="s33">3.3. ハンズオン1： ネットワーク設定</h2>
+<p>　このハンズオンでは、Alpine Linux のネットワークインタフェースの確認方法と設定のやり方について説明する。</p>
+
+<h3 id="s331">3.3.1 インタフェースの状態確認</h3>
+<p>　Alpine Linux では、ネットワークインタフェースの状態をipコマンドで確認することができる。なお、このコマンドによって確認できるのは次の二つの層である。</p>
+<ul>
+<li>データリンク層（レイヤ2： L2）</li>
+<li>ネットワーク層（レイヤ3： L3）</li>
+</ul>
+<p>　なお、物理層（レイヤ1： L1）の確認は LAN ケーブルの接続チェックやハブ（スイッチ）のアクセスランプの点灯状態から確認することができるが、本演習では仮想化された環境でのオペレーションするため物理層の確認は行わない。</p>
+
+<h4>データリンク層（L2）の確認</h4>
+<p>　データリンク層（L2）レベルでインタフェースの情報を表示するには、ipコマンドにサブコマンドlink showを付けて実行する。</p>
+<p class="fig-caption">【ip コマンドによるネットワークインタフェースの情報表示（L2）】</p>
+<div class="cmd"><pre>$ ip link show　　※ ipコマンドはオプション短縮が可能なため「ip l s」「ip link」「ip l」 でも実行可能
+
+【出力例】
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP mode DEFAULT group default qlen 1000
+    link/ether 08:00:27:df:a3:fb brd ff:ff:ff:ff:ff:ff
+3: docker0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default
+    link/ether 2a:8f:a8:81:0c:8b brd ff:ff:ff:ff:ff:ff
+　　※ ネットワークインタフェース番号（IF番号）のうち4番以降は K3s 関連のインタフェース</pre></div>
+<p>　このコマンドで出力されるインタフェースの情報には次のようなものがある。現時点では、インタフェース名、リンクの種別、状態、MAC アドレスの 4 つの要素が分かれば十分である。</p>
+<p class="fig-caption">【ip link show コマンドの出力項目（L2情報）】</p>
+<table>
+<thead><tr><th>IF</th><th>インタフェース</th><th>リンク（link）</th><th>フラグ（&lt;&gt;内の要素）</th><th>最大転送単位（MTU）</th><th>状態（state）</th><th>MACアドレス</th><th>ブロードキャストアドレス（brd）</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>lo</td><td>loopback</td><td>LOOPBACK, UP, LOWER_UP</td><td>65536</td><td>UNKNOWN</td><td>00:00:00:00:00:00</td><td>00:00:00:00:00:00</td></tr>
+<tr><td>2</td><td>eth0</td><td>Ethernet</td><td>BROADCAST, MULTICAST, UP, LOWER_UP</td><td>1500</td><td>UP</td><td>08:00:27:df:a3:fb</td><td>ff:ff:ff:ff:ff:ff</td></tr>
+<tr><td>3</td><td>docker0</td><td>Ethernet</td><td>NO-CARRIER, BROADCAST, MULTICAST, UP</td><td>1500</td><td>DOWN</td><td>c2:0f:e9:0e:87:b6</td><td>ff:ff:ff:ff:ff:ff</td></tr>
+</tbody>
+</table>
+<p>　　※ NO-CARRIER： キャリアなし（L1通信 無効），LOWER_UP： L2通信 有効，UP： L3通信 有効<br>　　　 BROADCAST： ブロードキャスト 有効，MULTICAST： マルチキャスト 有効</p>
+<p>　なお、loopbackインタフェースはL3のインタフェースであるが、L2 の表示確認でも出力されるようになっている。ただし、MACアドレスが未設定／無効を表す00:00:00:00:00:00となっていることに留意する。</p>
+
+<h4>ネットワーク層（L3）レベルの確認</h4>
+<p>　ネットワーク層（L3）レベルのインタフェースの情報を表示するには、ipコマンドにサブコマンドaddress showを付けて実行する。</p>
+<p class="fig-caption">【ip コマンドによるネットワークインタフェースの情報表示（L3）】</p>
+<div class="cmd"><pre>$ ip address show　　※ ipコマンドはオプション短縮が可能なため「ip a s」「ip address」「ip a」 でも実行可能
+
+【出力例】
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host proto kernel_lo
+       valid_lft forever preferred_lft forever
+2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:df:a3:fb brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fd17:625c:f037:2:a00:27ff:fedf:a3fb/64 scope global dynamic mngtmpaddr proto kernel_ra
+       valid_lft 86086sec preferred_lft 14086sec
+    inet6 fe80::a00:27ff:fedf:a3fb/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever
+3: docker0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN group default
+    link/ether 2a:8f:a8:81:0c:8b brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+　　※ ネットワークインタフェース番号（IF番号）のうち4番以降は K3s 関連のインタフェース</pre></div>
+<p>　先ほど表示した L2 の出力とインタフェースの数は同じだが、新たに L3 の IP アドレスの表示が増えていることがわかる。ちなみに追加された要素はinet, inet6の二つである。インタフェースによっては複数の IP アドレスを持っていることがわかる。IP アドレスはホストを特定する固有の情報であるが、この例が示すように複数の IP アドレスを持つことが可能である。</p>
+<p>　inet, inet6に付随する各要素をインタフェースごとにまとめたものを以下に示す。</p>
+<p class="fig-caption">【ループバックインタフェース（lo）のIPアドレス情報】</p>
+<table>
+<thead><tr><th>種別</th><th>IPバージョン</th><th>IP アドレス</th><th>プレフィックス長</th><th>スコープ</th><th>補足</th></tr></thead>
+<tbody>
+<tr><td>inet</td><td>4</td><td>127.0.0.1</td><td>/8</td><td>global</td><td>ループバックアドレス</td></tr>
+<tr><td>inet6</td><td>6</td><td>::1</td><td>/128</td><td>global</td><td>ループバックアドレス</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【ネットワークインタフェース（eth0）のIPアドレス情報】</p>
+<table>
+<thead><tr><th>種別</th><th>IPバージョン</th><th>IP アドレス</th><th>プレフィックス長</th><th>スコープ</th><th>補足</th></tr></thead>
+<tbody>
+<tr><td>inet</td><td>4</td><td>10.0.2.15</td><td>/24</td><td>global</td><td>プライベートアドレス（LAN 内のみ有効）</td></tr>
+<tr><td>inet6</td><td>6</td><td>fd17:625c:f037:2:a00:27ff:fedf:a3fb</td><td>/64</td><td>global</td><td>ユニークローカルアドレス（LAN 内のみ有効，動的割当）</td></tr>
+<tr><td>inet6</td><td>6</td><td>fe80::a00:27ff:fedf:a3fb</td><td>/64</td><td>link</td><td>リンクローカルアドレス（同一ネットワーク内のみ有効）</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【ブリッジインタフェース（docker0）のIPアドレス情報】</p>
+<table>
+<thead><tr><th>種別</th><th>IPバージョン</th><th>IP アドレス</th><th>プレフィックス長</th><th>スコープ</th><th>補足</th></tr></thead>
+<tbody>
+<tr><td>inet</td><td>4</td><td>172.17.0.1</td><td>/16</td><td>global</td><td>プライベートアドレス（LAN 内のみ有効）</td></tr>
+</tbody>
+</table>
+
+<h3 id="s332">3.3.2 ルーティング情報の確認</h3>
+<p>　IPのプロトコルスタックを搭載するホストは、上記の例のように複数のネットワークインタフェースを持つことができる。実際に通信を行う際に、適切なインタフェースからパケットが送信できるよう、すべてのホストは宛先情報をまとめたルーティングテーブルという情報を持っている。</p>
+<p>　この情報は、ipコマンドにサブコマンドroute listを付けて実行することで確認できる。</p>
+<p class="fig-caption">【ip コマンドによるルーティング情報の表示（L3）】</p>
+<div class="cmd"><pre>$ ip route list　　※ ipコマンドはオプション短縮が可能なため「ip r s」「ip route」「ip r」 でも実行可能
+
+【出力例】
+default via 10.0.2.2 dev eth0 metric 202
+10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15
+10.42.0.0/24 dev cni0 proto kernel scope link src 10.42.0.1
+172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown</pre></div>
+<p>　この出力結果を表形式にまとめたものを以下に示す。最初は、宛先ネットワーク、ゲートウェイ、出力インタフェースの3つの項目が分かればよい。</p>
+<p class="fig-caption">【ルーティングテーブルの内容（ip route list の出力例）】</p>
+<table>
+<thead><tr><th>宛先ネットワーク</th><th>ゲートウェイ(via)</th><th>出力インタフェース(dev)</th><th>ソースIP(src)</th><th>プロトコル(proto)</th><th>スコープ(scope)</th><th>メトリック(metric)</th><th>補足</th></tr></thead>
+<tbody>
+<tr><td>default (0.0.0.0/0)</td><td>10.0.2.2</td><td>eth0</td><td>-</td><td>-</td><td>-</td><td>202</td><td>すべての未知の宛先へのデフォルトルート。10.0.2.2（通常はルータ）へ送信</td></tr>
+<tr><td>10.0.2.0/24</td><td>-</td><td>eth0</td><td>10.0.2.15</td><td>kernel</td><td>link</td><td>-</td><td>ローカルネットワーク経路。同一ネットワーク内は直接eth0から送信</td></tr>
+<tr><td>10.42.0.0/24</td><td>-</td><td>cni0</td><td>10.42.0.1</td><td>kernel</td><td>link</td><td>-</td><td>CNIネットワーク経路。cni0経由で直接送信</td></tr>
+<tr><td>172.17.0.0/16</td><td>-</td><td>docker0</td><td>172.17.0.1</td><td>kernel</td><td>link</td><td>-</td><td>Dockerネットワーク経路。docker0経由で直接送信（現在linkdown）</td></tr>
+</tbody>
+</table>
+<p>　　※ proto kernel はカーネルがインタフェース設定に基づいて自動的に追加した経路</p>
+<p>　ここで、宛先ネットワークはパケットの届け先を表している。上記の例では4つのルートが登録されている。このうち、defaultは0.0.0.0/0とも書かれ、一般的にデフォルトルートと呼ばれる。ルーティングテーブルにルートがない場合はこのデフォルトルートが選択される。このデフォルトルートが選択された時に中継先としてパケットを転送するルータをゲートウェイと呼び、この例では10.0.2.2 が該当する。ルートが決定したら、出力インタフェースの欄に示されたインタフェースからパケットを出力する。この例ではeth0, cni0, docker0の3つのインタフェースが存在する。</p>
+
+<h3 id="s333">3.3.3 DHCP（Dynamic Host Configuration Protocol）の設定</h3>
+<p>　Alpine Linux をインストールした直後のネットワーク設定は通常 DHCP（Dynamic Host Configuration Protocol）による動的アドレス割り当てとなっている。この DHCP によるアドレスの割り当ては、利用者がネットワークの設定を手動で行う必要がないため、クライアント PC の接続などに利用されている。そのため、Alpine Linux のネットワーク接続のデフォルトも DHCP になっている。</p>
+<p>　Alpine Linux ではネットワークインタフェースの設定は/etc/network/interfacesに記述されており、catコマンドを利用して次のように確認することができる。</p>
+<p class="fig-caption">【ネットワークインタフェースの設定確認】</p>
+<div class="cmd"><pre>$ cat /etc/network/interfaces
+
+【出力例】
+auto eth0
+iface eth0 inet dhcp</pre></div>
+<p>　この設定を vi などのテキストを利用して内容を変更すると、静的アドレス割り当てに変更することができる。静的アドレスに変更した後でも、上記の設定内容に変更し直せば、元のDHCPによる動的アドレス割り当て設定に戻すことができる。</p>
+
+<h3 id="s334">3.3.4 コマンドライン操作による静的 IP 設定（命令型）</h3>
+<p>　DHCPのところで説明した設定ファイルによる動作の記述をクラウドコンピューティングでは宣言型と呼ぶことがある。一方で、コマンドラインによる動作の指示を命令型と呼ぶことがある。Linuxの通常オペレーションにおいてこの言葉を使うことは少ないが、この二つを抑えておくとクラウド環境を構築する際の概念理解の助けとなる。そこで、本演習では通常のオペレーションにおいても「命令型」「宣言型」という名称を利用する。</p>
+<p>　まずは、命令型のアプローチとして、静的 IP アドレスの設定を行う。この設定はネットワークアクセスに影響を直接及ぼすため、一連のオペレーションは SSH 接続ではなく、VirtualBox のコンソール画面から行うこと。</p>
+<p>　まずは以下のコマンドでネットワークインタフェースの設定を変更する前の状態を確認する。</p>
+<p class="fig-caption">【IP アドレスの確認】</p>
+<div class="cmd"><pre>$ ip address show</pre></div>
+<p>　管理者権限で、ip addressのサブコマンドとしてaddコマンドを利用すると、指定したインタフェースに IP アドレスを追加することができる。ここでは、プレフィックス長 24 bit のプライベートアドレス192.168.1.1をネットワークインタフェースeth0へ割り当てる。</p>
+<p class="fig-caption">【コマンドライン操作による IP アドレスの追加（要管理者権限）】</p>
+<div class="cmd"><pre>$ doas ip address add 192.168.1.1/24 dev eth0</pre></div>
+<p>　次に、以下のコマンドでネットワークインタフェースの設定を変更した後の状態を確認する。</p>
+<p class="fig-caption">【IP アドレスの確認】</p>
+<div class="cmd"><pre>$ ip address show</pre></div>
+<p>　具体的には、eth0に192.168.1.1/24が増えたことを確認できれば良い。ただし、今回はaddによってIP アドレスを追加したため、IP アドレスが書き換えでなく、追加されたことを確かめること。</p>
+<p>　次に、管理者権限でこのネットワークのデフォルトルートを追加する。（もし、Tera Term から接続している場合はこのタイミングで接続が切れてアプリケーションが固まる）</p>
+<p class="fig-caption">【コマンドライン操作による ルート情報の追加（要管理者権限）】</p>
+<div class="cmd"><pre>$ doas ip route add default via 192.168.1.254</pre></div>
+<p>　次のコマンドでデフォルトルートに192.168.1.254/24が増えたことを確認する。　　※addコマンドなのであくまで追加であることに留意する</p>
+<p class="fig-caption">【ルート情報の確認】</p>
+<div class="cmd"><pre>$ ip route list</pre></div>
+<p>　なお、追加したIP アドレス、デフォルトルートをエントリーから削除する方法は次の通りである。</p>
+<p class="fig-caption">【追加した IP アドレスとルート情報の削除（要管理者権限）】</p>
+<div class="cmd"><pre>$ doas ip address delete 192.168.1.1/24 dev eth0
+$ doas ip route delete default via 192.168.1.254</pre></div>
+<p>　基本的には前述のaddをdeleteへ置き換えるだけで、エントリーから削除することができる。また、今回のipコマンドを利用した命令型の指示は一過性のものとなるため、設定を元に戻すためには再起動も有効である。</p>
+
+<h3 id="s335">3.3.5 設定ファイルの編集による静的IP設定の永続化（宣言型）</h3>
+<p>　次に宣言型のアプローチとして、テキストエディタを利用した静的 IP 設定の永続化の取り組みを行う。次のコマンドでファイル/etc/network/interfacesを管理者権限で編集する。</p>
+<p class="fig-caption">【ネットワークインタフェースに関する設定ファイルの編集（要管理者権限）】</p>
+<div class="cmd"><pre>$ doas vi /etc/network/interfaces　　※ vi を利用する場合（保存終了：「:」→「wq」）
+---
+$ doas nano /etc/network/interfaces　　※ nano を利用する場合（保存終了：「Ctrl+X」→「y」→「ENTER」）
+
+【入力内容】
+auto eth0
+iface eth0 inet static
+  address 192.168.2.1
+  netmask 255.255.255.0
+  gateway 192.168.2.254</pre></div>
+<p>　編集が終わったら、rc-serviceコマンドでnetworkingサービスを再起動（restart）する。</p>
+<p class="fig-caption">【ネットワークサービス（networking）の再起動（要管理者権限）】</p>
+<div class="cmd"><pre>$ doas rc-service networking restart</pre></div>
+<p>　もし、赤字等でエラーが表示された場合は、/etc/network/interfacesの内容を確認する。特にエラーが表示されなかった場合は、以下のコマンドで割り当てられたIP アドレスが変更されたことを確認する。</p>
+<p class="fig-caption">【ネットワークインタフェース eth0 の IP アドレスの確認】</p>
+<div class="cmd"><pre>$ ip address show eth0
+
+【出力結果例】
+2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 08:00:27:df:a3:fb brd ff:ff:ff:ff:ff:ff
+    inet 192.168.2.1/24 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fd17:625c:f037:2:a00:27ff:fedf:a3fb/64 scope global dynamic flags 100
+       valid_lft 86177sec preferred_lft 14177sec
+    inet6 fe80::a00:27ff:fedf:a3fb/64 scope link
+       valid_lft forever preferred_lft forever</pre></div>
+<p>　うまく変更できていれば、上のようにinetのIP アドレスがDHCPの時のものから置き換わっている。これは、設定ファイルの「dhcp」を「static」に置き換えたため、DHCPが機能しなくなったためである。</p>
+<p>　次に、ルート情報について確認する。</p>
+<p class="fig-caption">【ルート情報の確認】</p>
+<div class="cmd"><pre>$ ip route list
+
+【出力結果例】
+default via 192.168.2.254 dev eth0  metric 202
+10.42.0.0/24 dev cni0 scope link  src 10.42.0.1
+172.17.0.0/16 dev docker0 scope link  src 172.17.0.1
+192.168.2.0/24 dev eth0 scope link  src 192.168.2.1</pre></div>
+<p>　ルートとデフォルトゲートウェイが上のように書き換わっていることを確認する。</p>
+
+<h3 id="s336">3.3.6 DHCP の再設定（宣言型）</h3>
+<p>　静的 IP アドレスの設定はこれでいったん終了とする。この後の取り組みは指示がない限り DHCP を利用するので、次の手順で DHCP の設定に戻すこと。（以降は Tera Term による接続が可能となる）</p>
+<p class="fig-caption">【ネットワークインタフェースの設定変更（要管理者権限）】</p>
+<div class="cmd"><pre>$ doas vi /etc/network/interfaces　　※ vi を利用する場合
+---
+$ doas nano /etc/network/interfaces　　※ nano を利用する場合
+
+【書き換え内容】
+auto eth0
+iface eth0 inet dhcp
+
+【サービスの再起動（要管理者権限）】
+$ doas rc-service networking restart</pre></div>
+
+<h2 id="s34">3.4. ハンズオン2： 通信の可視化</h2>
+<p>　通信の可視化は通信状況の把握やトラブルへの対応（トラブルシュート、トラブルシューティング）に必須のスキルとなる。この節では、基本的な確認が行えるよう、運用時によく用いられる可視化手法について簡単に紹介する。</p>
+<p>　なお、この節を始める前に必ず DHCP によるアドレス割り当てに戻っていることを確認すること。</p>
+
+<h3 id="s341">3.4.1 ping による疎通確認</h3>
+<p>　通信テストの一番基本となるコマンドにpingがある。このコマンドは相手のIP アドレスやホスト名などを指定するだけで通信の可否がわかる。この確認を「疎通確認」や「死活チェック」などと呼ぶ。</p>
+<p>　実際にpingコマンドを利用して、本学科Web サーバへ疎通確認する例を示す。</p>
+<p class="fig-caption">【ping コマンドの実行（IP アドレスによる疎通確認）】</p>
+<div class="cmd"><pre>$ ping 202.17.20.3
+
+【出力結果例】　　※指示があるまで、ECHO, ECHO REPLY 通信を繰り返すので、Ctrl + Cでプロセスを終了する。
+PING 202.17.20.3 (202.17.20.3): 56 data bytes
+64 bytes from 202.17.20.3: seq=0 ttl=42 time=4.369 ms
+64 bytes from 202.17.20.3: seq=1 ttl=42 time=4.036 ms
+64 bytes from 202.17.20.3: seq=2 ttl=42 time=4.033 ms
+64 bytes from 202.17.20.3: seq=3 ttl=42 time=4.006 ms
+64 bytes from 202.17.20.3: seq=4 ttl=42 time=3.193 ms
+^C
+--- 202.17.20.3 ping statistics ---
+5 packets transmitted, 5 packets received, 0% packet loss
+round-trip min/avg/max = 3.193/3.927/4.369 ms</pre></div>
+<p class="fig-caption">【ping コマンドの実行（FQDN, ホスト名による疎通確認）】</p>
+<div class="cmd"><pre>$ ping www.ai.chibatech.ac.jp
+
+【出力結果例】　　※指示があるまで、ECHO, ECHO REPLY 通信を繰り返すので、Ctrl + Cでプロセスを終了する。
+PING www.ai.chibatech.ac.jp (202.17.20.3): 56 data bytes
+64 bytes from 202.17.20.3: seq=0 ttl=42 time=4.686 ms
+64 bytes from 202.17.20.3: seq=1 ttl=42 time=3.248 ms
+64 bytes from 202.17.20.3: seq=2 ttl=42 time=4.102 ms
+64 bytes from 202.17.20.3: seq=3 ttl=42 time=4.299 ms
+64 bytes from 202.17.20.3: seq=4 ttl=42 time=4.433 ms
+^C
+--- www.ai.chibatech.ac.jp ping statistics ---
+5 packets transmitted, 5 packets received, 0% packet loss
+round-trip min/avg/max = 3.248/4.153/4.686 ms</pre></div>
+<p>　このコマンドは遅延やラウンドトリップタイム（RTT）の統計情報を得るときにも利用される。</p>
+
+<h3 id="s342">3.4.2 netstat によるソケット確認</h3>
+<p>　netstatコマンドを利用して、利用中のポート番号を表示することができる。</p>
+<p class="fig-caption">【netstat コマンドによる開放中のサーバポートの確認（一般ユーザ）】</p>
+<div class="cmd"><pre>$ netstat -tuln　　※ 他のディストリビューションでは「netstat」の代わりに「ss」コマンド等も用いられる
+
+【出力結果例】
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+tcp        0      0 127.0.0.1:10010         0.0.0.0:*               LISTEN
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN
+tcp        0      0 127.0.0.1:6444          0.0.0.0:*               LISTEN
+tcp        0      0 127.0.0.1:10259         0.0.0.0:*               LISTEN
+tcp        0      0 127.0.0.1:10258         0.0.0.0:*               LISTEN
+tcp        0      0 127.0.0.1:10257         0.0.0.0:*               LISTEN
+tcp        0      0 127.0.0.1:10256         0.0.0.0:*               LISTEN
+tcp        0      0 127.0.0.1:10249         0.0.0.0:*               LISTEN
+tcp        0      0 127.0.0.1:10248         0.0.0.0:*               LISTEN
+tcp        0      0 :::22                   :::*                    LISTEN
+tcp        0      0 :::10250                :::*                    LISTEN
+tcp        0      0 :::6443                 :::*                    LISTEN
+udp        0      0 0.0.0.0:8472            0.0.0.0:*</pre></div>
+<p>　また、管理者権限を用いた時に、-pオプションも加えると、PID（プロセス ID）を一緒に表示することができる。</p>
+<p class="fig-caption">【netstat コマンドによる開放中のサーバポートの確認（管理者権限）】</p>
+<div class="cmd"><pre>$ doas netstat -tulpn　※ 他のディストリビューションでは「netstat」の代わりに「ss」コマンド等も用いられる
+
+【出力結果例】
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 127.0.0.1:10010         0.0.0.0:*               LISTEN      4100/containerd
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      2427/sshd [listener
+tcp        0      0 127.0.0.1:6444          0.0.0.0:*               LISTEN      4069/k3s server
+tcp        0      0 127.0.0.1:10259         0.0.0.0:*               LISTEN      4069/k3s server
+tcp        0      0 127.0.0.1:10258         0.0.0.0:*               LISTEN      4069/k3s server
+tcp        0      0 127.0.0.1:10257         0.0.0.0:*               LISTEN      4069/k3s server
+tcp        0      0 127.0.0.1:10256         0.0.0.0:*               LISTEN      4069/k3s server
+tcp        0      0 127.0.0.1:10249         0.0.0.0:*               LISTEN      4069/k3s server
+tcp        0      0 127.0.0.1:10248         0.0.0.0:*               LISTEN      4069/k3s server
+tcp        0      0 :::22                   :::*                    LISTEN      2427/sshd [listener
+tcp        0      0 :::10250                :::*                    LISTEN      4069/k3s server
+tcp        0      0 :::6443                 :::*                    LISTEN      4069/k3s server
+udp        0      0 0.0.0.0:8472            0.0.0.0:*</pre></div>
+
+<h3 id="s343">3.4.3 tcpdump によるパケット解析</h3>
+<p>　ネットワークインタフェース eth0 を流れる通信パケットをダンプする時は次のコマンドを実行する。</p>
+<p class="fig-caption">【tcpdumpコマンドによるパケットダンプ（要管理者権限）】</p>
+<div class="cmd"><pre>$ doas tcpdump -i eth0
+
+【出力例】　※指示があるまで、通信内容を表示し続けるので、必要なタイミングでCtrl + Cでプロセスを終了する。
+localhost:~$ doas tcpdump -i eth0
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+19:55:07.592601 IP 10.0.2.15.22 &gt; 192.168.235.215.50823: Flags [P.], seq 1912375977:1912376173, ack 482316753, win 62677, length 196
+19:55:07.593156 IP 192.168.235.215.50823 &gt; 10.0.2.15.22: Flags [.], ack 196, win 65535, length 0
+19:55:07.799730 IP 10.0.2.15.50888 &gt; 10.0.2.3.53: 15379+ PTR? 215.235.168.192.in-addr.arpa. (46)
+19:55:07.814387 IP 10.0.2.3.53 &gt; 10.0.2.15.50888: 15379 NXDomain* 0/1/0 (101)
+19:55:07.814823 IP 10.0.2.15.32853 &gt; 10.0.2.3.53: 31431+ PTR? 15.2.0.10.in-addr.arpa. (40)
+^C
+16 packets captured
+20 packets received by filter
+0 packets dropped by kernel</pre></div>
+<p>　通信が頻繁に行われているときは大量のデータが表示される。そのため、サービス（ポート番号）を指定して出力することも可能である。具体的にはサービス名ないしポート番号をportパラメータと一緒に指定する。</p>
+<p>　次のコマンドは、DNS（53番）をダンプするコマンドの一例である。</p>
+<p class="fig-caption">【tcpdumpコマンドによるパケットダンプ（DNS 53番）（要管理者権限）】</p>
+<div class="cmd"><pre>$ doas tcpdump -i eth0 port 53
+
+【出力例】　※指示があるまで、通信内容を表示し続けるので、必要なタイミングでCtrl + Cでプロセスを終了する。
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+19:58:01.118435 IP 10.0.2.15.37704 &gt; 10.0.2.3.53: 51546+ A? www.ai.chibatech.ac.jp. (40)
+19:58:01.118716 IP 10.0.2.15.37704 &gt; 10.0.2.3.53: 51547+ AAAA? www.ai.chibatech.ac.jp. (40)
+19:58:01.132482 IP 10.0.2.3.53 &gt; 10.0.2.15.37704: 51546 2/0/0 CNAME www.aicit.jp., A 202.17.20.3 (82)
+19:58:01.153161 IP 10.0.2.15.46947 &gt; 10.0.2.3.53: 42197+ PTR? 3.2.0.10.in-addr.arpa. (39)
+19:58:01.158521 IP 10.0.2.3.53 &gt; 10.0.2.15.46947: 42197 NXDomain* 0/1/0 (89)
+19:58:01.159167 IP 10.0.2.15.43990 &gt; 10.0.2.3.53: 27691+ PTR? 15.2.0.10.in-addr.arpa. (40)
+19:58:01.162602 IP 10.0.2.3.53 &gt; 10.0.2.15.43990: 27691 NXDomain* 0/1/0 (90)
+19:58:01.172217 IP 10.0.2.3.53 &gt; 10.0.2.15.37704: 51547 1/1/0 CNAME www.aicit.jp. (123)
+^C
+8 packets captured
+8 packets received by filter
+0 packets dropped by kernel</pre></div>
+<p>　同様に、次のコマンドで SSH（22番）だけを確認することもできる。</p>
+<p class="fig-caption">【tcpdumpコマンドによるパケットダンプ（SSH 22番）（要管理者権限）】</p>
+<div class="cmd"><pre>$ doas tcpdump -i eth0 port 22
+
+【出力例】　※指示があるまで、通信内容を表示し続けるので、必要なタイミングでCtrl + Cでプロセスを終了する。
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+19:59:11.068516 IP 10.0.2.15.22 &gt; 192.168.235.215.50823: Flags [P.], seq 1912380621:1912380817, ack 482317713, win 62677, length 196
+19:59:11.069663 IP 192.168.235.215.50823 &gt; 10.0.2.15.22: Flags [.], ack 196, win 65535, length 0
+19:59:11.098902 IP 10.0.2.15.22 &gt; 192.168.235.215.50823: Flags [P.], seq 196:472, ack 1, win 62677, length 276
+19:59:11.099854 IP 192.168.235.215.50823 &gt; 10.0.2.15.22: Flags [.], ack 472, win 65535, length 0
+19:59:11.401003 IP 10.0.2.15.22 &gt; 192.168.235.215.50823: Flags [P.], seq 472:716, ack 1, win 62677, length 244
+19:59:11.401645 IP 192.168.235.215.50823 &gt; 10.0.2.15.22: Flags [.], ack 716, win 65535, length 0
+19:59:11.503664 IP 10.0.2.15.22 &gt; 192.168.235.215.50823: Flags [P.], seq 716:960, ack 1, win 62677, length 244
+^C
+14 packets captured
+17 packets received by filter
+0 packets dropped by kernel</pre></div>
+
+<h2 id="s35">3.5. ハンズオン3： Kubernetes ネットワーク</h2>
+<p>　これまで、lo, eth0, docker0に絞って説明をしてきた。この節ではKubernetesのネットワークの理解を深めるために、これまで学習してきた内容をもとに、説明を省いてきた他のネットワークインタフェースについても説明する。</p>
+<p>　第1章で構築したネットワークインタフェースの関係図を以下に示す。なお、Kubernetes (k3s) の要素が新たに加わったことで要素が増えたため、すべてのホストが持っているローカルホストは暗黙の了解として記載は省く。また、直感的に理解しやすくするため、グループ化は「K3s」「Docker」「Host」の3点に焦点を当て、docker0の先は対比を行うためにコンテナを2台作成した想定で記載している。</p>
+<p class="fig-caption">【K3s 利用時の Kubernetes ネットワークの構成】　　※ 資料内の ID, IP などは実行環境や実行時期によって変わる</p>
+<div class="fig-img"><img src="images/ch3-fig10.png" alt="K3s利用時のKubernetesネットワークの構成" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch3-fig10.png</div></div>
+<p class="fig-caption">【Kubernetes（K3s）環境におけるネットワークインタフェースの一覧】</p>
+<table>
+<thead><tr><th>インタフェース</th><th>種別</th><th>主なIP/レンジ</th><th>役割</th><th>備考</th></tr></thead>
+<tbody>
+<tr><td>lo</td><td>ループバック</td><td>127.0.0.1/8, ::1</td><td>ホスト内通信</td><td>OS内部のみで使用</td></tr>
+<tr><td>eth0</td><td>物理/仮想NIC</td><td>10.0.2.15/24</td><td>外部ネットワークとの通信</td><td>インターネット・他ノードとの出口</td></tr>
+<tr><td>docker0</td><td>ブリッジ</td><td>172.17.0.1/16</td><td>Docker用ネットワーク</td><td>k3sとは基本的に無関係（未使用でも残る）</td></tr>
+<tr><td>flannel.1</td><td>VXLAN (overlay)</td><td>10.42.0.0/32</td><td>ノード間Pod通信（オーバーレイ）</td><td>UDP/VXLANで他ノードと接続、eth0を経由</td></tr>
+<tr><td>cni0</td><td>Linuxブリッジ</td><td>10.42.0.1/24</td><td>ノード内Podネットワークのハブ</td><td>Podはここにぶら下がる</td></tr>
+<tr><td>vethXXXX</td><td>vethペア</td><td>(IPv6 link-localのみ)</td><td>Podとcni0を接続</td><td>片側がPodのeth0、もう片側がcni0配下</td></tr>
+<tr><td>(Pod内 eth0)</td><td>仮想NIC</td><td>10.42.0.x/24</td><td>Podのネットワークインタフェース</td><td>vethの対向側（ホストからは見えない）</td></tr>
+</tbody>
+</table>
+<p>　これまでコンテナネットワークはdocker0を中心に説明をしてきたが、Kubernetes はコンテナの実行環境として docker ではなく、オーケストレーション用に軽量化した containerd を利用している。containerd 上では docker によって作られたコンテナがそのまま動くようになっている。接続構成としても、flannel.1を利用すること以外は containerd と docker のネットワーク構成は似ている。ここで、flannel.1 は複数ノード間連携に利用される。具体的には、VXLAN と呼ばれる通信方式を使って、複数のノード（ホスト）間を一つのネットワークで接続するために利用する。</p>
+<p>　ここで、docker は不要になるかというとそうではない。docker は単独で手軽に利用できるため、containerd 上で動作させるコンテナの開発・テストに利用することができる。そのため、本演習では両方のコンテナ環境をインストールしている（実際は開発環境と運用環境を分けるため、別々に環境を作ることが望ましい）。</p>
+
+<h3 id="s351">3.5.1 Pod の確認</h3>
+<p>　上の図表で示したKubernetesネットワークにおいて、Podの状態を実際に次のコマンドで確認することができる。</p>
+<p class="fig-caption">【Kubernetes 環境における 全Pod の起動状態の表示（要管理者権限）】</p>
+<div class="cmd"><pre>$ doas kubectl get pods -A -o wide　　※「-A」は kube-system 名前空間を含むすべての Pod を表示
+
+【出力例】
+NAMESPACE     NAME                                      READY   STATUS      RESTARTS      AGE   IP           NODE        NOMINATED NODE   READINESS GATES
+kube-system   coredns-76c974cb66-rgpxc                  1/1     Running     2 (43s ago)   39h   10.42.0.21   localhost   &lt;none&gt;           &lt;none&gt;
+kube-system   helm-install-traefik-crd-cznjk            0/1     Completed   0             39h   &lt;none&gt;       localhost   &lt;none&gt;           &lt;none&gt;
+kube-system   helm-install-traefik-qvzcx                0/1     Completed   1             39h   &lt;none&gt;       localhost   &lt;none&gt;           &lt;none&gt;
+kube-system   local-path-provisioner-8686667995-h7thb   1/1     Running     2 (43s ago)   39h   10.42.0.22   localhost   &lt;none&gt;           &lt;none&gt;
+kube-system   metrics-server-c8774f4f4-wnlsp            1/1     Running     3 (43s ago)   39h   10.42.0.19   localhost   &lt;none&gt;           &lt;none&gt;
+kube-system   svclb-traefik-5ac9af6a-vtd2l              2/2     Running     4 (43s ago)   39h   10.42.0.23   localhost   &lt;none&gt;           &lt;none&gt;
+kube-system   traefik-c5c8bf4ff-g9rwb                   1/1     Running     2 (43s ago)   39h   10.42.0.20   localhost   &lt;none&gt;           &lt;none&gt;</pre></div>
+
+<h3 id="s352">3.5.2 ホスト（ノード）側ネットワークの確認</h3>
+<p>　Kubernetes では、これまでホストとして説明してきたコンピュータをノードという名前で管理する。これまでに学んだipコマンドを利用して、ノード上のネットワークインタフェースの情報を表示することができる。3.5.1 で確かめた IP アドレスとノード側で表示されるインターフェスを確認すると先ほど説明した図の構造が見えてくる。</p>
+<h4>ネットワーク層（L3）レベルの確認</h4>
+<div class="cmd"><pre>$ ip address show
+
+【出力例】
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host proto kernel_lo
+       valid_lft forever preferred_lft forever
+2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:df:a3:fb brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fd17:625c:f037:2:a00:27ff:fedf:a3fb/64 scope global dynamic mngtmpaddr proto kernel_ra
+       valid_lft 86249sec preferred_lft 14249sec
+    inet6 fe80::a00:27ff:fedf:a3fb/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever
+3: docker0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN group default
+    link/ether ce:85:de:ef:a2:eb brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+4: flannel.1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UNKNOWN group default
+    link/ether 32:2f:26:f7:9f:eb brd ff:ff:ff:ff:ff:ff
+    inet 10.42.0.0/32 scope global flannel.1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::302f:26ff:fef7:9feb/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever
+5: cni0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UP group default qlen 1000
+    link/ether 02:d9:1c:b7:19:cb brd ff:ff:ff:ff:ff:ff
+    inet 10.42.0.1/24 brd 10.42.0.255 scope global cni0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::d9:1cff:feb7:19cb/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever
+6: veth8515a272@if2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue master cni0 state UP group default
+    link/ether 5e:fe:b4:15:a1:85 brd ff:ff:ff:ff:ff:ff link-netns cni-62b63129-cbfe-3411-ae48-515b0b4aecdb
+    inet6 fe80::5cfe:b4ff:fe15:a185/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever
+7: veth3c9c524e@if2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue master cni0 state UP group default
+    link/ether ca:ba:c1:b7:dc:c7 brd ff:ff:ff:ff:ff:ff link-netns cni-71cc5f70-960e-9a32-6ae8-b8ad709b159a
+    inet6 fe80::c8ba:c1ff:feb7:dcc7/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever
+8: vethb69d4310@if2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue master cni0 state UP group default
+    link/ether d6:1b:d6:18:d6:03 brd ff:ff:ff:ff:ff:ff link-netns cni-fe2f21d3-eec2-efc6-730a-f4e568ba5a88
+    inet6 fe80::d41b:d6ff:fe18:d603/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever
+9: veth3e1b22b5@if2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue master cni0 state UP group default
+    link/ether f6:f7:33:16:34:af brd ff:ff:ff:ff:ff:ff link-netns cni-37594c59-6d42-ba6b-382f-2686b7f2ec03
+    inet6 fe80::f4f7:33ff:fe16:34af/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever
+10: veth6502cd4e@if2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue master cni0 state UP group default
+    link/ether a6:7f:19:af:63:b5 brd ff:ff:ff:ff:ff:ff link-netns cni-b5847cb7-9c8a-b682-e18e-e407c72f5a5f
+    inet6 fe80::a47f:19ff:feaf:63b5/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever</pre></div>
+<h4>ブリッジ接続の確認</h4>
+<p>　ノード上のブリッジの接続状態は次のコマンドで確かめることができる。cni0, docker0が仮想L2スイッチを表しており、仮想LANポート（インタフェース）としてvethインタフェースが接続されていることがわかる。なお、cni0は K3s をインストールした段階で名前空間kube-systemに5つのコンテナが起動しているため仮想LANポートが5個用意されている。しかし、docker0はデフォルトでコンテナを起動していないため、現時点では仮想LANポートが0個になっている（図の例は2個のコンテナが実行されていることを想定）。</p>
+<div class="cmd"><pre>localhost:~$ brctl show
+bridge name     bridge id               STP enabled     interfaces
+cni0            8000.02d91cb719cb       no              veth3e1b22b5
+                                                        vethb69d4310
+                                                        veth8515a272
+                                                        veth6502cd4e
+                                                        veth3c9c524e
+docker0         8000.ce85deefa2eb       no</pre></div>
+<h4>仮想Ethernetで接続されたコンテナのインタフェース情報の確認</h4>
+<p>　brctlコマンドを利用した確認では、仮想L2スイッチの仮想LANポート（インタフェース）の先のコンテナを特定することはできない。しかし、ip address showコマンドで表示されるlink-netnsというリンク接続から接続先のコンテナの情報を取得することができる。具体的にはlink-netnsの記述の後にあるcni-62b63129-cbfe-3411-ae48-515b0b4aecdbというネットワーク名前空間（netns）情報を利用する。</p>
+<p>　以下に、ipコマンドを利用してnetnsを指定することで、接続先のコンテナのインタフェース情報を表示する方法を示す。</p>
+<p class="fig-caption">【netns指定によるコンテナ側ネットワークインタフェース情報の表示（要管理者権限）】</p>
+<div class="cmd"><pre>$ doas ip netns exec cni-62b63129-cbfe-3411-ae48-515b0b4aecdb ip address show
+
+【出力結果】
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host proto kernel_lo
+       valid_lft forever preferred_lft forever
+2: eth0@if6: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UP group default qlen 1000
+    link/ether 2a:be:08:9b:b8:26 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 10.42.0.19/24 brd 10.42.0.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::28be:8ff:fe9b:b826/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever</pre></div>
+<p>　コマンドの後半部からも推測できるように、出力はコンテナ側でip address showコマンドを実行して得られる出力が表示される。</p>
+<p>　なお、cni-62b63129-cbfe-3411-ae48-515b0b4aecdbの項目を調べたいnetnsのIDに置き換えることで、他のコンテナの情報についても調べることができる。</p>
+
+<h2 id="s36">3.6. 総合演習</h2>
+<p>　本章ではハンズオン1～3を通して、以下の内容を完了した。</p>
+<ul>
+<li>ネットワーク設定</li>
+<li>通信の可視化</li>
+<li>Kubernetes ネットワーク</li>
+</ul>
+<p>　これまでの内容を振り返って、以下の総合演習に取り組むこと。</p>
+
+<h3 id="s361">3.6.1. IP アドレスの割り当て</h3>
+<ol>
+<li>ipコマンドを利用して、インタフェースeth0のIP アドレスを192.168.2.1に設定せよ。</li>
+<li>課題1の結果として、IP アドレスとルーティングテーブルが正しく反映されたことを確認せよ。</li>
+<li>設定した IP アドレスに対して、pingコマンドで疎通確認できることを確認せよ。</li>
+<li>インタフェースeth0のIP アドレス割当を、DHCP の動的割り当てからinterfacesファイルの変更による静的割当へ変更せよ。この時の割当IPは192.168.3.1とする。</li>
+<li>課題4の結果として、IP アドレスとルーティングテーブルが正しく反映されたことを確認せよ。</li>
+<li>設定したIP アドレスに対して、pingコマンドで疎通確認できることを確認せよ。</li>
+<li>最後に DHCP で動的IPを取得できるよう設定を変更せよ。</li>
+<li>課題7の結果として、IP アドレスとルーティングテーブルが正しく反映されたことを確認せよ。</li>
+<li>設定したIP アドレスに対して、pingコマンドで疎通確認できることを確認せよ。</li>
+</ol>
+
+<h3 id="s362">3.6.2. ping コマンドによる通信の可視化</h3>
+<ol>
+<li>次のコマンドで表示されたすべての IPv4 アドレスに対して、 ping コマンドによる疎通確認が行えることを確認せよ。<div class="cmd"><pre>$ ip address show</pre></div></li>
+<li>次のコマンドで表示されたすべての Pod の IPv4 アドレスに対して、 ping コマンドによる疎通確認が行えることを確認せよ。<div class="cmd"><pre>$ doas kubectl get pods -A -o wide</pre></div></li>
+</ol>
+
+<h3 id="s363">3.6.3. tcpdumpによる通信の可視化（HTTPS通信）</h3>
+<ol>
+<li>SSH で Alpine Linux へログインし、tcpdumpコマンドを利用してHTTPS通信（TCP 443番）をパケットキャプチャせよ。</li>
+<li>課題1を実行した状態で、VirtualBox のコンソール画面から以下のコマンドを実行した時に出力されるキャプチャ画面の内容を確認し、何が行われているか推測せよ。<div class="cmd"><pre>$ curl https://www.aicit.jp/ 　　※curl コマンドによる AI 学科 Web ページトップ画面のダウンロード</pre></div></li>
+</ol>
+
+<h3 id="s364">3.6.4. ホスト、Pod のネットワークインタフェース情報の確認</h3>
+<ol>
+<li>ホスト上で以下のコマンドを実行して、ホストの IP アドレスを確認せよ。<div class="cmd"><pre>$ ip address show</pre></div></li>
+<li>ip link showコマンドでネットワーク名前空間情報を確認し、以下のコマンドの[netns-id]部分を変更することで、Pod の IP アドレスを表示せよ。<div class="cmd"><pre>$ doas ip netns exec [netns-id] ip address show</pre></div></li>
+<li>課題2で表示した5つの Pod の IP アドレスを比較することで、それらの違いについて考えよ。</li>
+</ol>
+
+<h3 id="s365">3.6.5. ホスト、Pod のサービス情報の確認</h3>
+<ol>
+<li>ホスト上で以下のコマンドを実行して、ホストで起動しているサービスを確認せよ。<div class="cmd"><pre>$ doas netstat -tulnp</pre></div></li>
+<li>ip link showコマンドでネットワーク名前空間情報を確認し、以下のコマンドの[netns-id]部分を変更することで、Pod で起動しているサービスを表示せよ。<div class="cmd"><pre>$ doas ip netns exec [netns-id] netstat -tulnp</pre></div></li>
+<li>課題2で表示した5つの Pod のサービスを比較することで、それらの違いについて考えよ。</li>
+</ol>
+
+<h3 id="s366">3.6.6. ホスト、Pod のルート情報の確認</h3>
+<ol>
+<li>ホスト上で以下のコマンドを実行して、ホストのルート情報を確認せよ。<div class="cmd"><pre>$ ip route list</pre></div></li>
+<li>ip link showコマンドでネットワーク名前空間情報を確認し、以下のコマンドの[netns-id]部分を変更することで、Pod のルート情報を表示せよ。<div class="cmd"><pre>$ doas ip netns exec [netns-id] ip route list</pre></div></li>
+<li>課題2で表示した5つの Pod のルート情報を比較することで、それらの違いについて考えよ。</li>
+</ol>
+
+<div class="page-nav">
+  <a onclick="navigate('ch2-a2-portforward')">← A2.2. ポートフォワーディング設定方法</a>
+  <a onclick="navigate('ch3-a1-snapshot')">A3.1. スナップショット機能のすすめ →</a>
+</div>`
   },
 
   'ch3-a1-snapshot': {
