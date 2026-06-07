@@ -5545,8 +5545,76 @@ $ nslookup 172.2_.___.11　　　　　　　　　　　　　 ※ LAN上の IP
 
   'ch5-a1-dns': {
     title: 'A5.1. 名前解決の詳細',
-    toc: [{ level: 1, label: 'A5.1. 名前解決の詳細', anchor: 'top' }],
-    content: `<h1 id="top">A5.1. 名前解決の詳細</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    toc: [
+      { level: 1, label: 'A5.1. 名前解決の詳細', anchor: 'top' },
+      { level: 2, label: '図1. musl ライブラリを利用した名前解決', anchor: 'fig1-musl' },
+      { level: 2, label: '表1. musl 名前解決の流れ', anchor: 'tbl1-musl' },
+      { level: 2, label: '図2. glibc ライブラリを利用した名前解決', anchor: 'fig2-glibc' },
+      { level: 2, label: '表2. glibc 名前解決の手順', anchor: 'tbl2-glibc' },
+    ],
+    content: `
+<h1 id="top">A5.1. ホスト上の名前解決の詳細</h1>
+<p class="meta">公開日： 2026年5月16日（土）</p>
+<p class="meta">開講日： 2026年5月18日（月）</p>
+
+<p>　5章の名前解決の説明では、簡単なモデルを用いて解説したが、より詳細なフローがわかった方が理解が深まる。 そこで、本演習で利用している Alpine Linux の名前解決の詳細を図1に示す。 また、図に対する解説を表1に示す。</p>
+
+<h2 id="fig1-musl">【図1. Linux における musl ライブラリを利用した名前解決】</h2>
+<div class="fig-wrap"><img src="images/a51-fig1.png" alt="musllibcを利用した名前解決フロー図" class="fig-img"></div>
+
+<h2 id="tbl1-musl">【表1. musl ライブラリを利用した名前解決の流れ】</h2>
+<table>
+<thead><tr><th>手順</th><th>処理主体</th><th>処理内容</th></tr></thead>
+<tbody>
+<tr><td>①</td><td>アプリケーションプログラム → musl libc</td><td>アプリケーションプログラムが getaddrinfo() などを呼び出し、名前解決を要求する</td></tr>
+<tr><td>②</td><td>musl libc → resolver</td><td>musl libc が内部の resolver に処理を委譲する</td></tr>
+<tr><td>③</td><td>resolver → /etc/hosts</td><td>resolver がまず /etc/hosts を参照する</td></tr>
+<tr><td>④</td><td>/etc/hosts → resolver</td><td>該当エントリがあればIPアドレスを返す（あればここで解決完了）</td></tr>
+<tr><td>⑤</td><td>resolver → /etc/resolv.conf</td><td>hostsで解決できない場合、DNS設定ファイルを参照する</td></tr>
+<tr><td>⑥</td><td>/etc/resolv.conf → stub resolver</td><td>nameserver などの設定を読み込み、DNS問い合わせの準備を行う</td></tr>
+<tr><td>⑦</td><td>stub resolver → フルリゾルバ</td><td>DNSサーバ（フルリゾルバ）へ問い合わせる</td></tr>
+<tr><td>⑧</td><td>フルリゾルバ → 権威DNSサーバ</td><td>必要に応じて権威サーバへ問い合わせる</td></tr>
+<tr><td>⑨</td><td>権威DNSサーバ → フルリゾルバ</td><td>DNSレコード（A/AAAA/CNAMEなど）を返す</td></tr>
+<tr><td>⑩</td><td>フルリゾルバ → stub resolver</td><td>フルリゾルバが結果を返す</td></tr>
+<tr><td>⑪</td><td>stub resolver → resolver</td><td>stub resolver が結果を返す</td></tr>
+<tr><td>⑫</td><td>resolver → musl libc</td><td>resolver が結果を返す</td></tr>
+<tr><td>⑬</td><td>musl libc → アプリケーションプログラム</td><td>最終的なIPアドレスをアプリケーションプログラムに返す</td></tr>
+</tbody>
+</table>
+
+<p>　Alpine Linux は以前少し触れたが、軽量動作のため、メインのライブラリに musl を利用している。 Ubuntu や他の本格的なディストリビューションでは、より高機能な glibc のライブラリが用いられている。 glibc を利用した場合に比べ musl は名前解決のプロセスも一部簡略化しているため、参考までに glibc を利用した場合の名前解決の詳細も図2に示す。 同様に、この図に対する解説を表2に示す。</p>
+
+<h2 id="fig2-glibc">【図2. Linux における glibc ライブラリを利用した名前解決】</h2>
+<p class="meta">（図2の画像は追加予定）</p>
+
+<h2 id="tbl2-glibc">【表2. glibc ライブラリを利用した名前解決の手順（glibc / NSS ベース）】</h2>
+<table>
+<thead><tr><th>手順</th><th>処理主体</th><th>処理内容</th></tr></thead>
+<tbody>
+<tr><td>①</td><td>アプリケーションプログラム → glibc</td><td>アプリケーションプログラムが getaddrinfo() などを呼び出し、名前解決を要求する</td></tr>
+<tr><td>②</td><td>glibc → NSS</td><td>glibcの名前解決APIがNSS（Name Service Switch）に処理を委譲する</td></tr>
+<tr><td>③</td><td>NSS → nsswitch.conf</td><td>/etc/nsswitch.conf を参照し、名前解決の順序（例：files → dns）を決定する</td></tr>
+<tr><td>④</td><td>NSS → nss_files</td><td>最初の解決手段として files モジュールを呼び出す</td></tr>
+<tr><td>⑤</td><td>nss_files → /etc/hosts</td><td>/etc/hosts を参照してローカルの静的定義を確認する</td></tr>
+<tr><td>⑥</td><td>/etc/hosts → nss_files</td><td>該当エントリがあればIPアドレスを返す（あればここで解決完了）</td></tr>
+<tr><td>⑦</td><td>NSS → nss_dns</td><td>hostsで解決できない場合、次に dns モジュールを呼び出す</td></tr>
+<tr><td>⑧</td><td>nss_dns → /etc/resolv.conf</td><td>DNS設定ファイルを参照し、名前サーバや検索ドメインを取得する</td></tr>
+<tr><td>⑨</td><td>resolv.conf → stub resolver</td><td>設定に基づき、glibcのスタブリゾルバが問い合わせ準備を行う</td></tr>
+<tr><td>⑩</td><td>stub resolver → フルリゾルバ</td><td>DNSサーバ（フルリゾルバ）へ問い合わせる</td></tr>
+<tr><td>⑪</td><td>フルリゾルバ → 権威DNSサーバ</td><td>必要に応じて権威サーバへ問い合わせる（反復問い合わせ）</td></tr>
+<tr><td>⑫</td><td>権威DNSサーバ → フルリゾルバ</td><td>DNSレコード（A/AAAA/CNAMEなど）を返す</td></tr>
+<tr><td>⑬</td><td>フルリゾルバ → stub resolver</td><td>フルリゾルバが結果を返す（キャッシュされる）</td></tr>
+<tr><td>⑭</td><td>stub resolver → nss_dns</td><td>スタブリゾルバが結果を返す</td></tr>
+<tr><td>⑮</td><td>nss_dns → NSS</td><td>DNSモジュールが結果を返す</td></tr>
+<tr><td>⑯</td><td>NSS → glibc</td><td>NSSが最終的な結果をglibcに返す</td></tr>
+<tr><td>⑰</td><td>glibc → アプリケーションプログラム</td><td>glibcがIPアドレスをアプリケーションプログラムに返す</td></tr>
+</tbody>
+</table>
+
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch5-lan2-2')">← 5. LANの設計2(2)</a>
+  <a onclick="navigate('ch6-cloud1')">6. クラウドサービスの利用法1 →</a>
+</div>`
   },
 
   'ch6-cloud1': {
