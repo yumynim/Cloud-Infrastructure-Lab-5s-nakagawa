@@ -7137,8 +7137,465 @@ dev# kubectl delete -f postgresql-pvc.yaml</pre></div>
 
   'ch7-a1-sql': {
     title: 'A7.1. SQL リファレンス',
-    toc: [{ level: 1, label: 'A7.1. SQL リファレンス', anchor: 'top' }],
-    content: `<h1 id="top">A7.1. SQL リファレンス</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    toc: [
+      { level: 1, label: 'A7.1. SQL リファレンス', anchor: 'top' },
+      { level: 2, label: '(1) SQL とは', anchor: 's1' },
+      { level: 2, label: '(2) SQL の基本4操作（CRUD）', anchor: 's2' },
+      { level: 2, label: '(3) SQL の読み方', anchor: 's3' },
+      { level: 2, label: '(4) SQL 実行時の注意', anchor: 's4' },
+      { level: 2, label: '(5) よく利用する SQL', anchor: 's5' },
+      { level: 2, label: '(6) PostgreSQL でよく使う psql コマンド', anchor: 's6' },
+      { level: 2, label: '(7) データベースソフトウェアの特徴の違い', anchor: 's7' },
+      { level: 2, label: '(8) SQL 例文集', anchor: 's8' },
+      { level: 3, label: 'SELECT', anchor: 's8-select' },
+      { level: 3, label: 'WHERE', anchor: 's8-where' },
+      { level: 3, label: '並び替え', anchor: 's8-order' },
+      { level: 3, label: 'LIMIT', anchor: 's8-limit' },
+      { level: 3, label: '集計関数', anchor: 's8-agg' },
+      { level: 3, label: 'GROUP BY', anchor: 's8-group' },
+      { level: 3, label: 'HAVING', anchor: 's8-having' },
+      { level: 3, label: 'JOIN', anchor: 's8-join' },
+      { level: 3, label: 'CASE', anchor: 's8-case' },
+      { level: 3, label: 'INSERT', anchor: 's8-insert' },
+      { level: 3, label: 'UPDATE', anchor: 's8-update' },
+      { level: 3, label: 'DELETE', anchor: 's8-delete' },
+      { level: 3, label: 'CREATE TABLE', anchor: 's8-create' },
+      { level: 3, label: 'ALTER TABLE', anchor: 's8-alter' },
+      { level: 3, label: 'INDEX', anchor: 's8-index' },
+      { level: 3, label: 'サブクエリ', anchor: 's8-sub' },
+      { level: 3, label: 'EXISTS', anchor: 's8-exists' },
+      { level: 3, label: 'CTE（WITH）', anchor: 's8-cte' },
+      { level: 3, label: 'ウィンドウ関数', anchor: 's8-window' },
+      { level: 3, label: '日付処理', anchor: 's8-date' },
+      { level: 3, label: 'UPSERT', anchor: 's8-upsert' },
+    ],
+    content: `<h1 id="top">A7.1. SQL リファレンス</h1>
+
+<h2 id="s1">(1) SQL とは</h2>
+<p>　SQL（Structured Query Language）は、リレーショナルデータベースを操作するための言語である。 PostgreSQL や MySQL などのデータベースでは、データを「テーブル（表）」として保存する。</p>
+<p>　例えば、利用者情報を管理する場合は次のような表になる。</p>
+<table>
+<thead><tr><th>id</th><th>name</th><th>age</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Tanaka</td><td>20</td></tr>
+<tr><td>2</td><td>Suzuki</td><td>25</td></tr>
+<tr><td>3</td><td>Sato</td><td>30</td></tr>
+</tbody>
+</table>
+<p>SQL を利用すると、次のような操作が行える。</p>
+<ul>
+<li>データを検索する</li>
+<li>データを追加する</li>
+<li>データを更新する</li>
+<li>データを削除する</li>
+</ul>
+
+<h2 id="s2">(2) SQL の基本4操作（CRUD）</h2>
+<p>　Web アプリケーションでは、次の4種類の操作が頻繁に利用される。</p>
+<table>
+<thead><tr><th>CRUD</th><th>SQL</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>Create</td><td>INSERT</td><td>データ追加</td></tr>
+<tr><td>Read</td><td>SELECT</td><td>データ検索</td></tr>
+<tr><td>Update</td><td>UPDATE</td><td>データ更新</td></tr>
+<tr><td>Delete</td><td>DELETE</td><td>データ削除</td></tr>
+</tbody>
+</table>
+<p>　まずはこの4つを確実に覚えることが重要である。</p>
+
+<h2 id="s3">(3) SQL の読み方</h2>
+<p>　例えば次の SQL を考える。</p>
+<div class="cmd"><pre>SELECT name
+FROM users
+WHERE age >= 20
+ORDER BY age DESC;</pre></div>
+<p>　SQL は上から読むのではなく、次のような意味になる。</p>
+<div class="cmd"><pre>users テーブルから
+↓
+age が 20 以上のデータを探し
+↓
+年齢の大きい順に並べ
+↓
+name 列を表示する</pre></div>
+<p>　慣れないうちは、「どのテーブルから」「どんな条件で」「何を表示するか」の3点を意識して読むと理解しやすい。</p>
+
+<h2 id="s4">(4) SQL 実行時の注意</h2>
+<h4>UPDATE の注意</h4>
+<div class="cmd"><pre>UPDATE users
+SET age = 20;</pre></div>
+<p>　この SQL は全利用者の年齢を 20 に変更する。</p>
+<p>　更新対象を限定したい場合は WHERE 句を付ける。</p>
+<div class="cmd"><pre>UPDATE users
+SET age = 20
+WHERE id = 1;</pre></div>
+<h4>DELETE の注意</h4>
+<div class="cmd"><pre>DELETE FROM users;</pre></div>
+<p>　この SQL はテーブル内の全データを削除する。</p>
+<p>　通常は WHERE 句を利用する。</p>
+<div class="cmd"><pre>DELETE FROM users
+WHERE id = 1;</pre></div>
+<p>　実運用では UPDATE と DELETE を実行する前に、同じ条件で SELECT を実行して対象レコードを確認する習慣を付けると安全である。</p>
+
+<h2 id="s5">(5) よく利用する SQL</h2>
+<p>　初心者が最初に覚えると良い SQL は次の順番である。</p>
+<ol>
+<li>SELECT</li>
+<li>WHERE</li>
+<li>ORDER BY</li>
+<li>INSERT</li>
+<li>UPDATE</li>
+<li>DELETE</li>
+<li>JOIN</li>
+<li>GROUP BY</li>
+</ol>
+<p>　まずはここまで理解できれば、多くの Web アプリケーションのデータ操作を理解できる。</p>
+
+<h2 id="s6">(6) PostgreSQL でよく使う psql コマンド</h2>
+<p>　SQL とは別に、psql には専用コマンドが存在する。</p>
+<h4>テーブル一覧</h4>
+<div class="cmd"><pre>\dt</pre></div>
+<h4>テーブル構造表示</h4>
+<div class="cmd"><pre>\d users</pre></div>
+<h4>データベース一覧</h4>
+<div class="cmd"><pre>\l</pre></div>
+<h4>接続中データベース確認</h4>
+<div class="cmd"><pre>SELECT current_database();</pre></div>
+<h4>終了</h4>
+<div class="cmd"><pre>\q</pre></div>
+
+<h2 id="s7">(7) データベースソフトウェアの特徴の違い</h2>
+<p>　現在利用されているリレーショナルデータベース（RDBMS）には様々な種類があるが、代表的なものとして MySQL、PostgreSQL、SQLite がある。 それぞれ同じ SQL を利用するが、得意とする用途や機能に違いがある。</p>
+<p>【表A7.1. 代表的なデータベースソフトウェアの比較】</p>
+<table>
+<thead><tr><th>項目</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th></tr></thead>
+<tbody>
+<tr><td>主な用途</td><td>Webアプリケーション</td><td>大規模システム・業務システム</td><td>組み込み機器・スマートフォンアプリ</td></tr>
+<tr><td>動作形態</td><td>サーバ型</td><td>サーバ型</td><td>ファイル型</td></tr>
+<tr><td>学習難易度</td><td>易しい</td><td>やや高い</td><td>易しい</td></tr>
+<tr><td>型チェック</td><td>やや緩い</td><td>厳格</td><td>緩い</td></tr>
+<tr><td>JSON 機能</td><td>○</td><td>◎</td><td>○</td></tr>
+<tr><td>ウィンドウ関数</td><td>○</td><td>◎</td><td>○</td></tr>
+<tr><td>CTE（WITH句）</td><td>○</td><td>◎</td><td>○</td></tr>
+<tr><td>トランザクション</td><td>○</td><td>◎</td><td>○</td></tr>
+<tr><td>処理性能</td><td>◎</td><td>◎</td><td>○</td></tr>
+<tr><td>大規模運用</td><td>○</td><td>◎</td><td>△</td></tr>
+<tr><td>導入の容易さ</td><td>○</td><td>○</td><td>◎</td></tr>
+</tbody>
+</table>
+
+<h4>MySQL</h4>
+<p>　MySQL は Web アプリケーションで広く利用されているデータベースである。</p>
+<p>　代表的な利用例として、次のようなものがある。</p>
+<ul><li>WordPress</li><li>ECサイト</li><li>SNS</li><li>ブログシステム</li></ul>
+<p>　比較的学習しやすく、導入事例も多いため、初心者が最初に触れることが多い。</p>
+
+<h4>PostgreSQL</h4>
+<p>　PostgreSQL は高機能なオープンソースデータベースである。</p>
+<p>　特徴として、次のようなものがある。</p>
+<ul><li>厳格なデータ管理</li><li>高度な検索機能</li><li>強力なトランザクション機能</li><li>JSON データの扱いが得意</li></ul>
+<p>　近年ではクラウドサービスや業務システムでも広く利用されている。</p>
+<p>　本演習では、Kubernetes 環境との親和性が高く、実運用でも利用されることが多いため PostgreSQL を採用している。</p>
+
+<h4>SQLite</h4>
+<p>　SQLite はサーバを必要としない軽量データベースである。</p>
+<p>　MySQL や PostgreSQL がサーバプロセスとして動作するのに対し、SQLite はデータベース全体を 1 つのファイルとして管理する。</p>
+<p>そのため、次のような用途で広く利用されている。</p>
+<ul><li>Android アプリ</li><li>iPhone アプリ</li><li>小規模なツール</li><li>組み込み機器</li></ul>
+<p>　学習用途にも適しているが、多数の利用者が同時にアクセスする Web サービスには向いていない。</p>
+
+<h4>本演習における PostgreSQL の利用</h4>
+<p>本演習では 次のような理由から PostgreSQL を利用している。</p>
+<ul>
+<li>クラウド環境で広く利用されている</li>
+<li>Docker や Kubernetes 上で動作させやすい</li>
+<li>SQL の標準機能を幅広く利用できる</li>
+<li>大規模システムでも利用される高機能なデータベースである</li>
+</ul>
+<p>　なお、基本的な SQL（SELECT、INSERT、UPDATE、DELETE）は MySQL や SQLite でもほぼ同じように利用できる。</p>
+
+<h2 id="s8">(8) SQL 例文集</h2>
+
+<h3 id="s8-select">SELECT</h3>
+<div class="cmd"><pre>SELECT *
+FROM users;</pre></div>
+<p>　特定列のみ</p>
+<div class="cmd"><pre>SELECT id, name
+FROM users;</pre></div>
+<p>　重複除外</p>
+<div class="cmd"><pre>SELECT DISTINCT country
+FROM users;</pre></div>
+
+<h3 id="s8-where">WHERE</h3>
+<div class="cmd"><pre>SELECT *
+FROM users
+WHERE age >= 20;</pre></div>
+<p>　複数条件</p>
+<div class="cmd"><pre>SELECT *
+FROM users
+WHERE age >= 20
+  AND country = 'JP';</pre></div>
+<p>IN</p>
+<div class="cmd"><pre>SELECT *
+FROM users
+WHERE country IN ('JP', 'US');</pre></div>
+<p>BETWEEN</p>
+<div class="cmd"><pre>SELECT *
+FROM users
+WHERE age BETWEEN 20 AND 30;</pre></div>
+<p>LIKE</p>
+<div class="cmd"><pre>SELECT *
+FROM users
+WHERE name LIKE '田中%';</pre></div>
+<table>
+<thead><tr><th>記号</th><th>意味</th></tr></thead>
+<tbody>
+<tr><td>%</td><td>0文字以上</td></tr>
+<tr><td>_</td><td>1文字</td></tr>
+</tbody>
+</table>
+
+<h3 id="s8-order">並び替え</h3>
+<p>　昇順</p>
+<div class="cmd"><pre>SELECT *
+FROM users
+ORDER BY age ASC;</pre></div>
+<p>　降順</p>
+<div class="cmd"><pre>SELECT *
+FROM users
+ORDER BY age DESC;</pre></div>
+<p>　複数列</p>
+<div class="cmd"><pre>SELECT *
+FROM users
+ORDER BY country, age DESC;</pre></div>
+
+<h3 id="s8-limit">LIMIT</h3>
+<div class="cmd"><pre>SELECT *
+FROM users
+LIMIT 10;</pre></div>
+<p>　ページング</p>
+<div class="cmd"><pre>SELECT *
+FROM users
+LIMIT 10 OFFSET 20;</pre></div>
+
+<h3 id="s8-agg">集計関数</h3>
+<div class="cmd"><pre>COUNT(*)
+SUM(amount)
+AVG(score)
+MAX(age)
+MIN(age)</pre></div>
+<p>例</p>
+<div class="cmd"><pre>SELECT
+    COUNT(*) AS total_users,
+    AVG(age) AS avg_age
+FROM users;</pre></div>
+
+<h3 id="s8-group">GROUP BY</h3>
+<div class="cmd"><pre>SELECT country,
+       COUNT(*) AS cnt
+FROM users
+GROUP BY country;</pre></div>
+<p>結果例</p>
+<table>
+<thead><tr><th>country</th><th>cnt</th></tr></thead>
+<tbody>
+<tr><td>JP</td><td>120</td></tr>
+<tr><td>US</td><td>80</td></tr>
+</tbody>
+</table>
+
+<h3 id="s8-having">HAVING</h3>
+<div class="cmd"><pre>SELECT country,
+       COUNT(*) AS cnt
+FROM users
+GROUP BY country
+HAVING COUNT(*) >= 10;</pre></div>
+<p>覚え方</p>
+<div class="cmd"><pre>WHERE  → 集計前
+HAVING → 集計後</pre></div>
+
+<h3 id="s8-join">JOIN</h3>
+<h4>INNER JOIN</h4>
+<p>　両方に存在するデータ</p>
+<div class="cmd"><pre>SELECT u.name,
+       o.amount
+FROM users u
+INNER JOIN orders o
+ON u.id = o.user_id;</pre></div>
+<h4>LEFT JOIN</h4>
+<p>　ユーザーを全件取得</p>
+<div class="cmd"><pre>SELECT u.name,
+       o.amount
+FROM users u
+LEFT JOIN orders o
+ON u.id = o.user_id;</pre></div>
+<h4>RIGHT JOIN</h4>
+<p>　※SQLiteは未対応</p>
+<div class="cmd"><pre>SELECT *
+FROM users u
+RIGHT JOIN orders o
+ON u.id = o.user_id;</pre></div>
+<h4>FULL OUTER JOIN</h4>
+<p>　※MySQLは未対応</p>
+<div class="cmd"><pre>SELECT *
+FROM users u
+FULL OUTER JOIN orders o
+ON u.id = o.user_id;</pre></div>
+
+<h3 id="s8-case">CASE</h3>
+<div class="cmd"><pre>SELECT name,
+       CASE
+           WHEN age &lt; 20 THEN 'Teen'
+           WHEN age &lt; 30 THEN '20s'
+           ELSE '30+'
+       END AS age_group
+FROM users;</pre></div>
+
+<h3 id="s8-insert">INSERT</h3>
+<div class="cmd"><pre>INSERT INTO users
+(name, age)
+VALUES
+('田中', 25);</pre></div>
+<p>　複数行</p>
+<div class="cmd"><pre>INSERT INTO users
+(name, age)
+VALUES
+('田中', 25),
+('佐藤', 30),
+('鈴木', 28);</pre></div>
+
+<h3 id="s8-update">UPDATE</h3>
+<div class="cmd"><pre>UPDATE users
+SET age = 26
+WHERE id = 1;</pre></div>
+<p>　※ WHERE忘れに注意する。</p>
+<div class="cmd"><pre>UPDATE users
+SET age = 26;</pre></div>
+<p>　全件更新となる。</p>
+
+<h3 id="s8-delete">DELETE</h3>
+<div class="cmd"><pre>DELETE FROM users
+WHERE id = 1;</pre></div>
+<p>　※ WHERE忘れに注意する。</p>
+<div class="cmd"><pre>DELETE FROM users;</pre></div>
+<p>　全件削除となる。</p>
+
+<h3 id="s8-create">CREATE TABLE</h3>
+<h4>PostgreSQL</h4>
+<div class="cmd"><pre>CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    age INTEGER
+);</pre></div>
+<h4>MySQL</h4>
+<div class="cmd"><pre>CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    age INT
+);</pre></div>
+<h4>SQLite</h4>
+<div class="cmd"><pre>CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    age INTEGER
+);</pre></div>
+
+<h3 id="s8-alter">ALTER TABLE</h3>
+<p>　列追加</p>
+<div class="cmd"><pre>ALTER TABLE users
+ADD COLUMN email VARCHAR(255);</pre></div>
+<p>　列削除</p>
+<div class="cmd"><pre>ALTER TABLE users
+DROP COLUMN email;</pre></div>
+
+<h3 id="s8-index">INDEX</h3>
+<p>　作成</p>
+<div class="cmd"><pre>CREATE INDEX idx_users_email
+ON users(email);</pre></div>
+<p>　削除</p>
+<div class="cmd"><pre>DROP INDEX idx_users_email;</pre></div>
+
+<h3 id="s8-sub">サブクエリ</h3>
+<div class="cmd"><pre>SELECT *
+FROM users
+WHERE id IN (
+    SELECT user_id
+    FROM orders
+);</pre></div>
+
+<h3 id="s8-exists">EXISTS</h3>
+<p>　大量データで有効</p>
+<div class="cmd"><pre>SELECT *
+FROM users u
+WHERE EXISTS (
+    SELECT 1
+    FROM orders o
+    WHERE o.user_id = u.id
+);</pre></div>
+
+<h3 id="s8-cte">CTE（WITH）</h3>
+<p>PostgreSQLで特によく使う</p>
+<div class="cmd"><pre>WITH sales AS (
+    SELECT
+        user_id,
+        SUM(amount) AS total
+    FROM orders
+    GROUP BY user_id
+)
+SELECT *
+FROM sales
+WHERE total > 10000;</pre></div>
+
+<h3 id="s8-window">ウィンドウ関数</h3>
+<p>順位付け</p>
+<div class="cmd"><pre>SELECT
+    name,
+    score,
+    RANK() OVER (
+        ORDER BY score DESC
+    ) AS ranking
+FROM users;</pre></div>
+<p>結果</p>
+<table>
+<thead><tr><th>name</th><th>score</th><th>ranking</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>95</td><td>1</td></tr>
+<tr><td>B</td><td>90</td><td>2</td></tr>
+<tr><td>C</td><td>90</td><td>2</td></tr>
+</tbody>
+</table>
+
+<h3 id="s8-date">日付処理</h3>
+<h4>PostgreSQL</h4>
+<div class="cmd"><pre>NOW()
+CURRENT_DATE
+DATE_TRUNC('month', created_at)</pre></div>
+<h4>MySQL</h4>
+<div class="cmd"><pre>NOW()
+CURDATE()
+DATE_FORMAT(created_at, '%Y-%m')</pre></div>
+<h4>SQLite</h4>
+<div class="cmd"><pre>datetime('now')
+date('now')
+strftime('%Y-%m', created_at)</pre></div>
+
+<h3 id="s8-upsert">UPSERT</h3>
+<p>　データが存在しなければ INSERT、存在していれば UPDATE を 1 回の SQL で実現する仕組み。</p>
+<h4>PostgreSQL</h4>
+<div class="cmd"><pre>INSERT INTO users(id, name)
+VALUES (1, '田中')
+ON CONFLICT(id)
+DO UPDATE SET
+name = EXCLUDED.name;</pre></div>
+<h4>MySQL</h4>
+<div class="cmd"><pre>INSERT INTO users(id, name)
+VALUES (1, '田中')
+ON DUPLICATE KEY UPDATE
+name = VALUES(name);</pre></div>
+<h4>SQLite</h4>
+<div class="cmd"><pre>INSERT OR REPLACE INTO users
+(id, name)
+VALUES
+(1, '田中');</pre></div>`
   },
 
   'books-ta': {
