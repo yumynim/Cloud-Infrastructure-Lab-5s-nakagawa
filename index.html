@@ -5605,8 +5605,658 @@ $ nslookup 172.2_.___.11　　　　　　　　　　　　　 ※ LAN上の IP
 
   'ch6-cloud1': {
     title: '6. クラウドサービスの利用法1',
-    toc: [{ level: 1, label: '6. クラウドサービスの利用法1', anchor: 'top' }],
-    content: `<h1 id="top">6. クラウドサービスの利用法1</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    toc: [
+      { level: 1, label: '6.1. はじめに', anchor: 's61' },
+      { level: 2, label: '6.1.1. 概要', anchor: 's611' },
+      { level: 2, label: '6.1.2. 前提となる知識・スキル', anchor: 's612' },
+      { level: 2, label: '6.1.3. 到達目標', anchor: 's613' },
+      { level: 2, label: '6.1.4. 第6章の操作対象', anchor: 's614' },
+      { level: 2, label: '6.1.5. 第6章で起動するホスト', anchor: 's615' },
+      { level: 1, label: '6.2. MinIO', anchor: 's62' },
+      { level: 1, label: '6.3. ハンズオン1：環境の確認', anchor: 's63' },
+      { level: 1, label: '6.4. ハンズオン2：Docker 環境', anchor: 's64' },
+      { level: 2, label: '6.4.1. 事前準備', anchor: 's641' },
+      { level: 2, label: '6.4.2. デプロイ', anchor: 's642' },
+      { level: 2, label: '6.4.3. サービスの利用確認', anchor: 's643' },
+      { level: 2, label: '6.4.4. 後始末', anchor: 's644' },
+      { level: 1, label: '6.5. ハンズオン3：K3s 試験環境', anchor: 's65' },
+      { level: 2, label: '6.5.1. 事前準備', anchor: 's651' },
+      { level: 2, label: '6.5.2. デプロイ', anchor: 's652' },
+      { level: 2, label: '6.5.3. サービスの利用確認', anchor: 's653' },
+      { level: 2, label: '6.5.4. 後始末（今回は不要）', anchor: 's654' },
+      { level: 1, label: '6.6. 総合演習', anchor: 's66' },
+      { level: 2, label: '6.6.1. オブジェクトのアップロード - GUI', anchor: 's661' },
+      { level: 2, label: '6.6.2. オブジェクトのダウンロード - GUI', anchor: 's662' },
+      { level: 2, label: '6.6.3. オブジェクトのダウンロード - CUI', anchor: 's663' },
+    ],
+    content: `
+<h1 id="top">第6章 クラウドサービスの利用法1</h1>
+<p class="meta">クラウドストレージ</p>
+<p class="meta">公開日： 2026年5月30日（土）</p>
+<p class="meta">開講日： 2026年6月 1日（月）</p>
+
+<h2 id="s61">6.1. はじめに</h2>
+<h3 id="s611">6.1.1. 概要</h3>
+<p>　本章では、Web アプリケーションで利用されるオブジェクトストレージの利用法について学習する。 クラウドストレージは、Web API を利用して、インターネット経由で利用できるデータ保存サービスであり、 物理的なストレージ機器を自身で管理する必要のないサービスである。 そのため、「ファイルを置く場所」ではなく、「アプリケーションが使うデータ基盤」として利用されている。 代表的なサービスには、Amazon S3、Google Cloud Storage、Azure Blob Storage などがあり、 バックアップ、ログ保存、コンテンツ配信、データ共有など幅広い用途で利用されている。</p>
+<p>　本演習では，AWS S3 の互換 API を持つオープンソースオブジェクトストレージ MinIO を使って、今後作成する Chat アプリのデータ基盤を作成する。この取り組みを通して、クラウドストレージの利用法とアクセス制御の基礎について学ぶ。</p>
+
+<h3 id="s612">6.1.2. 前提となる知識・スキル</h3>
+<ul>
+<li>IP アドレス、ホスト名、FQDN の基本を理解していること。</li>
+<li>Linux の基本操作を理解していること。</li>
+<li>Docker, Kubernetes の基本操作が手順を見ながら行えること。</li>
+<li>VirtualBox のポートフォワーディングの設定が行えること。</li>
+</ul>
+
+<h3 id="s613">6.1.3. 到達目標</h3>
+<ul>
+<li>MinIO の役割を説明できる</li>
+<li>MinIO サーバを Docker 上でデプロイできる。</li>
+<li>MinIO サーバを Kubernetes 上でデプロイできる。</li>
+<li>MinIO を利用して、オブジェクトのアップロード・ダウンロードができる（Web ブラウザ, curl コマンド）</li>
+</ul>
+
+<h3 id="s614">6.1.4. 第6章の操作対象</h3>
+<p>　第6章では、以下の角括弧で囲まれたマシン上で、MinIO の基本動作について確認する。</p>
+<p class="fig-caption">【演習環境の構成（Alpine Linux・Docker・K3s）】</p>
+<div class="cmd"><pre>ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            │
+            │　【Web アプリケーション用クラウド環境（開発・テスト用）】
+            ├─ [Alpine Linux（alpine-k3s, core:2, ram:4G, hdd:20G）]　　※ dev.s____.enshu.aicit.jp
+            │    ├─ Docker - MinIO
+            │    └─ K3s（Kubernetes + containerd）- MinIO
+            │
+            │　【Web アプリケーション用クラウド環境（公開用クラスタ）】
+            ├─ Alpine Linux（k3s-lb, core:1, ram:1G, hdd:8G）　　　　 ※ lb.s____.enshu.aicit.jp
+            │    ├─ HAProxy
+            │    ├─ Unbound
+            │    └─ WireGuard Client
+            ├─ Alpine Linux（k3s-server, core:1, ram:2G, hdd:16G）　　※ sv.s____.enshu.aicit.jp
+            │    ├─ Docker ── BIND9
+            │    └─ K3s（Kubernetes + containerd）
+            ├─ Alpine Linux（k3s-worker1, core:1, ram:1G, hdd:8G）　　※ wk1.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            ├─ Alpine Linux（k3s-worker2, core:1, ram:1G, hdd:8G）　　※ wk2.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            └─ Alpine Linux（k3s-worker3, core:1, ram:1G, hdd:8G）　　※ wk3.s____.enshu.aicit.jp
+                 └─ Docker, K3s（Kubernetes + containerd）</pre></div>
+
+<h3 id="s615">6.1.5. 第6章で起動するホスト</h3>
+<p>　第6章では、以下の仮想マシンを起動する。</p>
+<div class="cmd"><pre>lb　 ※ あらかじめ起動
+dev　※ 資料の手順に従い起動</pre></div>
+
+<h2 id="s62">6.2. MinIO</h2>
+<p>　MinIO は、S3互換のオブジェクトストレージで、ファイルを「オブジェクト」として保存する仕組みを持つ。 オブジェクトストレージでは、フォルダに似た役割を持つ「バケット（Bucket）」が管理単位となり、その中に画像や動画などのオブジェクトを格納する。 これらのデータへのアクセスは、URL に含まれるオブジェクトキーに基づいて参照される。 そのため、Web アプリケーションはその URL を利用することで、事前に設定された要件のもと、オブジェクトデータ（バイナリデータ）へアクセスすることができる。 ここで、代表的なオブジェクトの種類には次のようなものが挙げられる。</p>
+<ul>
+<li>静止画像</li>
+<li>動画像</li>
+<li>添付ファイル</li>
+<li>バックアップデータ</li>
+</ul>
+<p>　大量のデータを管理するソフトウェアとして、一般的に SQL を用いるリレーショナルデータベース（RDB）が利用されているが、オブジェクトデータを直接保存すると、データの肥大化に伴って、バックアップが重くなったり、性能低下を引き起こしたりすることがある。 特に、Webアプリではオブジェクトデータが大量に扱われてデータが肥大化しがちである。</p>
+<p>　そのため、Web アプリケーションではリレーショナルデータベースとオブジェクトストレージを役割分担して利用することが多い。 具体的には、テキスト情報や検索に使う情報はデータベースに保存し、画像や動画などの大きなデータはオブジェクトストレージに保存することで、管理しやすさと性能の両立を図る。 例えば、図 6.2.1 に示すように、オブジェクトデータ本体はオブジェクトストレージに保存し、その所在を表す URL を SQL データベースに保存するという実装が行われる。</p>
+<p class="fig-caption">【図6.2.1. リレーショナルデータベースとオブジェクトストレージの役割分担例】</p>
+<div class="fig-wrap"><img src="images/ch6-fig1.png" alt="RDBとオブジェクトストレージの役割分担図" class="fig-img" style="max-width:560px;"></div>
+<p>　ところで、MinIO は Amazon S3（Simple Storage Service）と互換性を持つため、多くのクラウドネイティブアプリケーションやバックアップツールから利用できる。 クラウド環境だけでなく、オンプレミス環境や Docker 環境でも簡単に構築できることから、学習用途や小規模システムの検証環境としても利用されている。</p>
+<p>　そこで、本章では、Docker を利用してMinIOの簡単な動作確認を行い、Kubernetes 環境を利用して実際のデプロイ方法に触れることで、オブジェクトストレージの基本について学ぶ。</p>
+
+<h2 id="s63">6.3. ハンズオン1： 環境の確認（dev）</h2>
+<p>　この節では、ハンズオン2, 3のベース環境となるホスト dev に対して、第5章 総合演習 5.4.2, 第6章 総合演習 5.9.1 で指示された操作が完了しているか確認する。</p>
+
+<h3>(1) VirtualBox のネットワーク設定の確認</h3>
+<p>　VirtualBoxのネットワーク設定を確認し、表5.4.2 に示すようにアダプターが二つ有効になっているか、指定された内容に変更されているかを確認する。 また、ポートフォワーディングは割り当てが NAT の場合のみ有効なため、アダプター1で利用していたポートフォワーディングの設定を、アダプター2で設定し直す。</p>
+<p class="fig-caption">【表5.4.2. alpine-k3s のネットワークアダプタの設定】　※第5回資料より転載</p>
+<table>
+<thead><tr><th>アダプター名</th><th>有効化</th><th>割り当て</th><th>アダプタータイプ</th></tr></thead>
+<tbody>
+<tr><td>アダプター1</td><td>ON（デフォルト）</td><td>ホストオンリーアダプター（変更）</td><td>準仮想化ネットワーク virtio-net（変更）</td></tr>
+<tr><td>アダプター2</td><td>ON（変更）</td><td>NAT（変更）</td><td>準仮想化ネットワーク virtio-net（変更）</td></tr>
+<tr><td>アダプター3</td><td>OFF（デフォルト）</td><td>—</td><td>—</td></tr>
+<tr><td>アダプター4</td><td>OFF（デフォルト）</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表6.4.1. ポートフォワーディング設定（アダプター2への設定振替）】</p>
+<table>
+<thead><tr><th>仮想マシン名</th><th>ホスト名</th><th>アダプタ名</th><th>名前</th><th>プロトコル</th><th>ホストIP</th><th>ホストポート</th><th>ゲストIP</th><th>ゲストポート</th></tr></thead>
+<tbody>
+<tr><td>alpine-k3s</td><td>dev</td><td>アダプター2</td><td>SSH</td><td>TCP</td><td>※空欄</td><td>10022</td><td>※空欄</td><td>22</td></tr>
+</tbody>
+</table>
+
+<h3>(2) root ユーザへの移行</h3>
+<p>　VirtualBoxのネットワーク設定の確認が済んだら、ゲストOSを起動する。 その後、root ユーザに移行する。</p>
+<p class="fig-caption">【root ユーザへの移行】</p>
+<div class="cmd"><pre>dev$ doas su -</pre></div>
+
+<h3>(3) 過去に起動したコンテナの停止</h3>
+<p>　余計なリソースの消費を抑えるため、これまでの演習で起動したままのコンテナがある場合は停止する。</p>
+<p class="fig-caption">【Docker コンテナの確認と停止】</p>
+<div class="cmd"><pre>dev# docker ps
+※ もし、実行中のコンテナが表示される場合は以下のコマンドで停止する。
+dev# docker stop コンテナID　　※ コンテナIDは「CONTAINER ID」に表示された値に置き換える</pre></div>
+<p class="fig-caption">【Kubernetes コンテナの確認と停止】</p>
+<div class="cmd"><pre># kubectl get pods -A | grep -v kube-system
+※ もし、実行中のコンテナが表示される場合は以下のコマンドで停止する。
+# kubectl delete -f 起動時に指定した YAML ファイル</pre></div>
+
+<h3>(4) 設定ファイルの確認</h3>
+<p>　第5章 総合演習 5.4.2, 第6章 総合演習 5.9.1 で指示された設定に変更されているか確認する。 設定ファイルの確認は cat コマンドを利用し、修正が必要な場合はテキストエディタを利用する。</p>
+<p class="fig-caption">【表5.4.1. alpine-k3s の基本仕様】　※第5回資料より転載</p>
+<table>
+<thead><tr><th>用途</th><th>仮想マシン名</th><th>IPアドレス</th><th>ホスト名</th><th>FQDN</th></tr></thead>
+<tbody>
+<tr><td>開発用VM</td><td>alpine-k3s</td><td>eth0: 172.2_.__.51<br>eth1: dhcp</td><td>dev</td><td>dev.s____.enshu.aicit.jp</td></tr>
+</tbody>
+</table>
+<p class="meta">　　※ 下線部は自分の情報に置き換える</p>
+<p class="fig-caption">【ホスト名の設定： /etc/hostname】　※ 下線部は自分の情報に置き換える</p>
+<div class="cmd"><pre>dev.s___.enshu.aicit.jp</pre></div>
+<p class="fig-caption">【ローカル名前解決データベースの設定： /etc/hosts】　※ 下線部は自分のLANの情報に置き換える</p>
+<div class="cmd"><pre>172.2_.__.51   dev.s___.enshu.aicit.jp dev
+127.0.0.1       localhost localhost.localdomain
+::1             localhost localhost.localdomain
+　　※ 権威 DNS サーバを設定したため、他のホストの記述は省くことができる。</pre></div>
+<p class="fig-caption">【ネットワークインタフェースの設定： /etc/network/interfaces】　※ 下線部は自分の情報に置き換える</p>
+<div class="cmd"><pre>auto lo
+iface lo inet loopback
+auto eth0
+iface eth0 inet static
+        address 172.2_.__.51
+        netmask 255.255.255.0
+        gateway 172.2_.__.1
+auto eth1
+iface eth1 inet dhcp</pre></div>
+<p class="fig-caption">【DHCP クライアントの設定： /etc/udhcpc/udhcpc.conf】</p>
+<div class="cmd"><pre># Do not overwrite /etc/resolv.conf
+RESOLV_CONF="no"　　※コメント「#」を削除して、DHCP 利用時の「resolv.conf」書き換えを禁止する
+# Use alternative path for resolv.conf
+#RESOLV_CONF="/tmp/resolv.conf"
+# Prevent overwriting of resolv.conf on a per-interface basis
+#NO_DNS="eth1 wlan1"
+# List of interfaces where DHCP routes are ignored
+NO_GATEWAY="eth1 wlan1"　　※コメント「#」を削除して、DHCP 利用時の「eth1」のゲートウェイ追加を禁止</pre></div>
+<p class="fig-caption">【スタブリゾルバの設定： /etc/resolv.conf】　※下線部を自分の情報に置き換える</p>
+<div class="cmd"><pre>search s____.enshu.aicit.jp
+nameserver 172.2_.__.1</pre></div>
+<p>　もし、設定が異なる場合は、以下のコマンドで設定し直す。</p>
+<div class="cmd"><pre>dev$ doas setup-dns -d s____.enshu.aicit.jp -n 172.2_.__.1</pre></div>
+
+<h3>(5) Kubernetes の localhost ノードの削除</h3>
+<p>　手順(4)で設定変更があった場合は必ず再起動してから、この操作を行う。</p>
+<div class="cmd"><pre># reboot</pre></div>
+<p>　K3s 環境では、インストール後にホスト名を変更すると、変更前後の二つのノードが登録された表示となる。 本演習のケースでは、localhost と 変更後の FQDN が該当する。 そうすると、扱うコンテナの数が見かけ上2倍に見えるため、状況によって負荷が増える恐れがある。 そのため、以下の手順で不要となった localhost ノードのエントリを削除する。</p>
+<div class="cmd"><pre># kubectl get nodes
+※ もし、localhost ノードが表示される場合は、以下のコマンドで削除し、OSを再起動する。
+# kubectl delete node localhost</pre></div>
+<p>　ノード削除後は、Alpine Linux を再起動することで、余計なコンテナの起動を抑えることができる。</p>
+<div class="cmd"><pre># reboot</pre></div>
+
+<h2 id="s64">6.4. ハンズオン2： Docker 環境（dev）</h2>
+<p>　本節では、Docker を利用して MinIO サーバを開発用ホストである dev 上に構築する。 Docker を利用すると、複雑なインストール作業を行わずに、コンテナとして簡単に MinIO を実行できる。 また、コンテナを削除しても、ボリュームに保存されたデータは保持されるため、安全に環境を作り直すことができる。</p>
+<p>　MinIO サーバ構築後は、図6.4.1 に示すように、受講者PCの Web ブラウザから、VirtualBox および Alpine Linux の NAT ルータを経由することで、Docker コンテナ上で動作する MinIO にアクセスすることができる。</p>
+<p class="fig-caption">【図6.4.1. Docker を利用した検証構成】</p>
+<div class="fig-wrap"><img src="images/ch6-fig2.png" alt="Docker検証構成図" class="fig-img" style="max-width:700px;"></div>
+
+<h3 id="s641">6.4.1. 事前準備</h3>
+<h4>(1) 実行環境の確認</h4>
+<p>　第6章は、/root 内のオペレーションが多いため、管理者ユーザ root で操作する。 そのため、まず doas コマンドを利用して root ユーザへ移行する。</p>
+<p class="fig-caption">【root ユーザへの移行】</p>
+<div class="cmd"><pre>dev$ doas su -</pre></div>
+
+<h4>(2) 作業ディレクトリの作成</h4>
+<p>　次に、MinIO 用作業ディレクトリ /root/docker/minio を作成し、カレントディレクトリを作成したディレクトリに変更する。</p>
+<div class="cmd"><pre>dev# mkdir -p /root/docker/minio　　※ `/root/docker/minio`ディレクトリの作成
+dev# cd /root/docker/minio　　　　　 ※ カレントワーキングディレクトリを`/root/docker/minio`に移動</pre></div>
+
+<h4>(3) ボリュームの事前作成</h4>
+<p>　MinIO のデータ保存先として Docker ボリュームを作成する。 Docker ボリュームを利用することで、コンテナを削除してもデータを保持できる。 具体的には、docker volume create により minio-data という名前の永続ボリュームを作成する。</p>
+<div class="cmd"><pre>dev# docker volume ls　　　　　　　　　　 ※ ボリューム一覧の事前確認
+dev# docker volume create minio-data　　※ ボリュームの作成
+dev# docker volume ls　　　　　　　　　　 ※ ボリューム一覧の事後確認（minio-data が表示される）</pre></div>
+
+<h4>(4) シークレットファイル .env ファイルの作成</h4>
+<p>　MinIO の管理者ユーザ情報を .env ファイルに保存する。 認証情報を Docker コマンドへ直接書かずに分離することで、設定管理を安全に行える。</p>
+<p class="fig-caption">【Docker 用 MinIO シークレットファイル：/root/docker/minio/.env】</p>
+<div class="cmd"><pre>MINIO_ROOT_USER=minioadmin　　　　　※ 管理者ユーザ名（一般的には管理しやすく推測されにくいものを利用する）
+MINIO_ROOT_PASSWORD=minioadmin123　※ 管理者パスワード（推測されにくい十分に長いパスワードを設定）</pre></div>
+<p>　次に、作成したファイルのパーミッションを変更する。 chmod 600 により、.env ファイルを所有者のみ読み書き可能な状態へ変更することで、他ユーザからの認証情報閲覧を防止することができる。</p>
+<div class="cmd"><pre>dev# chmod 600 .env</pre></div>
+<p>　推測されにくいパスワードをその都度考えるのは負担が大きい。 そのため、一般的には機械的に安全なパスワードを作成する。 以下に、openssl コマンドを利用したパスワード作成例を示す。</p>
+<div class="cmd"><pre>dev# openssl rand -hex 12
+ff3e5e7148a5a9aa13d16324　　※出力例
+　　※ -hex は 16 進数（0-9, a-f） の文字列を出力 　　※ 12 は 12 バイトを意味するため、出力は 24 文字</pre></div>
+<p>　別の方法として、base64 形式を利用してランダム文字を生成する方法も利用されている。</p>
+<div class="cmd"><pre>dev# openssl rand -base64 32
+gX3ablUhzfbl/ubr3NzR2sPjHmziD33s7p+6ErjCEAQ=　　※出力例</pre></div>
+
+<h3 id="s642">6.4.2. デプロイ</h3>
+<p>　カレントディレクトリが /root/docker/minio になっており、かつ .env ファイルがあることを ls -al コマンドで確認した上で、以下のコマンドで MinIO コンテナを起動する。</p>
+<p class="fig-caption">【1回目の起動】</p>
+<div class="cmd"><pre>dev# docker run -d \
+  --name minio \
+  --env-file .env \
+  -p 9000:9000 \
+  -p 9001:9001 \
+  -v minio-data:/data \
+  minio/minio:latest \
+  server /data --console-address ":9001"
+　　※ 演習時は「hub.enshu.aicit.jp/minio/minio:latest」を指定（学内のみアクセス可）</pre></div>
+<p class="fig-caption">【リスト6.4.1. コマンドオプションの解説】</p>
+<table>
+<thead><tr><th>オプション</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>-d</td><td>バックグラウンドで実行</td></tr>
+<tr><td>--name minio</td><td>コンテナ名を minio に設定</td></tr>
+<tr><td>--env-file .env</td><td>.env ファイルから環境変数を読み込み</td></tr>
+<tr><td>-p 9000:9000</td><td>MinIO API ポートの外部公開（AL-NATのポートフォワーディング設定）</td></tr>
+<tr><td>-p 9001:9001</td><td>管理コンソール用ポートの外部公開（AL-NATのポートフォワーディング設定）</td></tr>
+<tr><td>-v minio-data:/data</td><td>Docker ボリュームを /data にマウント</td></tr>
+<tr><td>minio/minio:latest</td><td>使用する MinIO イメージ</td></tr>
+<tr><td>server /data</td><td>/data をデータ保存先としてサーバ起動</td></tr>
+<tr><td>--console-address ":9001"</td><td>管理画面を 9001 番ポートで公開</td></tr>
+</tbody>
+</table>
+<p>　もし、ホスト dev を再起動したり、docker stop minio で停止したりした後は、次のコマンドでコンテナを起動することができる。</p>
+<p class="fig-caption">【2回目以降の起動】</p>
+<div class="cmd"><pre>dev# docker start minio</pre></div>
+
+<h3 id="s643">6.4.3. サービスの利用確認</h3>
+<h4>(1) コマンドラインによる起動の確認</h4>
+<p class="fig-caption">【起動コンテナの確認】</p>
+<div class="cmd"><pre># docker ps</pre></div>
+<p class="fig-caption">【ネットワークサービスの確認】</p>
+<div class="cmd"><pre># netstat -ntlp</pre></div>
+<p class="fig-caption">【minio コンテナのログ確認】</p>
+<div class="cmd"><pre># docker logs minio</pre></div>
+
+<h4>(2) Web ブラウザによるサービスの利用</h4>
+<p class="fig-caption">【表 6.4.2. MinIO が公開するサービスと URL】　※要ポートフォワーディング設定</p>
+<table>
+<thead><tr><th>役割</th><th>URL</th></tr></thead>
+<tbody>
+<tr><td>MinIO API</td><td>http://localhost:10090</td></tr>
+<tr><td>MinIO 管理コンソール</td><td>http://localhost:10091</td></tr>
+</tbody>
+</table>
+<p>　MinIO 管理コンソールへ Web ブラウザを利用してアクセスすると、ログイン画面が表示される。 ここで、.env ファイルで設定した管理者ユーザ名とパスワードを入力し、ログインする。</p>
+<ul>
+<li>バケットの作成</li>
+<li>ファイルアップロード</li>
+<li>オブジェクト一覧表示</li>
+<li>オブジェクト削除</li>
+<li>アクセスURL確認</li>
+</ul>
+
+<h4>(3) MinIO へのポートフォワーディング設定</h4>
+<p class="fig-caption">【表6.4.3. MinIO へのポートフォワーディング設定】</p>
+<table>
+<thead><tr><th>仮想マシン名</th><th>ホスト名</th><th>アダプタ名</th><th>名前</th><th>プロトコル</th><th>ホストIP</th><th>ホストポート</th><th>ゲストIP</th><th>ゲストポート</th></tr></thead>
+<tbody>
+<tr><td>alpine-k3s</td><td>dev</td><td>アダプター2</td><td>MinIO-API</td><td>TCP</td><td>※空欄</td><td>10090</td><td>※空欄</td><td>9000</td></tr>
+<tr><td>alpine-k3s</td><td>dev</td><td>アダプター2</td><td>MinIO-Console</td><td>TCP</td><td>※空欄</td><td>10091</td><td>※空欄</td><td>9001</td></tr>
+</tbody>
+</table>
+
+<h4>(4) バケットの作成</h4>
+<ol>
+<li>Create Bucket を選択する</li>
+<li>chat-app を作成する</li>
+</ol>
+
+<h4>(5) ファイルアップロード</h4>
+<ol>
+<li>作成した chat-app を開く</li>
+<li>Upload から任意の画像ファイルをアップロードする</li>
+<li>アップロードしたファイル名が一覧に表示されたことを確認する</li>
+<li>ウィンドウ右側にあるメニューから Preview を選んで画像を確認する</li>
+</ol>
+
+<h4>(6) オブジェクトの共有</h4>
+<ol>
+<li>chat-app バケットにアップロードしたファイルを選択する</li>
+<li>ウィンドウ右側にあるメニューから Share をクリックする</li>
+<li>共有期間を指定して、リンクをコピーする</li>
+<li>Web ブラウザを別のタブで開き、リンクした URL をアドレスバーにペーストしてエンターキーを押す</li>
+<li>アップロードした画像ファイルがダウンロードできたことを確認する</li>
+</ol>
+
+<h4>(7) オブジェクトのパブリック共有</h4>
+<p class="fig-caption">【バケットのアクセス権限変更】</p>
+<div class="cmd"><pre>dev# docker exec -it minio bash　　※ 以下、MinIO コンテナのコンソールへ接続
+bash-5.1# mc alias set minio http://localhost:9000 管理者ユーザ名 管理者パスワード
+bash-5.1# mc anonymous set download minio/chat-app
+bash-5.1# exit
+dev#</pre></div>
+<p class="fig-caption">【設定内容の確認】</p>
+<ol>
+<li>chat-app バケットの Web コンソール画面をリロードする。</li>
+<li>chat-app バケットの Access が PRIVATE から CUSTOM へ変更されていることを確認する。</li>
+<li>新しいシークレットウィンドウから以下の URL にアクセスする。<br>
+　<code>http://localhost:10091/browser/chat-app/</code></li>
+<li>バケット内のオブジェクト一覧が表示されることを確認する。</li>
+<li>続いて、バケット内に保存した画像ファイルへ直接アクセスする。<br>
+　<code>http://localhost:10090/chat-app/ファイル名</code></li>
+<li>画像が表示されれば、パブリック公開設定が正しく適用されている。</li>
+</ol>
+<p class="fig-caption">【補足】設定を元に戻したい場合：</p>
+<div class="cmd"><pre>bash-5.1# mc anonymous set none minio/chat-app　　※コンテナに接続した状態で実行</pre></div>
+
+<h3 id="s644">6.4.4. 後始末</h3>
+<h4>コンテナの停止</h4>
+<div class="cmd"><pre>docker stop minio</pre></div>
+<h4>コンテナの削除</h4>
+<div class="cmd"><pre>docker rm minio</pre></div>
+<h4>ボリュームの削除</h4>
+<div class="cmd"><pre># docker volume ls　　　　　　　　※ 事前確認
+# docker volume rm minio-data　　※ ボリュームの削除
+# docker volume ls　　　　　　　　※ 事後確認（minio-data がなくなったことを確認）</pre></div>
+
+<h2 id="s65">6.5. ハンズオン3： K3s 試験環境（dev）</h2>
+<p>　本節では、Kubernetes の軽量実行環境である K3s 上へ MinIO をデプロイし、永続ボリューム要求（PVC）を利用したオブジェクトストレージ環境を構築する。 本環境は後続のチャットアプリ構築を前提としており、Node.js バックエンドから MinIO を利用するためのテスト環境となる。</p>
+<p>　この節で構築する環境は、図 6.5.1 の以下のファイルによって定義することができる。</p>
+<p class="fig-caption">【図6.5.1. ディレクトリ構成】</p>
+<div class="cmd"><pre>chat-app
+  └── k3s
+       ├── minio-deploy.yaml
+       ├── namespace.yaml
+       ├── pvc.yaml
+       ├── secret.yaml
+       └── service.yaml</pre></div>
+<p>　定義ファイルを利用して MinIO サーバを構築した後は、図6.5.2 に示すように、受講者PCの Web ブラウザから MinIO Console へアクセスできる。</p>
+<p class="fig-caption">【図6.5.2. Kubernetes を利用した検証構成】</p>
+<div class="fig-wrap"><img src="images/ch6-fig3.png" alt="Kubernetes検証構成図" class="fig-img" style="max-width:700px;"></div>
+
+<h3 id="s651">6.5.1. 事前準備</h3>
+<h4>(1) K3s ノードの確認</h4>
+<div class="cmd"><pre>dev# kubectl get nodes -o wide</pre></div>
+<h4>(2) 作業ディレクトリ作成</h4>
+<div class="cmd"><pre>dev# mkdir -p /root/k3s/chat-app/k3s
+dev# cd /root/k3s/chat-app/k3s</pre></div>
+
+<h3 id="s652">6.5.2. デプロイ</h3>
+<p>　本演習では、MinIO を構築するために 表 6.5.1 に示す 5 個の YAML 形式の定義ファイルを利用する。</p>
+<p class="fig-caption">【表6.5.1. ハンズオン 3 で作成する定義ファイル（ディレクトリ： /root/k3s/chat-app/k3s）】</p>
+<table>
+<thead><tr><th>No.</th><th>定義ファイル名</th><th>内容</th><th>Dockerとの比較</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>namespace.yaml</td><td>名前空間（管理グループ）の定義</td><td>対応なし</td></tr>
+<tr><td>2</td><td>pvc.yaml</td><td>永続ボリューム要求の定義</td><td>永続ボリューム minio-data に相当</td></tr>
+<tr><td>3</td><td>secret.yaml</td><td>シークレットの定義</td><td>.env に相当</td></tr>
+<tr><td>4</td><td>minio-deploy.yaml</td><td>MinIO のデプロイ定義</td><td>docker run コマンドに相当</td></tr>
+<tr><td>5</td><td>service.yaml</td><td>MinIO のサービス定義</td><td>docker run の -p オプションに相当</td></tr>
+</tbody>
+</table>
+
+<h4>(1) 名前空間の定義： namespace.yaml</h4>
+<p class="fig-caption">【リスト 6.5.1. 名前空間の定義： /root/k3s/chat-app/k3s/namespace.yaml】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: Namespace
+metadata:
+  name: chat-app</pre></div>
+<p class="fig-caption">【表 6.5.2. namespace.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>Kubernetes API のバージョンを指定。Namespace は基本機能なので v1 を使用。</td></tr>
+<tr><td>kind</td><td>Namespace</td><td>作成するリソースの種類。ここでは「名前空間」を作成。</td></tr>
+<tr><td>metadata</td><td>（オブジェクト）</td><td>リソースの基本情報をまとめる項目。名前やラベルなどを設定。</td></tr>
+<tr><td>metadata.name</td><td>chat-app</td><td>作成される名前空間の名前。この名前空間の中にアプリやPodを配置。</td></tr>
+</tbody>
+</table>
+<div class="cmd"><pre>dev# kubectl apply -f namespace.yaml
+namespace/chat-app created
+dev# kubectl get namespace</pre></div>
+
+<h4>(2) 永続ボリューム要求（PVC）の定義： pvc.yaml</h4>
+<p class="fig-caption">【リスト 6.5.2. 永続ボリューム要求の定義： /root/k3s/chat-app/k3s/pvc.yaml】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  namespace: chat-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi</pre></div>
+<p class="fig-caption">【表 6.5.3. pvc.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>Kubernetes API のバージョン。PVC は基本 API の v1 を使用。</td></tr>
+<tr><td>kind</td><td>PersistentVolumeClaim</td><td>「永続ストレージを要求するリソース」であることを示す。略語は PVC。</td></tr>
+<tr><td>metadata.name</td><td>minio-pvc</td><td>PVC の名前。この名前を Pod 側から参照して使用。</td></tr>
+<tr><td>metadata.namespace</td><td>chat-app</td><td>chat-app 名前空間にこの PVC を作成することを示す。</td></tr>
+<tr><td>spec.accessModes</td><td>ReadWriteOnce</td><td>「1つのノードから読み書き可能」を意味する。</td></tr>
+<tr><td>spec.resources.requests.storage</td><td>1Gi</td><td>必要なストレージ容量。1Gi は約 1GB を意味する。</td></tr>
+</tbody>
+</table>
+<div class="cmd"><pre>dev# kubectl apply -f pvc.yaml
+persistentvolumeclaim/minio-pvc created
+dev# kubectl get pvc -n chat-app</pre></div>
+
+<h4>(3) Secret 作成</h4>
+<p class="fig-caption">【リスト 6.5.3. シークレットの定義： /root/k3s/chat-app/k3s/secret.yaml】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-secret
+  namespace: chat-app
+type: Opaque
+stringData:
+  MINIO_ROOT_USER: minioadmin　　　　　※ 管理者ユーザ名
+  MINIO_ROOT_PASSWORD: minioadmin123　※ 管理者パスワード</pre></div>
+<p class="fig-caption">【表 6.5.4. secret.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>Kubernetes API のバージョン。Secret は基本機能なので v1 を使用。</td></tr>
+<tr><td>kind</td><td>Secret</td><td>作成するリソースの種類。ここでは「機密情報」を保存する Secret を作成。</td></tr>
+<tr><td>metadata.name</td><td>minio-secret</td><td>Secret の名前。他の Pod や Deployment からこの名前で参照。</td></tr>
+<tr><td>metadata.namespace</td><td>chat-app</td><td>この Secret を配置する Namespace。chat-app 内で利用。</td></tr>
+<tr><td>type</td><td>Opaque</td><td>任意のキーと値を保存する一般的な Secret。</td></tr>
+<tr><td>stringData.MINIO_ROOT_USER</td><td>minioadmin</td><td>MinIO の管理者ユーザ名。</td></tr>
+<tr><td>stringData.MINIO_ROOT_PASSWORD</td><td>minioadmin123</td><td>MinIO の管理者パスワード。</td></tr>
+</tbody>
+</table>
+<div class="cmd"><pre>dev# kubectl apply -f secret.yaml
+secret/minio-secret created
+dev# kubectl get secrets -n chat-app</pre></div>
+
+<h4>(4) MinIO のデプロイ定義</h4>
+<p class="fig-caption">【リスト 6.5.4. MinIO のデプロイ定義： /root/k3s/chat-app/k3s/minio-deploy.yaml】</p>
+<div class="cmd"><pre>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: chat-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          args:
+            - server
+            - /data
+            - --console-address
+            - ":9001"
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_USER
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_PASSWORD
+          ports:
+            - containerPort: 9000
+            - containerPort: 9001
+          volumeMounts:
+            - mountPath: /data
+              name: minio-storage
+      volumes:
+        - name: minio-storage
+          persistentVolumeClaim:
+            claimName: minio-pvc</pre></div>
+<p class="fig-caption">【表 6.5.5. minio-deploy.yaml の解説（抜粋）】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>kind</td><td>Deployment</td><td>Pod を管理するリソース。コンテナの起動・再起動・複製数管理などを担当。</td></tr>
+<tr><td>replicas</td><td>1</td><td>MinIO を1台だけ起動。常に1つの Pod が動作するよう維持。</td></tr>
+<tr><td>containers.image</td><td>minio/minio:latest</td><td>使用するDockerイメージ。</td></tr>
+<tr><td>args</td><td>server /data --console-address ":9001"</td><td>MinIO起動時のコマンド。</td></tr>
+<tr><td>env[*].valueFrom.secretKeyRef</td><td>minio-secret</td><td>Secret から認証情報を取得。</td></tr>
+<tr><td>volumeMounts.mountPath</td><td>/data</td><td>データ保存場所。PersistentVolume にマウントされた領域を利用する。</td></tr>
+<tr><td>volumes.persistentVolumeClaim.claimName</td><td>minio-pvc</td><td>利用する PVC 名。Pod 再起動後もデータを保持。</td></tr>
+</tbody>
+</table>
+<div class="cmd"><pre>dev# kubectl apply -f minio-deploy.yaml
+deployment.apps/minio created
+dev# kubectl get pods -n chat-app -o wide
+dev# kubectl get pvc -n chat-app</pre></div>
+
+<h4>(5) MinIO のサービス定義</h4>
+<p class="fig-caption">【リスト 6.5.5. MinIO のサービス定義： /root/k3s/chat-app/k3s/service.yaml】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: Service
+metadata:
+  name: minio-service
+  namespace: chat-app
+spec:
+  type: NodePort
+  selector:
+    app: minio
+  ports:
+    - name: api
+      port: 9000
+      targetPort: 9000
+      nodePort: 30090
+    - name: console
+      port: 9001
+      targetPort: 9001
+      nodePort: 30091</pre></div>
+<p class="fig-caption">【表 6.5.6. service.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>kind</td><td>Service</td><td>Pod を外部へ公開するリソース。</td></tr>
+<tr><td>spec.type</td><td>NodePort</td><td>ノードの特定ポートを外部に公開する方式。</td></tr>
+<tr><td>spec.selector.app</td><td>minio</td><td>app=minio ラベルを持つPodへ通信を転送。</td></tr>
+<tr><td>ports[0].nodePort</td><td>30090</td><td>MinIO API 用外部公開ポート。</td></tr>
+<tr><td>ports[1].nodePort</td><td>30091</td><td>管理コンソール用外部公開ポート。</td></tr>
+</tbody>
+</table>
+<p class="meta">　　※ NodePort に指定できる番号は 30000 ～ 32767</p>
+<div class="cmd"><pre>dev# kubectl apply -f service.yaml
+service/minio-service created
+dev# kubectl get services -n chat-app</pre></div>
+
+<h4>(7) MinIO へのポートフォワーディング設定</h4>
+<p class="fig-caption">【表6.5.7. MinIO へのポートフォワーディング設定】</p>
+<table>
+<thead><tr><th>仮想マシン名</th><th>ホスト名</th><th>アダプタ名</th><th>名前</th><th>プロトコル</th><th>ホストIP</th><th>ホストポート</th><th>ゲストIP</th><th>ゲストポート</th></tr></thead>
+<tbody>
+<tr><td>alpine-k3s</td><td>dev</td><td>アダプター2</td><td>MinIO-API</td><td>TCP</td><td>※空欄</td><td>10090</td><td>※空欄</td><td>30090</td></tr>
+<tr><td>alpine-k3s</td><td>dev</td><td>アダプター2</td><td>MinIO-Console</td><td>TCP</td><td>※空欄</td><td>10091</td><td>※空欄</td><td>30091</td></tr>
+</tbody>
+</table>
+
+<h3 id="s653">6.5.3. サービスの利用確認</h3>
+<p>　基本的な確認手順は Docker の時と同じため、ハンズオン1の 6.4.3 の項を参照して取り組むこと。 ただし、コンテナへの接続コマンドのみ異なる。</p>
+<p class="fig-caption">【MinIO コンテナのコンソールへ接続（Kubernetes）】</p>
+<div class="cmd"><pre>dev# kubectl get pods -n chat-app　　※ 表示された minio コンテナの NAME がコンテナ名
+dev# kubectl exec -n chat-app -it コンテナ名 -- bash　※「コンテナ名」の箇所を置き換えて実行</pre></div>
+
+<h3 id="s654">6.5.4. 後始末（今回は不要）</h3>
+<p>　今後の演習で利用するため、Kubernetes 用に構築した MinIO は後始末不要だが、各定義ファイルの削除は次のコマンドで行うことができる。</p>
+<div class="cmd"><pre>dev# kubectl delete -f minio-deploy.yaml
+dev# kubectl delete -f service.yaml
+dev# kubectl delete -f pvc.yaml　　　　※ PVC を削除すると保存データも失われるので注意
+dev# kubectl delete -f namespace.yaml</pre></div>
+
+<h2 id="s66">6.6. 総合演習</h2>
+<p>　本演習では、これまで学習した MinIO の基本操作について確認する。 具体的には、バケット作成・オブジェクトアップロード・ダウンロード・アクセス確認を通して、オブジェクトストレージの基本利用方法を理解する。</p>
+
+<h3 id="s661">6.6.1. オブジェクトのアップロード - GUI</h3>
+<h4>(1) Bucket の作成</h4>
+<table>
+<thead><tr><th>バケット名</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td>chat-app</td><td>チャットアプリ用画像の保存（作成済）</td></tr>
+<tr><td>backup</td><td>バックアップデータの保存</td></tr>
+<tr><td>private-data</td><td>非公開データの保存</td></tr>
+<tr><td>public-data</td><td>公開データの保存</td></tr>
+</tbody>
+</table>
+<h4>(2) オブジェクトのアップロード</h4>
+<table>
+<thead><tr><th>Bucket 名</th><th>保存するファイル</th></tr></thead>
+<tbody>
+<tr><td>chat-app</td><td>画像ファイル 2 個以上</td></tr>
+<tr><td>backup</td><td>テキストファイル 1 個以上</td></tr>
+<tr><td>private-data</td><td>任意ファイル 1 個以上</td></tr>
+<tr><td>public-data</td><td>任意ファイル 1 個以上</td></tr>
+</tbody>
+</table>
+<h4>(3) オブジェクト一覧の確認</h4>
+<p>　アップロード後、Web コンソール上で以下の内容を確認せよ。</p>
+<ul>
+<li>アップロードしたファイル名（Name）</li>
+<li>ファイルサイズ（Size）</li>
+<li>更新日時（Last Modified）</li>
+</ul>
+<h4>(4) バケットのアクセス権限変更</h4>
+<table>
+<thead><tr><th>バケット名</th><th>アクセス権限</th></tr></thead>
+<tbody>
+<tr><td>chat-app</td><td>download</td></tr>
+<tr><td>backup</td><td>upload</td></tr>
+<tr><td>private-data</td><td>none</td></tr>
+<tr><td>public-data</td><td>public</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【参考情報： バケットのアクセス権のまとめ】</p>
+<table>
+<thead><tr><th>権限</th><th>コマンド例</th><th>説明</th><th>利用例</th></tr></thead>
+<tbody>
+<tr><td>none</td><td>mc anonymous set none minio/chat-app</td><td>匿名アクセスを禁止する。ログインしたユーザのみアクセス可能。</td><td>社内システム、非公開データ</td></tr>
+<tr><td>download</td><td>mc anonymous set download minio/chat-app</td><td>匿名ユーザによるオブジェクトの閲覧・ダウンロードを許可する。アップロードは不可。</td><td>Webサイトの画像配信、公開資料</td></tr>
+<tr><td>upload</td><td>mc anonymous set upload minio/chat-app</td><td>匿名ユーザによるオブジェクトのアップロードを許可する。ダウンロードは不可。</td><td>ファイル受け取り専用フォルダ</td></tr>
+<tr><td>public</td><td>mc anonymous set public minio/chat-app</td><td>匿名ユーザによるアップロードとダウンロードの両方を許可する。</td><td>不特定多数からのファイル共有（通常は非推奨）</td></tr>
+</tbody>
+</table>
+
+<h3 id="s662">6.6.2. オブジェクトのダウンロード - GUI</h3>
+<p>　Share 機能や直接アクセスによって、アップロードしたファイルをダウンロードせよ。 ダウンロード後、ファイルが正常に開けることを確認すること。</p>
+
+<h3 id="s663">6.6.3. オブジェクトのダウンロード - CUI【応用課題】</h3>
+<p>　ホストOS（Windows）で、コマンドプロンプトを起動せよ。 その後、 curl コマンドを利用して、次の例を参考にして、アップロード済みオブジェクトをダウンロードせよ。</p>
+<p class="fig-caption">【curl コマンドによるダウンロード例】</p>
+<div class="cmd"><pre>&gt; curl -O http://localhost:10090/chat-app/sample.png
+　　※ URL は自分がアップロードしたオブジェクトに合わせて変更</pre></div>
+<div class="cmd"><pre>&gt; dir</pre></div>
+<div class="cmd"><pre>&gt; del ファイル名</pre></div>
+
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch5-a1-dns')">← A5.1. 名前解決の詳細</a>
+  <a onclick="navigate('ch7-cloud2')">7. クラウドサービスの利用法2 →</a>
+</div>`
   },
 
   'ch7-cloud2': {
