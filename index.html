@@ -3528,9 +3528,941 @@ docker0         8000.ce85deefa2eb       no</pre></div>
   },
 
   'ch4-lan1': {
-    title: '4. LANの設計1',
-    toc: [{ level: 1, label: '4. LANの設計1', anchor: 'top' }],
-    content: `<h1 id="top">4. LANの設計1</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: '第4章 LANの設計1',
+    toc: [
+      { level: 1, label: '4.1. はじめに', anchor: 's41' },
+      { level: 2, label: '4.1.1. 概要', anchor: 's411' },
+      { level: 2, label: '4.1.2. 前提となる知識・スキル', anchor: 's412' },
+      { level: 2, label: '4.1.3. 到達目標', anchor: 's413' },
+      { level: 2, label: '4.1.4. 第4章の操作対象', anchor: 's414' },
+      { level: 1, label: '4.2. ネットワークアドレスの割り当てと分割', anchor: 's42' },
+      { level: 2, label: '4.2.1. ネットワークアドレスの割り当て', anchor: 's421' },
+      { level: 2, label: '4.2.2. サブネット化', anchor: 's422' },
+      { level: 2, label: '4.2.3. サブネット設計手法', anchor: 's423' },
+      { level: 1, label: '4.3. ハンズオン1：LANの設計', anchor: 's43' },
+      { level: 2, label: '4.3.1 演習用LANの設計', anchor: 's431' },
+      { level: 2, label: '4.3.2 学生番号からの情報抽出', anchor: 's432' },
+      { level: 2, label: '4.3.3 学習者用LANの設計', anchor: 's433' },
+      { level: 1, label: '4.4. ハンズオン2：ホストの構築', anchor: 's44' },
+      { level: 2, label: '4.4.1. 仮想マシンの設計', anchor: 's441' },
+      { level: 2, label: '4.4.2. 仮想マシンの作成', anchor: 's442' },
+      { level: 2, label: '4.4.3. Alpine Linuxのインストール', anchor: 's443' },
+      { level: 2, label: '4.4.4. パッケージソフトウェアの追加', anchor: 's444' },
+      { level: 2, label: '4.4.5. 管理用アカウントの作成', anchor: 's445' },
+      { level: 2, label: '4.4.6. 遠隔ログイン環境の設定', anchor: 's446' },
+      { level: 2, label: '4.4.7. 構築したクラスタネットワーク', anchor: 's447' },
+      { level: 1, label: '4.5. ハンズオン3：クラスタ環境の構築', anchor: 's45' },
+      { level: 2, label: '4.5.1. サーバノード（k3s-server）', anchor: 's451' },
+      { level: 2, label: '4.5.2. ワーカノード（k3s-worker1）', anchor: 's452' },
+      { level: 2, label: '4.5.3. ロードバランサ', anchor: 's453' },
+      { level: 2, label: '4.5.4. Podのクラスタ化', anchor: 's454' },
+      { level: 1, label: '4.6. 総合演習', anchor: 's46' },
+      { level: 2, label: '4.6.1. worker2の作成', anchor: 's461' },
+      { level: 2, label: '4.6.2. Podのスケールアウト', anchor: 's462' },
+      { level: 2, label: '4.6.3. worker3の作成（応用）', anchor: 's463' },
+    ],
+    content: `
+<h1 id="top">第4章　LANの設計1</h1>
+<p class="meta" style="font-weight:600">ネットワーク分割手法とサブネット設計手法</p>
+<p class="meta">公開日： 2026年5月9日（土）<br>開講日： 2026年5月11日（月）<br>修正日： 2026年5月12日（火）</p>
+<ul>
+<li>設定中のキャピタル文字の変更： 「Kubernetes」→「kubernetes」</li>
+<li>サブドメイン表記の変更： 「<code>.enshu.aicit.jp</code>」→「<code>s.enshu.aicit.jp</code>」</li>
+<li>ロードバランサの初期登録ホストの変更： wk1,wk2構成 → sv1,wk1構成</li>
+</ul>
+
+<h2 id="s41">4.1. はじめに</h2>
+<h3 id="s411">4.1.1. 概要</h3>
+<p>　この章では、K3s を利用した Kubernetes のクラスタ環境の設計を通して、ネットワークの分割手法とサブネット設計手法について学ぶ。そして、これまで学んだ内容を応用し、実際に設計した環境を作ることで、ネットワークの構築方法について理解を深めるとともに、今後の演習で必要となるクラウド用Webアプリケーションの実行環境を構築する。</p>
+
+<h3 id="s412">4.1.2. 前提となる知識・スキル</h3>
+<ul>
+<li>第1～3章で学んだ内容が理解できる。</li>
+<li>第1～3章で学んだオペレーションがすべて行える。</li>
+</ul>
+
+<h3 id="s413">4.1.3. 到達目標</h3>
+<ol>
+<li>演習用の自分のLANの設計が行える。</li>
+<li>クラスタ環境用の仮想マシンの作成とOSのインストールが行える。</li>
+<li>K3sを利用したKubernetesのクラスタ環境が構築できる。</li>
+<li>定義ファイルを元にクラスタを作成できる。</li>
+</ol>
+
+<h3 id="s414">4.1.4. 第4章の操作対象</h3>
+<p>　第1～3章では、小規模なクラウド環境の構築を通して、その導入方法からネットワークの構成に関する知識を学んだ。第4章では、ネットワークの設計手法について整理するとともに、Webアプリケーションの公開プラットフォームとなるクラウド環境をクラスタで構築する。本章では、これまでの復習を兼ねて、新たに以下の角括弧で括られた4つの仮想マシンを新たに作成する。</p>
+<p class="fig-caption">【演習環境の構成（Alpine Linux・Docker・K3s）】</p>
+<div class="cmd"><pre>ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            │
+            │　【Web アプリケーション用クラウド環境（開発・テスト用）】
+            ├─ Alpine Linux（alpine-k3s, core:2, ram:4G, hdd:20G）
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            │
+            │　【Web アプリケーション用クラウド環境（公開用クラスタ）】
+            ├─ [Alpine Linux（k3s-lb, core:1, ram:1G, hdd:8G）]　　※ ロードバランサ
+            │    └─ [HAProxy]
+            ├─ [Alpine Linux（k3s-server, core:1, ram:2G, hdd:16G）]　　※ Kubernetes サーバノード
+            │    └─ [Docker, K3s（Kubernetes + containerd）]
+            ├─ [Alpine Linux（k3s-worker1, core:1, ram:1G, hdd:8G）]　　※ Kubernetes ワーカノード 1
+            │    └─ [Docker, K3s（Kubernetes + containerd）]
+            └─ [Alpine Linux（k3s-worker2, core:1, ram:1G, hdd:8G）]　　※ Kubernetes ワーカノード 2
+                 └─ [Docker, K3s（Kubernetes + containerd）]</pre></div>
+<p class="fig-caption">【図4.1.1. 本演習で作るクラスタ環境】</p>
+<div class="fig-img"><img src="images/ch4-fig1.png" alt="図4.1.1 本演習で作るクラスタ環境" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch4-fig1.png</div></div>
+<p>　　※ eth0に書かれている数値はIPアドレスの第4オクテット<br>　　※ 下線部は自分のLAN用の情報に書き換える</p>
+
+<h2 id="s42">4.2. ネットワークアドレスの割り当てと分割</h2>
+<p>　IPv4 枯渇の説明で触れたように、IPアドレスを効率的に利用することは非常に重要である。そのため、ネットワークアドレスを取得した後、「ネットワークの分割（サブネット化）」を行うためにネットワークの再設計を行うことが多い。ネットワークを再設計する際には、限られたアドレス空間を無駄なく使いながら、管理・拡張性にも配慮する必要がある。</p>
+<p>　この節では、プライベートアドレスを例に、LAN内におけるネットワークアドレスの割り当てと分割方法について説明する。</p>
+
+<h3 id="s421">4.2.1. ネットワークアドレスの割り当て</h3>
+<p>　TCP/IPを利用するネットワークでは、複数のIPアドレスをまとめて一つの範囲（グループ）として扱う。この範囲を識別するための番号がネットワークアドレスである。このネットワークアドレスを理解するためには、まずIPアドレスの特徴を知る必要がある。</p>
+<p>　本演習で主に利用する IPv4 のアドレスの主な特徴は以下の通りである。</p>
+<p class="fig-caption">【特徴1：IPアドレスの構造】</p>
+<ul>
+<li>ホストに割り当てるIPアドレスをユニキャストアドレス（単一通信アドレス）と呼ぶ</li>
+<li>ユニキャストアドレスは「ネットワーク部」と「ホスト部」の二つの情報で構成する</li>
+<li>ネットワーク部の区切りは次のどちらかで定義する
+  <ul>
+    <li>プレフィックス長（ネットワーク部のビット数）（例：/24）</li>
+    <li>サブネットマスク（計算用にプレフィックス長を展開したもの）（例：255.255.255.0）</li>
+  </ul>
+</li>
+<li>ホスト部のビット数はIPアドレス長32bitからプレフィックス長を引いた数（例： 32[bit] - 24[bit] → 8[bit]）</li>
+</ul>
+<p class="fig-caption">【特徴2：ネットワーク部とホスト部のルール】</p>
+<ul>
+<li>同一ネットワーク内では、ネットワーク部の数値は共通である</li>
+<li>同一ネットワーク内のホストは、ホスト部の数値が原則重複しない</li>
+</ul>
+<p class="fig-caption">【特徴3：ネットワーク内のIPアドレスの区分】</p>
+<ul>
+<li>ネットワークアドレス： ホスト部の2進数表記がすべて0<br>（例： 10進数表記： 192.168.1.0/24，2進数表記：11000000.10101000.00000001.00000000/24）</li>
+<li>ブロードキャストアドレス（一斉同報通信アドレス）： ホスト部の2進数表記がすべて1<br>（例： 10進数表記： 192.168.1.255/24, 2進数表記：11000000.10101000.00000001.11111111/24）</li>
+<li>それ以外： ホストに割り当てるユニキャストアドレス（例：192.168.1.1 ～ 192.168.1.254）</li>
+</ul>
+<p>　そして、ネットワークアドレスには次の二つの運用方式があることを知っておく必要がある。</p>
+<p class="fig-caption">【ネットワークアドレスの運用方式】</p>
+<ul>
+<li><strong>クラスフルアドレス（旧方式）</strong>：ネットワーク部をオクテット単位（「.」の区切り）で分割（クラスA: /8, クラスB: /16, クラスC: /24）。現在はほぼ使われない。</li>
+<li><strong>クラスレスアドレス, CIDR（Classless Inter-Domain Routing）（現方式）</strong>：ネットワーク部を任意のプレフィックス長で柔軟に割り当てる（例：/23, /27）。現在の主流方式。</li>
+</ul>
+<p>　実際のインターネットではクラスレスアドレスを利用したCIDR方式による割り当て、ルーティングが行われている。</p>
+<p>　インターネット上の通信にはグローバルIPアドレスが利用されているが、「グローバルIPアドレス」は数に限りがあるため、通常はISP（インターネットサービスプロバイダ）などの事業者から少量の割り当てを受けて通信している。大規模な組織であれば、直接アドレスの割り当てを受けて管理することもあるが、一般的にはそうした機会は多くない。</p>
+<p>　しかし、会社や学校、家庭内のLAN（ローカルネットワーク）では、多くの機器（PC、スマートフォン、プリンタなど）にIPアドレスを割り当てる必要がある。そこで、LAN内の機器には申請なしで自由に利用できる「プライベートIPアドレス」を割り当て、インターネットと通信するときだけ「NAT（ネットワークアドレス変換）」という仕組みを使って、グローバルIPアドレスに変換する。この仕組みを利用することで、少数のグローバルIPアドレスで多くの機器がインターネットを利用できる。</p>
+<p>　ここで、「プライベートIPアドレス」は、LAN内だけで使用するための特別なアドレスで、RFC1918において、次のアドレス帯が指定されている。</p>
+<p class="fig-caption">【表4-2-1　プライベートアドレス（クラスA〜C）】</p>
+<table>
+<thead><tr><th>クラス</th><th>割り当て領域（CIDR表記）</th><th>割り当て可能なネットワーク数</th><th>開始ネットワークアドレス</th><th>終了ネットワークアドレス</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>10.0.0.0/8</td><td>1</td><td>10.0.0.0</td><td>10.0.0.0</td></tr>
+<tr><td>B</td><td>172.16.0.0/12</td><td>16</td><td>172.16.0.0</td><td>172.31.0.0</td></tr>
+<tr><td>C</td><td>192.168.0.0/16</td><td>256</td><td>192.168.0.0</td><td>192.168.255.0</td></tr>
+</tbody>
+</table>
+
+<h3 id="s422">4.2.2. サブネット化</h3>
+<p>　この演習では、LANの設計に表4.2.1のプライベートアドレスを利用する。その際、クラスBのプライベートアドレスを分割して、管理用、学習者用のネットワークを作る。</p>
+<p>　ここで、「ネットワークの分割」とは、1つの大きなネットワークを複数の小さなネットワーク（サブネット）に分けることを指す。そのため、「ネットワークの分割」を「サブネット化」とも呼ぶ。</p>
+<p>　サブネット化する際は設計時に次の点に留意する。</p>
+<ul>
+<li>柔軟性を持たせるため、グループごとに範囲を分けて割り当てる（ネットワーク部ビット数（プレフィックス長）の適切な設計）</li>
+<li>元のネットワークアドレスのリソースを効率良く利用するため、必要なホスト数をあらかじめ試算する（ホスト部ビット数の適切な設計）</li>
+<li>再設計時に大きなコストが必要となるため、将来の拡張も考慮する（ネットワーク部、ホスト部ビット数の適切な設計）</li>
+<li>サブネット化は、割り当てられたネットワークアドレスのネットワーク部を増やし、ホスト部を減らすことで、複数のネットワークアドレスを作り出す。そのため、ネットワーク部とホスト部のビット数の確保は相反関係になる。</li>
+</ul>
+<p>　実際にクラスCのネットワークアドレス「192.168.1.0/24」を例に考えてみる。</p>
+<p>　次の表は、プレフィックス長が24ビット（/24）であるクラスCのプライベートアドレスを26ビット（/26）で分割する例である。分割前後のプレフィックス長の差2ビット分が新たにネットワーク部として使えるようになる。つまり、4つのサブネットを作り出すことができる。</p>
+<p class="fig-caption">【表4.2.2. 分割前のネットワーク（ネットワーク部 24bit, ホスト部 8bit）】</p>
+<table>
+<thead><tr><th>ネットワーク</th><th>第4オクテットの範囲</th><th>使用可能ホスト数</th></tr></thead>
+<tbody><tr><td>192.168.1.0/24</td><td>.0 ～ .255</td><td>254</td></tr></tbody>
+</table>
+<p>　　※ 使用可能ホスト数は、総数-2（ネットワークアドレス, ブロードキャストアドレス分を除外）</p>
+<p class="fig-caption">【表4.2.3. 26bit 分割時に利用可能なネットワーク（ネットワーク部 26 bit, ホスト部 6 bit）】</p>
+<table>
+<thead><tr><th>サブネット</th><th>第4オクテットの範囲</th><th>使用可能ホスト数</th></tr></thead>
+<tbody>
+<tr><td>192.168.1.0/26</td><td>.0 ～ .63</td><td>62</td></tr>
+<tr><td>192.168.1.64/26</td><td>.64 ～ .127</td><td>62</td></tr>
+<tr><td>192.168.1.128/26</td><td>.128 ～ .191</td><td>62</td></tr>
+<tr><td>192.168.1.192/26</td><td>.192 ～ .255</td><td>62</td></tr>
+</tbody>
+</table>
+<p>　　※ 使用可能ホスト数は、総数-2（ネットワークアドレス, ブロードキャストアドレス分を除外）</p>
+<p>　ネットワーク部が2bit増えた代わりに、ホスト部が2bit減り、使用可能なホスト数が減っていることがわかる。</p>
+<p>　同様に、/27で分割すると、3ビットのサブネット領域を作ることで、8個のネットワークを利用することができる。</p>
+<p class="fig-caption">【表4.2.4. 27bit 分割時に利用可能なネットワーク（ネットワーク部 27 bit, ホスト部 5 bit）】</p>
+<table>
+<thead><tr><th>サブネット</th><th>第4オクテットの範囲</th><th>使用可能ホスト数</th></tr></thead>
+<tbody>
+<tr><td>192.168.1.0/27</td><td>.0 ～ .31</td><td>30</td></tr>
+<tr><td>192.168.1.32/27</td><td>.32 ～ .63</td><td>30</td></tr>
+<tr><td>192.168.1.64/27</td><td>.64 ～ .95</td><td>30</td></tr>
+<tr><td>192.168.1.96/27</td><td>.96 ～ .127</td><td>30</td></tr>
+<tr><td>192.168.1.128/27</td><td>.128 ～ .159</td><td>30</td></tr>
+<tr><td>192.168.1.160/27</td><td>.160 ～ .191</td><td>30</td></tr>
+<tr><td>192.168.1.192/27</td><td>.192 ～ .223</td><td>30</td></tr>
+<tr><td>192.168.1.224/27</td><td>.224 ～ .255</td><td>30</td></tr>
+</tbody>
+</table>
+<p>　　※ 使用可能ホスト数は、総数-2（ネットワークアドレス, ブロードキャストアドレス分を除外）</p>
+
+<h3 id="s423">4.2.3. サブネット設計手法</h3>
+<p>　サブネット化は、ネットワークの規模や用途に応じてネットワーク資源を適切に分配する大事なプロセスである。そのため、インターネット時代のシステム設計・開発・運用者は、このプロセスの概略について理解しておくことが望ましい。</p>
+<p>　サブネットの設計にはCIDRが用いられるが、具体的な設計手法にはFLSM、VLSMの二つがある。また、サブネット化はルータの扱う経路情報（ルート情報）を肥大化させるため、ルーティングの領域では、サブネット情報の集約でもあるルート集約（ルートのブロック化）が行われている。</p>
+<h4>① 固定長サブネットマスク FLSM（Fixed Length Subnet Mask）</h4>
+<p>　FLSMは全て同じプレフィックス長でネットワーク部を分割する手法である。この手法は、シンプルで管理しやすい反面、状況によっては無駄がでやすい。具体的な例があった方が分かりやすいので、26bitのみのプレフィックス長でサブネット化した割り当て例を表4.2.5に示す。この例からわかるように、実際に割り当てるホストの数によっては、IPアドレスが余ってしまう（192.168.1.128/26, 192.168.1.192/26）。</p>
+<p class="fig-caption">【表4.2.5. 26bit 分割時に利用可能なネットワーク（ネットワーク部 26 bit, ホスト部 6 bit）】</p>
+<table>
+<thead><tr><th>サブネット</th><th>第4オクテットの範囲</th><th>使用可能ホスト数</th><th>割当数</th><th>未割当数</th><th>備考</th></tr></thead>
+<tbody>
+<tr><td>192.168.1.0/26</td><td>.0 ～ .63</td><td>62</td><td>35</td><td>27</td><td>適切なサイズ</td></tr>
+<tr><td>192.168.1.64/26</td><td>.64 ～ .127</td><td>62</td><td>48</td><td>14</td><td>適切なサイズ</td></tr>
+<tr><td>192.168.1.128/26</td><td>.128 ～ .191</td><td>62</td><td>16</td><td>46</td><td>/27で対応可能</td></tr>
+<tr><td>192.168.1.192/26</td><td>.192 ～ .255</td><td>62</td><td>12</td><td>50</td><td>/28で対応可能、ただし余裕が少ない</td></tr>
+</tbody>
+</table>
+<p>　　※ 使用可能ホスト数は、総数-2（ネットワークアドレス, ブロードキャストアドレス割り当て分を除外）</p>
+<h4>② 可変長サブネットマスク VLSM（Variable Length Subnet Mask）</h4>
+<p>　①の手法に対して、VLSMはプレフィックス長を柔軟に指定する。この手法は、FLSMに比べて設計がやや複雑となるが、アドレスの無駄を最小化できる。対比のために、①で示したネットワークをVLSMで再設計した例を表4.2.6に示す。再設計後は、適切なサイズに収まると共に、今後の拡張に合わせて余地を残せていることがわかる。</p>
+<p class="fig-caption">【表4.2.6. VLSMによる26, 27bit 分割時に利用可能なネットワーク】</p>
+<table>
+<thead><tr><th>サブネット</th><th>第4オクテットの範囲</th><th>使用可能ホスト数</th><th>割当数</th><th>未割当数</th><th>備考</th></tr></thead>
+<tbody>
+<tr><td>192.168.1.0/26</td><td>.0 ～ .63</td><td>62</td><td>35</td><td>27</td><td>適切なサイズ</td></tr>
+<tr><td>192.168.1.64/26</td><td>.64 ～ .127</td><td>62</td><td>48</td><td>14</td><td>適切なサイズ</td></tr>
+<tr><td>192.168.1.128/27</td><td>.128 ～ .159</td><td>30</td><td>16</td><td>14</td><td>適切なサイズ</td></tr>
+<tr><td>192.168.1.160/27</td><td>.160 ～ .191</td><td>30</td><td>12</td><td>18</td><td>拡張性を確保（/28分割時は未割当数2）</td></tr>
+<tr><td>192.168.1.192/26</td><td>.192 ～ .255</td><td>62</td><td>0</td><td>62</td><td>予約領域（VLSMで再分割可能）</td></tr>
+</tbody>
+</table>
+<p>　　※ 使用可能ホスト数は、総数-2（ネットワークアドレス, ブロードキャストアドレス割り当て分を除外）</p>
+<p>　上記のように、VLSMを利用することで、柔軟に設計しつつ、今後の拡張の余地まで残すことができる。この例では、予約領域に/26のアドレスを1個残してある。このアドレスをサブネット化すれば、/27 で2個、/28 で4個、/29 なら8個のサブネットを作り出すことができる。</p>
+<p>　一方で、初めてネットワークをサブネット化する時やIPアドレスに余裕がある時は、管理が容易になるので、FLSMを利用するのも一つである。この時、クラスA、クラスBのプライベートアドレスを利用して、表4.2.7のようにオクテット単位でサブネット化すると管理が容易になる。</p>
+<p class="fig-caption">【表4.2.7. プライベートアドレスを利用したオクテット単位のサブネット化例】</p>
+<table>
+<thead><tr><th>分割前のネットワークアドレス</th><th>分割後のネットワークアドレス</th><th>分割後のサブネット数</th></tr></thead>
+<tbody>
+<tr><td>10.0.0.0/8</td><td>10.0.0.0/24 ～ 10.255.255.0/24</td><td>65,565</td></tr>
+<tr><td>172.16.0.0/16</td><td>172.16.0.0/24 ～ 172.16.255.0/24</td><td>256</td></tr>
+</tbody>
+</table>
+<h4>③ ネットワークアドレスの経路集約（ルート情報の集約：Route Aggregation）</h4>
+<p>　先に述べたように、サブネット化するとそのままではルーティングテーブルに記載するネットワークアドレスの数が増加する。すると、ルート計算に必要な時間が増大し、パケットの転送に遅延が発生したり、転送速度の低下を招いたりする。そのため、CIDRではクラスレスにおける「ルート情報の集約化」についても規定されている。ここで、「ルート情報の集約化」とは、複数のネットワークをまとめて1つとして扱うことでルーティングテーブルを簡素化することを指す。具体的には、ルートの識別をプレフィックス長で指定した先頭領域のみで判断する。これはネットワーク群の識別に他ならないので、連続するネットワークアドレスをまとめたネットワーク群の表記にもこの経路集約が利用される。</p>
+<p>　以下、事例を用いて説明する。次のような24bitマスクの4つのネットワークアドレスが2進数表記と共にあったとする。</p>
+<div class="cmd"><pre>- 192.168.0.0/24, 11000000.10101000.00000000.00000000/24
+- 192.168.1.0/24, 11000000.10101000.00000001.00000000/24
+- 192.168.2.0/24, 11000000.10101000.00000010.00000000/24
+- 192.168.3.0/24, 11000000.10101000.00000011.00000000/24</pre></div>
+<p>　これらの2進数表記のネットワーク部とホスト部を括弧で括ると次のようになる。</p>
+<div class="cmd"><pre>- 192.168.0.0/24, (11000000.10101000.00000000).(00000000)/24
+- 192.168.1.0/24, (11000000.10101000.00000001).(00000000)/24
+- 192.168.2.0/24, (11000000.10101000.00000010).(00000000)/24
+- 192.168.3.0/24, (11000000.10101000.00000011).(00000000)/24</pre></div>
+<p>　ここで、上の4つのネットワークを識別するプレフィックス長を考える。考え方としては通常のネットワークアドレスと同じため、次のようにプレフィックス長を短くすることで、4つのアドレスで共通となるネットワーク部を指定する。</p>
+<div class="cmd"><pre>- 192.168.0.0/22, (11000000.10101000.000000)(00.00000000)/22
+- 192.168.1.0/22, (11000000.10101000.000000)(01.00000000)/22
+- 192.168.2.0/22, (11000000.10101000.000000)(10.00000000)/22
+- 192.168.3.0/22, (11000000.10101000.000000)(11.00000000)/22</pre></div>
+<p>　結果、上の4つのネットワークアドレスは次の集約されたルート（Aggregated Route）でまとめることができる。</p>
+<div class="cmd"><pre>- 192.168.0.0/22, (11000000.10101000.000000)(00.00000000)/22</pre></div>
+<p>　これが経路集約（Route Aggregation）である。元のネットワークアドレスに対して、サブネット化はプレフィックス長を大きくするが、経路集約はプレフィックス長を小さくするのが特徴である。</p>
+<p>　なお、次のアドレス群のように、連続するすべてのネットワークアドレスを確保できない場合に経路集約を行うと、他の場所に存在する192.168.2.0/24にパケットが届かなくなるため、経路集約は行えない。そのため、経路集約は連続するすべてのネットワークを含むことが前提となる。</p>
+<div class="cmd"><pre>192.168.0.0/24
+192.168.1.0/24
+192.168.3.0/24</pre></div>
+<p>　前述の通り、プレフィックス長を用いたCIDR表現は、アドレス群の表現にも用いられる。身近な例としては、表4.2.8のクラスB, Cのプライベートアドレスブロックの表現が挙げられる。</p>
+<p class="fig-caption">【表4.2.8. プライベートアドレスのアドレスブロック（CIDR表記）】</p>
+<table>
+<thead><tr><th>集約前のルート</th><th>集約後のルート</th><th>クラスベース換算のネットワーク集約数</th></tr></thead>
+<tbody>
+<tr><td>172.16.0.0/16 ～ 172.31.0.0/16</td><td>172.16.0.0/12</td><td>16</td></tr>
+<tr><td>192.168.0.0/24 ～ 192.168.255.0/24</td><td>192.168.0.0/16</td><td>256</td></tr>
+</tbody>
+</table>
+
+<h2 id="s43">4.3. ハンズオン1： LANの設計</h2>
+<p>　この節では、前節で学んだ内容をもとに、今後利用するクラウド環境用の管理LANの設計を行う。</p>
+
+<h3 id="s431">4.3.1 演習用LANの設計</h3>
+<p>　本演習では、学習者用LANのネットワークアドレスとして、一人一人にユニークなプライベートアドレスを割り当てる。一方で、プライベートアドレスは様々な仮想環境でも利用されている。参考までに、仮想環境で利用されるプライベートアドレスを含んだネットワークアドレス帯を表4.3.1に示す。</p>
+<p class="fig-caption">【表4.3.1. 仮想環境で利用される主なネットワークアドレス帯一覧】</p>
+<table>
+<thead><tr><th>区分</th><th>アドレス帯</th><th>CIDR</th><th>用途 / 説明</th><th>主な利用例</th></tr></thead>
+<tbody>
+<tr><td>プライベート (Class A)</td><td>10.0.0.0 - 10.255.255.255</td><td>10.0.0.0/8</td><td>大規模ネットワーク向け</td><td>Kubernetes Pod/Service、Docker、企業LAN</td></tr>
+<tr><td>プライベート (Class B)</td><td>172.16.0.0 - 172.31.255.255</td><td>172.16.0.0/12</td><td>中規模ネットワーク</td><td>Dockerデフォルトブリッジなど</td></tr>
+<tr><td>プライベート (Class C)</td><td>192.168.0.0 - 192.168.255.255</td><td>192.168.0.0/16</td><td>小規模ネットワーク</td><td>VirtualBox Host-Onlyなど</td></tr>
+<tr><td>リンクローカル</td><td>169.254.0.0 - 169.254.255.255</td><td>169.254.0.0/16</td><td>DHCP失敗時の自動設定</td><td>一部仮想NIC</td></tr>
+<tr><td>ループバック</td><td>127.0.0.0 - 127.255.255.255</td><td>127.0.0.0/8</td><td>自分自身への通信</td><td>localhost</td></tr>
+</tbody>
+</table>
+<p>　また、各仮想環境で利用されているプライベートアドレスの利用状況を表4.3.2～4.3.5に示すので、興味のある人は表4.3.1と合わせて参考にしてほしい。</p>
+<p class="fig-caption">【表4.3.2. VirtualBox の利用するプライベートアドレス帯】</p>
+<table>
+<thead><tr><th>種別</th><th>デフォルトアドレス帯</th><th>CIDR</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>Host-Only Network</td><td>192.168.56.0</td><td>/24</td><td>VirtualBox標準</td></tr>
+<tr><td>NAT Network</td><td>10.0.2.0</td><td>/24</td><td>VMから外部通信用</td></tr>
+<tr><td>内部ネットワーク</td><td>任意</td><td>任意</td><td>ユーザ定義</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.3.3. Docker の利用するプライベートアドレス帯】</p>
+<table>
+<thead><tr><th>種別</th><th>デフォルトアドレス帯</th><th>CIDR</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>bridge (docker0)</td><td>172.17.0.0</td><td>/16</td><td>デフォルトブリッジ</td></tr>
+<tr><td>user-defined bridge</td><td>172.18.0.0〜</td><td>/16</td><td>自動割当</td></tr>
+<tr><td>overlay network</td><td>10.0.0.0〜</td><td>/24〜</td><td>Swarm/K8s連携</td></tr>
+<tr><td>macvlan</td><td>任意</td><td>任意</td><td>物理ネットワーク直結</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.3.4. Kubernetes / K3s の利用するプライベートアドレス帯】</p>
+<table>
+<thead><tr><th>種別</th><th>デフォルト例</th><th>CIDR</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>Pod CIDR</td><td>10.42.0.0</td><td>/16</td><td>K3s標準</td></tr>
+<tr><td>Service CIDR</td><td>10.43.0.0</td><td>/16</td><td>K3s標準</td></tr>
+<tr><td>Cluster全体（例）</td><td>10.0.0.0〜</td><td>/8内</td><td>クラスタ設計次第</td></tr>
+<tr><td>Node内部通信</td><td>任意</td><td>任意</td><td>VPCやLAN依存</td></tr>
+</tbody>
+</table>
+<p>　これらを踏まえて、本演習では管理用LANと学習者用LANのネットワークアドレス帯として表4.3.5のものを利用する。</p>
+<p class="fig-caption">【表4.3.5. 演習用LANのネットワークアドレス割り当て情報】</p>
+<table>
+<thead><tr><th>用途</th><th>ネットワークアドレス帯</th><th>ドメイン名</th></tr></thead>
+<tbody>
+<tr><td>学習者用LAN</td><td>172.20.0.0/16 ～ 172.29.0.0/16</td><td>s学生番号.enshu.aicit.jp</td></tr>
+<tr><td>管理用LAN</td><td>172.30.0.0/16 ～ 172.31.0.0/16</td><td>enshu.aicit.jp</td></tr>
+</tbody>
+</table>
+<p>　　※ ドメインaicit.jpは高度応用情報科学科が実際に管理するドメインの一つ<br>　　※ 演習用サブドメインは外部公開しないため、インターネットからの直接接続は不可</p>
+
+<h3 id="s432">4.3.2 学生番号からの情報抽出</h3>
+<p>　設計に用いる情報を自分の学生番号からピックアップする。まず、学生番号7桁を次の4つの領域に分割する（桁数は左からカウント）。</p>
+<ul>
+<li>領域1：1桁目（不要）</li>
+<li>領域2：2桁目（利用）</li>
+<li>領域3：3-4桁目（不要）</li>
+<li>領域4：5-7桁目（変形して利用）</li>
+</ul>
+<p>　表4.3.6に架空の学生番号を利用した分割例を示すので、この情報を参考に自分の学生番号についても分割を行う。</p>
+<p class="fig-caption">【表4.3.6. 学生番号の分割例】</p>
+<table>
+<thead><tr><th>学生番号</th><th>領域1：1桁目（不要）</th><th>領域2：2桁目（利用）</th><th>領域3：3-4桁目（不要）</th><th>領域4：5-7桁目（変形して利用）</th></tr></thead>
+<tbody>
+<tr><td>23g3001</td><td>2</td><td>3</td><td>g3</td><td>1（001）</td></tr>
+<tr><td>00g3199</td><td>2</td><td>3</td><td>g3</td><td>199（199）</td></tr>
+<tr><td>2432001</td><td>2</td><td>4</td><td>32</td><td>1（001）</td></tr>
+</tbody>
+</table>
+<p>　　※ 上の例は全て存在しない学生番号</p>
+<p>　なお、学生番号の下3桁が700番台となる人は、領域4の数値を次のように500引いて利用する。</p>
+<p class="fig-caption">【表4.3.7. 学生番号の分割例（学生番号下3桁が700番台の場合）】</p>
+<table>
+<thead><tr><th>学生番号</th><th>領域1：1桁目（不要）</th><th>領域2：2桁目（利用）</th><th>領域3：3-4桁目（不要）</th><th>領域4：5-7桁目（変形して利用）</th></tr></thead>
+<tbody>
+<tr><td>23g3701</td><td>2</td><td>3</td><td>g3</td><td>201（751-500）</td></tr>
+<tr><td>23g3751</td><td>2</td><td>3</td><td>g3</td><td>251（751-500）</td></tr>
+</tbody>
+</table>
+<p>　　※ 上の例は全て存在しない学生番号</p>
+<p>　この演習では、高度応用情報科学科、情報ネットワーク学科の二つの学科において、個人の識別ができる領域2, 4の数値を利用する。</p>
+
+<h3 id="s433">4.3.3 学習者用LANの設計</h3>
+<p>　前項で抽出した二つの領域を利用して、ネットワークアドレスを次のように割り当てる。</p>
+<p class="fig-caption">【学習者LANのネットワーク情報】</p>
+<div class="cmd"><pre>割当ネットワークアドレス： 172.2x.yyy.0/24　　※x：領域2の数値, yyy：領域4の数値</pre></div>
+<p>　前項で紹介した学生番号を基に設計した例を表4.3.8に示す。</p>
+<p class="fig-caption">【表4.3.8. 学習者LANのネットワーク設計例】</p>
+<table>
+<thead><tr><th>学生番号</th><th>割当ネットワーク（CIDR表記）</th><th>サブネットマスク</th><th>ホスト数</th><th>割当可能IP（OCT4）</th><th>ブロードキャスト（OCT4）</th><th>ドメイン名</th></tr></thead>
+<tbody>
+<tr><td>00g3199</td><td>172.2_.__.0/24</td><td>255.255.255.0</td><td>254</td><td>.1～.254</td><td>.255</td><td>s00g3199.enshu.aicit.jp</td></tr>
+<tr><td>23g3001</td><td>172.23.1.0/24</td><td>255.255.255.0</td><td>254</td><td>.1～.254</td><td>.255</td><td>s23g3001.enshu.aicit.jp</td></tr>
+<tr><td>23g3701</td><td>172.23.201.0/24</td><td>255.255.255.0</td><td>254</td><td>.1～.254</td><td>.255</td><td>s23g3701.enshu.aicit.jp</td></tr>
+<tr><td>23g3751</td><td>172.23.251.0/24</td><td>255.255.255.0</td><td>254</td><td>.1～.254</td><td>.255</td><td>s23g3751.enshu.aicit.jp</td></tr>
+<tr><td>2432001</td><td>172.24.1.0/24</td><td>255.255.255.0</td><td>254</td><td>.1～.254</td><td>.255</td><td>s2432001.enshu.aicit.jp</td></tr>
+</tbody>
+</table>
+<p>　　※ 上の例には履修していない／存在しない学生番号を利用　　※ OCT4 ･･· 第4オクテット</p>
+<p>　上記の情報を参考にして、表4.3.9の下線部を埋めてネットワーク情報を完成させる。</p>
+<p class="fig-caption">【表4.3.9. 学習者LANのネットワーク設計（別の場所にメモする）】</p>
+<table>
+<thead><tr><th>学生番号</th><th>割当ネットワーク（CIDR表記）</th><th>サブネットマスク</th><th>ホスト数</th><th>割当可能IP（OCT4）</th><th>ブロードキャスト（OCT4）</th><th>ドメイン名</th></tr></thead>
+<tbody>
+<tr><td>_____</td><td>172. ___ . ___ .0/24</td><td>255.255.255.0</td><td>254</td><td>.1～.254</td><td>.255</td><td>s____.enshu.aicit.jp</td></tr>
+</tbody>
+</table>
+<p>　　※ 「学生番号」,「割当ネットワークアドレス（CIDR表記）」,「ドメイン名」の下線部を埋めてネットワーク情報を完成させる</p>
+
+<h2 id="s44">4.4. ハンズオン2： ホストの構築</h2>
+<p>　本演習では、Webアプリケーションをデプロイ（配置）するためのクラスタ環境として図4.1.1のような5台の仮想マシン（VM）からなるLANを作る。この節では、基本構成として、この中から「ロードバランサ」「サーバノード」「ワーカノード1」の3つのVMをこれまで学んだ知識を活用して作る。</p>
+<p class="fig-caption">【図4.4.1. 本演習で作るクラスタ環境】</p>
+<div class="fig-img"><img src="images/ch4-fig2.png" alt="図4.4.1 本演習で作るクラスタ環境" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch4-fig2.png</div></div>
+<p>　　※ eth0に書かれている数値はIPアドレスの第4オクテット<br>　　※ 下線部は自分のLAN用の情報に書き換える</p>
+
+<h3 id="s441">4.4.1. 仮想マシンの設計</h3>
+<p>　以下の表の仕様に基づき、仮想マシンを新規に3つ作成する。ただし、下線部は自分のLANの情報に置き換えること。</p>
+<p class="fig-caption">【表4.4.1. 新たに作成するノードとロードバランサの基本仕様】</p>
+<table>
+<thead><tr><th>項目</th><th>仮想マシン名</th><th>メインメモリ</th><th>CPU数</th><th>ディスクサイズ</th><th>IPアドレス（OCT4）</th><th>ホスト名</th><th>FQDN</th></tr></thead>
+<tbody>
+<tr><td>ロードバランサ</td><td>k3s-lb</td><td>1024 MB</td><td>1</td><td>8 GB</td><td>.1</td><td>lb</td><td>lb.s____.enshu.aicit.jp</td></tr>
+<tr><td>サーバノード</td><td>k3s-server</td><td>2048 MB</td><td>1</td><td>16 GB</td><td>.11</td><td>sv</td><td>sv.s____.enshu.aicit.jp</td></tr>
+<tr><td>ワーカノード 1</td><td>k3s-worker1</td><td>1024 MB</td><td>1</td><td>8 GB</td><td>.21</td><td>wk1</td><td>wk1.s____.enshu.aicit.jp</td></tr>
+</tbody>
+</table>
+<p>　　※ 下線部は自分のLANの情報に置き換える</p>
+
+<h3 id="s442">4.4.2. 仮想マシンの作成</h3>
+<p>　資料A1.1を参考に仮想マシンを新たに3台作成する。本演習のクラスタ環境では、演習を円滑に進めるためにメンテナンス用のネットワークインタフェースを利用する。そのため、表4.4.2の内容となるよう、全ての仮想マシンのネットワークインタフェースの設定を変更する。なお、アダプタータイプはデフォルトのままでも動く。ただ、1台のPC上でクラスタ環境を構築すると多くのリソースを消費するため、本演習では負荷が相対的に軽い準仮想化ネットワークを利用する。</p>
+<p class="fig-caption">【表4.4.2. 各仮想マシンのネットワークアダプタの設定】</p>
+<table>
+<thead><tr><th>アダプター名</th><th>有効化</th><th>割り当て</th><th>アダプタータイプ</th></tr></thead>
+<tbody>
+<tr><td>アダプター1</td><td>ON（デフォルト）</td><td>ホストオンリーアダプター（変更）</td><td>準仮想化ネットワーク virtio-net（変更）</td></tr>
+<tr><td>アダプター2</td><td>ON（変更）</td><td>NAT（変更）</td><td>準仮想化ネットワーク virtio-net（変更）</td></tr>
+<tr><td>アダプター3</td><td>OFF（デフォルト）</td><td>—</td><td>—</td></tr>
+<tr><td>アダプター4</td><td>OFF（デフォルト）</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3 id="s443">4.4.3. Alpine Linux のインストール</h3>
+<p>　表4.4.3の共通仕様と表4.4.4の個別仕様に基づき、k3s-lb, k3s-server, k3s-worker1の3台の仮想マシンにAlpine Linuxをインストールする。なお、Alpine Linuxのインストール方法は資料A1.2.の手順を参考にすること。ここで、ネットワークインタフェースが二つに増えているので、資料A1.2と手順が一部変わるので注意すること。具体的には、管理用LANに使用するアダプター1はeth0として固定IPを割り当て、メンテナンス用に利用するアダプター2はeth1としてDHCPに設定する。</p>
+<p>　インストールが終了したら、全てのホストにパスワード付きでログインができることを確認し、pingコマンドを利用して、ホスト間の疎通確認ができることを確かめる。</p>
+<p class="fig-caption">【表4.4.3. Alpine Linux インストール時の共通設定（第1章と同じ）】</p>
+<table>
+<thead><tr><th>内容</th><th>表示されるキーワード</th><th>選択肢</th></tr></thead>
+<tbody>
+<tr><td>キーボード</td><td>Keymap</td><td>日本語キーボード利用時：jp → jp　／　英語キーボード利用時： us → us</td></tr>
+<tr><td>管理者パスワード</td><td>Root Password</td><td>※任意（必ず覚えておくこと）</td></tr>
+<tr><td>タイムゾーン</td><td>Timezone</td><td>Japan</td></tr>
+<tr><td>プロキシ</td><td>Proxy</td><td>none ※デフォルト</td></tr>
+<tr><td>自動時刻同期</td><td>Network Time Protocol</td><td>busybox ※デフォルト</td></tr>
+<tr><td>パッケージダウンロード先</td><td>APK Mirror</td><td>1 ※デフォルト</td></tr>
+<tr><td>ユーザー情報</td><td>User</td><td>「Setup a user?」： no ※デフォルト<br>「ssh:」： openssh ※デフォルト<br>「root ssh login:」： prohibit-password ※デフォルト<br>「ssh key for root:」： none ※デフォルト</td></tr>
+<tr><td>ディスクへのインストール</td><td>Disk &amp; Install</td><td>「use:」： sda　「how:」： sys　「erase:」：y</td></tr>
+</tbody>
+</table>
+<p>　　※デフォルトの項目はそのままエンターキーを押すだけでよい</p>
+<p class="fig-caption">【表4.4.4. Alpine Linux インストール時の個別設定（第1章と異なる）】</p>
+<table>
+<thead><tr><th>内容</th><th>表示されるキーワード</th><th>k3s-lb の選択肢</th><th>k3s-server の選択肢</th><th>k3s-worker1 の選択肢</th></tr></thead>
+<tbody>
+<tr><td>ホスト名</td><td>Hostname</td><td>lb.____.enshu.aicit.jp</td><td>sv.____.enshu.aicit.jp</td><td>wk1.____.enshu.aicit.jp</td></tr>
+<tr><td>ネットワークインタフェース</td><td>Interface</td><td>eth0：固定IP 172.2_.___.1 / マスク 255.255.255.0 / GW なし<br>eth1：DHCP</td><td>eth0：固定IP 172.2_.___.11 / マスク 255.255.255.0 / GW なし<br>eth1：DHCP</td><td>eth0：固定IP 172.2_.___.21 / マスク 255.255.255.0 / GW なし<br>eth1：DHCP</td></tr>
+</tbody>
+</table>
+<p>　　※デフォルトの項目はそのままエンターキーを押すだけでよい<br>　　※ 下線部は自分のLANの情報に置き換える</p>
+
+<h3 id="s444">4.4.4. パッケージソフトウェアの追加</h3>
+<p>　第1章のインストール手順を参考にして/etc/apk/repositoriesファイルのcommunityリポジトリを有効化する。その後、表4.4.5に基づき仮想マシンごとに指定されたパッケージソフトウェアをインストールする。</p>
+<p class="fig-caption">【表4.4.5. 仮想マシンごとに必要なパッケージソフトウェア】</p>
+<table>
+<thead><tr><th>仮想マシン名</th><th>第1章</th><th>第2章</th><th>第3章</th></tr></thead>
+<tbody>
+<tr><td>k3s-lb</td><td>curl</td><td>doas, htop, vim</td><td>iproute2, nano, tcpdump</td></tr>
+<tr><td>k3s-server, k3s-worker1</td><td>↑ + docker</td><td>↑</td><td>↑</td></tr>
+</tbody>
+</table>
+
+<h3 id="s445">4.4.5. 管理用アカウントの作成</h3>
+<p>　第2章の手順を参考にして、管理用アカウントmymanagerを作成し、doasコマンドで管理者権限が行使できるようにする。次に、mymanagerでログインして、<code>doas su -</code>でroot権限へ移行する。</p>
+
+<h3 id="s446">4.4.6. 遠隔ログイン環境の設定</h3>
+<p>　資料A2.2を参考に、以下の仕様で各ホストのポートフォワーディング設定を行う。ただし、設定対象がこれまでのアダプター1と異なり、メンテナンス用のアダプター2となるので注意する。</p>
+<p>　設定完了後、新たに作成した3台の仮想マシンが起動していることを確認する。次に、Tera Termなどのターミナルソフトウェアを利用して、ユーザmymanagerで遠隔ログインできることを確認する。</p>
+<p class="fig-caption">【表4.4.6. 各仮想マシンのポートフォワード設定】</p>
+<table>
+<thead><tr><th>仮想マシン名</th><th>アダプタ名</th><th>名前</th><th>プロトコル</th><th>ホストIP</th><th>ホストポート</th><th>ゲストIP</th><th>ゲストポート</th></tr></thead>
+<tbody>
+<tr><td>k3s-lb</td><td>アダプター2</td><td>SSH</td><td>TCP</td><td>※空欄</td><td>10122</td><td>※空欄</td><td>22</td></tr>
+<tr><td>k3s-server</td><td>アダプター2</td><td>SSH</td><td>TCP</td><td>※空欄</td><td>11122</td><td>※空欄</td><td>22</td></tr>
+<tr><td>k3s-worker1</td><td>アダプター2</td><td>SSH</td><td>TCP</td><td>※空欄</td><td>12122</td><td>※空欄</td><td>22</td></tr>
+</tbody>
+</table>
+
+<h3 id="s447">4.4.7. 構築したクラスタネットワーク</h3>
+<p>　図4.1.1, 4.4.1では、純粋なクラスタ環境のみに焦点を当てて作図している。基本的にこれらの図について理解できれば十分であるが、メンテナンス用のインタフェースも加えた K3s による Kubernetes クラスタネットワークの実際の接続環境を図4.4.2に示すので、余力のある人は参考にしてほしい。</p>
+<p class="fig-caption">【図4.4.2. K3s で構築した Kubernetes クラスタネットワーク（ロードバランサ、サーバノード、ワーカノード各1台構成）】</p>
+<div class="fig-img"><img src="images/ch4-fig3.png" alt="図4.4.2 K3sで構築したKubernetesクラスタネットワーク" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch4-fig3.png</div></div>
+<p>　　※ホストマシンの接続構成は省略</p>
+
+<h2 id="s45">4.5. ハンズオン3： クラスタ環境の構築</h2>
+<p>　この節では、前節で準備した Alpine Linux に対して K3s を利用した Kubernetes 環境を作る。なお、コマンドプロンプトの指示に新たなルールを設けているため注意する。これまではプロンプト記号として管理者権限の利用の有無の判別のために root ユーザの「#」、一般ユーザの「$」を記載していた。今回からは、複数のホストを扱うため、どのホストか識別できるとわかりやすい。そのため、プロンプト記号の前にホスト名を追加している（例: sv#）。</p>
+
+<h3 id="s451">4.5.1. サーバノード（k3s-server）</h3>
+<p>　最初にサーバノードを作成する。連続したコマンドの実行では doas を毎回付けるのが煩雑なため、セットアップの準備として、まず特権ユーザ root へ移行する。</p>
+<p class="fig-caption">【root ユーザへの移行】</p>
+<div class="cmd"><pre>sv$ doas su -
+sv#</pre></div>
+<p>　次に、K3sをサーバ（control-planeノード）としてインストールする。インストールはhttps://get.k3s.ioからスクリプトをダウンロードして行うが、その際に次のオプションを指定する。</p>
+<ul>
+<li><code>--node-ip</code>：当該ノード自身のIPアドレスを指定する</li>
+<li><code>--server</code>：APIサーバのアドレス（単一ノードの場合は自身）</li>
+<li><code>--tls-san</code>：証明書に含めるSAN（Subject Alternative Name）を指定する</li>
+<li><code>--advertise-address</code>：他ノードへ通知する自身のアドレス</li>
+</ul>
+<p>　これらを適切に設定することで、後続のワーカノードが正しくサーバへ接続できるようになる。なお、インタフェースが一つの場合は上記の内容は自動で設定されるが、本演習ではメンテナンス用に eth1 を持ち、インタフェースが複数となるため、eth0 の IP アドレスを明示的に指定する。</p>
+<p>　実際のインストールは、次の手法①②のどちらかを実行すれば良い。手法②は可読性向上のため改行しているが、内容は手法①と同一である。</p>
+<p class="fig-caption">【K3s サーバのインストール方法①： curl コマンドを1行で入力する場合】</p>
+<div class="cmd"><pre>sv# export MYHOST="172.2_.__.11"　　※ ネットワーク部を自分の情報に置き換える
+sv# curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --node-ip $MYHOST --server $MYHOST --tls-san $MYHOST --advertise-address $MYHOST --flannel-iface=eth0" sh -</pre></div>
+<p class="fig-caption">【K3s サーバのインストール方法②： curl コマンドを複数行で入力する場合】</p>
+<div class="cmd"><pre>sv# export MYHOST="172.2_.__.11"　　※ ネットワーク部を自分の情報に置き換える
+sv# curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="
+  server
+    --node-ip $MYHOST
+    --server $MYHOST
+    --tls-san $MYHOST
+    --advertise-address $MYHOST
+    --flannel-iface=eth0　　※2026/5/21追記
+  " sh -</pre></div>
+<p>　インストールが完了したら、クラスタ内部のPodを確認する。</p>
+<p class="fig-caption">【クラスタ内部の Pod の確認】</p>
+<div class="cmd"><pre># kubectl get pods -A -o wide
+
+【出力例】
+NAMESPACE     NAME                                      READY   STATUS      RESTARTS        AGE    IP           NODE                      NOMINATED NODE   READINESS GATES
+kube-system   coredns-c4dbffb5f-qqmhl                   1/1     Running     5 (3h4m ago)    2d     10.42.0.32   sv.s____.enshu.aicit.jp   &lt;none&gt;           &lt;none&gt;
+kube-system   helm-install-traefik-crd-fj656            0/1     Completed   0               2d     &lt;none&gt;       sv.s____.enshu.aicit.jp   &lt;none&gt;           &lt;none&gt;
+kube-system   helm-install-traefik-psvk9                0/1     Completed   2               2d     &lt;none&gt;       sv.s____.enshu.aicit.jp   &lt;none&gt;           &lt;none&gt;
+kube-system   local-path-provisioner-5c4dc5d66d-xpqbt   1/1     Running     5 (3h4m ago)    2d     10.42.0.30   sv.s____.enshu.aicit.jp   &lt;none&gt;           &lt;none&gt;
+kube-system   metrics-server-786d997795-hw5x5           1/1     Running     6 (3h4m ago)    2d     10.42.0.34   sv.s____.enshu.aicit.jp   &lt;none&gt;           &lt;none&gt;
+kube-system   svclb-traefik-6fd4abea-xmqmp              2/2     Running     10 (3h4m ago)   2d     10.42.0.33   sv.s____.enshu.aicit.jp   &lt;none&gt;           &lt;none&gt;
+kube-system   traefik-9bcdbbd9-9sgt9                    1/1     Running     5 (3h4m ago)    2d     10.42.0.31   sv.s____.enshu.aicit.jp   &lt;none&gt;           &lt;none&gt;</pre></div>
+<p>　ここで表示される coredns、traefik、metrics-server などは、Kubernetesの基本機能を提供するシステムコンポーネントである。すべてが Running または Completed 状態であることを確認する。</p>
+<p>　続いて、ノード情報を次のコマンドで確認する。</p>
+<p class="fig-caption">【クラスタを構成するノードの確認（ワーカノード追加前）】</p>
+<div class="cmd"><pre>sv# kubectl get nodes -o wide
+
+【出力例】
+NAME                      STATUS   ROLES           AGE   VERSION        INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
+sv.s____.enshu.aicit.jp   Ready    control-plane   45h   v1.35.4+k3s1   172.2_.__.11   &lt;none&gt;        Alpine Linux v3.23   6.18.26-0-lts    containerd://2.2.3-k3s1</pre></div>
+<p>　この時点では、control-planeノード（サーバノード）のみが登録されている状態である。</p>
+<p>　この後、ワーカノードのインストールと追加を行うが、この追加にはサーバノードのトークンが必要になる。このノードトークンは次のコマンドで確認することができる。</p>
+<p class="fig-caption">【サーバノードトークンの表示】</p>
+<div class="cmd"><pre>sv# cat /var/lib/rancher/k3s/server/node-token
+
+【出力例】
+K10f8828a3525bf96042dd1e913e99606e3641dc053e9ebb8d88c1466b5d1bb917f::server:5650dce0e77f0f1546a9cfd112cccbc1</pre></div>
+<p>　上記の内容はワーカノードがクラスタへ参加する際の認証情報である。このトークンは環境によって異なるため、実際に表示されたトークンを後の手順で使用するため控えておく。</p>
+<p>　なお、本演習では、コピー&amp;ペーストで電子的に扱っても良いが、クリップボード（コピー＆ペーストのバッファ）は完全に安全な領域ではない。そのため、実際の運用では次の点にも留意する必要がある。</p>
+<p class="fig-caption">【データを残さない】</p>
+<ul>
+<li>別の無意味な文字列をコピーして上書きする（空白など）</li>
+<li>クリップボードを手動でクリアする</li>
+<li>クリップボードを自動でクリアするツールを使う</li>
+<li>クリップボード履歴機能は無効化または制限する</li>
+</ul>
+<p class="fig-caption">【盗難を防止する】</p>
+<ul>
+<li>不審なアプリやブラウザ拡張を入れない</li>
+<li>OS・ブラウザ・セキュリティソフトを最新に保つ</li>
+<li>共有環境におけるクリップボード共有を無効化する</li>
+<li>マルウェア対策（EDRなど）を導入する</li>
+</ul>
+
+<h3 id="s452">4.5.2. ワーカノード（k3s-worker1）</h3>
+<p>　サーバノードと同様の理由から、まずは、特権ユーザ root へ移行する。</p>
+<div class="cmd"><pre>wk1$ doas su -
+wk1#</pre></div>
+<p>　次に、ワーカノード側の設定を行う。ワーカノードはアプリケーション（Pod）を実行する役割を担い、control-planeからの指示に従って動作する。インストールはサーバノードと同じhttps://get.k3s.ioからスクリプトをダウンロードして行う。ただし、サーバと異なるオプションを指定する。</p>
+<ul>
+<li><code>agent</code>：workerとして動作させる指定</li>
+<li><code>--server</code>：control-planeノード（サーバノード）のAPIサーバURL（ポート番号：6443）</li>
+<li><code>--token</code>：先ほど取得したサーバノードのnode-token</li>
+</ul>
+<p class="fig-caption">【K3s ワーカのインストール方法①： curl コマンドを1行で入力する場合】</p>
+<div class="cmd"><pre>wk1# export MYSERVER="172.2_.__.11"　　※ ネットワーク部を自分の情報に置き換える
+wk1# export MYHOST="172.2_.__.21"　　※ ネットワーク部を自分の情報に置き換える
+wk1# curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="agent --node-ip $MYHOST --server https://$MYSERVER:6443 --token ※svのトークン --flannel-iface=eth0" sh -</pre></div>
+<p class="fig-caption">【K3s ワーカのインストール方法②： curl コマンドを複数行で入力する場合】</p>
+<div class="cmd"><pre>wk1# export MYSERVER="172.2_.__.11"　　※ ネットワーク部を自分の情報に置き換える
+wk1# export MYHOST="172.2_.__.21"　　※ ネットワーク部を自分の情報に置き換える
+wk1# curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="
+  agent
+    --node-ip $MYHOST
+    --server https://$MYSERVER:6443
+    --token ※svの「cat /var/lib/rancher/k3s/server/node-token」で表示された内容を記入
+    --flannel-iface=eth0　　※2026/5/21追記
+  " sh -</pre></div>
+<p>　ワーカノードの登録が完了したら、サーバノードで実際にノードが追加されたことを次のコマンドで確認する。</p>
+<p class="fig-caption">【クラスタを構成するノードの確認（ワーカノード追加後）】</p>
+<div class="cmd"><pre>sv# kubectl get nodes -o wide
+
+【ノード出力例】
+NAME                       STATUS   ROLES           AGE   VERSION        INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
+sv.s____.enshu.aicit.jp    Ready    control-plane   45h   v1.35.4+k3s1   172.2_.__.11   &lt;none&gt;        Alpine Linux v3.23   6.18.26-0-lts    containerd://2.2.3-k3s1
+wk1.s____.enshu.aicit.jp   Ready    &lt;none&gt;          44h   v1.35.4+k3s1   172.2_.__.21   &lt;none&gt;        Alpine Linux v3.23   6.18.26-0-lts    containerd://2.2.3-k3s1</pre></div>
+<p>　ここでワーカノード（wk1など）が Ready 状態で追加されていれば、クラスタリングが正常に構成されている。</p>
+
+<h3 id="s453">4.5.3. ロードバランサ</h3>
+<p>　ロードバランサの設定は root に直接ならなくても良い。ロードバランサには Docker や K3s をインストールせず、代わりに高機能ロードバランサ HAProxy (High Availability Proxy) をインストールする。</p>
+<p>　その前準備として、以下のコマンドで/etc/haproxyディレクトリを作成する。</p>
+<p class="fig-caption">【/etc/haproxy ディレクトリの作成】</p>
+<div class="cmd"><pre>lb$ doas mkdir -p /etc/haproxy</pre></div>
+<p>　次に、vim, vi, nano のいずれかのテキストエディタを利用して、HAProxyの設定ファイルである /etc/haproxy/haproxy.cfg を作成する。</p>
+<p class="fig-caption">【HAProxyの設定ファイル /etc/haproxy/haproxy.cfg の作成】</p>
+<div class="cmd"><pre>lb$ doas vi /etc/haproxy/haproxy.cfg</pre></div>
+<p class="fig-caption">【リスト4.5.1. 作成するファイルの内容】</p>
+<div class="cmd"><pre>global
+    daemon
+defaults
+    mode http
+    timeout connect 5s
+    timeout client 30s
+    timeout server 30s
+frontend fe_http
+    bind *:80
+    default_backend be_k3s_web
+backend be_k3s_web
+    balance roundrobin
+    server server1 172.2_.__.11:30080 check
+    server worker1 172.2_.__.21:30080 check</pre></div>
+<p class="fig-caption">【表4.5.1 設定内容の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>global</td><td>HAProxy 全体に関わる設定</td></tr>
+<tr><td>defaults</td><td>frontend や backend に共通する初期値をまとめる場所</td></tr>
+<tr><td>frontend ...</td><td>クライアントからの接続を受ける入口、bind *:80 で 80 番ポートを待ち受ける</td></tr>
+<tr><td>default_backend ...</td><td>この frontend が受けた通信を指定した backend に流す</td></tr>
+<tr><td>backend ...</td><td>実際に転送先となるサーバ群を定義する場所</td></tr>
+<tr><td>balance roundrobin</td><td>2台以上のサーバへ順番に振り分ける設定（負荷分散）</td></tr>
+<tr><td>server worker1 ... check</td><td>1台目の転送先サーバの設定，check は生存確認を行う設定（省略可能）</td></tr>
+<tr><td>server worker2 ... check</td><td>2台目の転送先サーバの設定，check は生存確認を行う設定（省略可能）</td></tr>
+</tbody>
+</table>
+<p>　設定ファイルの作成が完了したら、haproxy をインストールする。次に、haproxyをサービスに登録して、サービスを再起動することでロードバランサが完成する。</p>
+<p class="fig-caption">【haproxy のインストール】</p>
+<div class="cmd"><pre>lb$ doas apk -U add haproxy　　※ パッケージリストのアップデートとhaproxyの追加
+lb$ doas rc-update add haproxy　　※haproxyをサービスに追加
+lb$ doas rc-service haproxy restart　　※haproxyサービスの再起動（停止している場合は起動）</pre></div>
+
+<h3 id="s454">4.5.4. Podのクラスタ化</h3>
+<p>　次に、クラスタ上で動作させるサンプルアプリケーションをサーバノード上の YAML ファイルで定義する。本章では web-test.yaml という一つのファイルで定義ファイルを作成するが、その内部は3つのリソース「ConfigMap」「Deployment」「Service（NodePort）」から構成されている。まずは、この3つのリソースについて順に説明したのち、3つを統合した web-test.yaml ファイルについて説明する。</p>
+<h4>1. ConfigMap</h4>
+<p>　ConfigMap の設定をリスト4.5.2に示す。ConfigMap は、Kubernetes において、設定データやファイル内容を保持するためのリソースである。具体的には、Webサーバのコンテナにマウントして、静的なHTMLページとして配信する用途で使われる。今回の例では「Hello from k3s HA」を表示するHTMLページを定義している。</p>
+<p class="fig-caption">【リスト 4.5.2 ConfigMap の設定】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-content
+data:
+  index.html: |
+    &lt;html&gt;
+      &lt;head&gt;&lt;title&gt;k3s ha demo&lt;/title&gt;&lt;/head&gt;
+      &lt;body&gt;
+        &lt;h1&gt;Hello from k3s HA demo&lt;/h1&gt;
+      &lt;/body&gt;
+    &lt;/html&gt;</pre></div>
+<p class="fig-caption">【表 4.5.2 ConfigMap の設定】</p>
+<table>
+<thead><tr><th>項目</th><th>内容</th><th>関係・役割</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>基本APIを示す</td></tr>
+<tr><td>kind</td><td>ConfigMap</td><td>設定データやファイル内容を保持するためのリソースである</td></tr>
+<tr><td>metadata.name</td><td>web-content</td><td>ConfigMapの識別名である</td></tr>
+</tbody>
+</table>
+<h4>2. Deployment</h4>
+<p>　Deployment の設定をリスト4.5.3に示す。Deploymentは、Kubernetes において、コンテナ（今回の例では Web サーバ（nginx））を複数の Pod で稼働させるための設定である。Pod の数はreplicasで指定することができ、この数を2以上にすることでコンテナを冗長化（クラスタ化）することができる。また、topologySpreadConstraints の指定により、Pod が異なるノードに分散配置されるよう制御している。このことにより、特定ノード障害時の耐障害性を向上させることができる。</p>
+<p class="fig-caption">【リスト4.5.3 Deployment の設定】</p>
+<div class="cmd"><pre>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: web
+      containers:
+        - name: nginx
+          image: nginx:1.30-alpine　　※ 学内LANでは「hub.enshu.aicit.jp/nginx:1.30-alpine」を指定（学内のみアクセス可）
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: content
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: content
+          configMap:
+            name: web-content</pre></div>
+<p class="fig-caption">【表4.5.3 Deployment の設定： 基本情報】</p>
+<table>
+<thead><tr><th>項目</th><th>内容</th><th>関係・役割</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>apps/v1</td><td>Deployment用のAPIバージョンである</td></tr>
+<tr><td>kind</td><td>Deployment</td><td>Podを管理・自動復旧するリソースである</td></tr>
+<tr><td>metadata.name</td><td>web</td><td>Deploymentの識別名である</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.5.4 Deployment の設定： スケーリング・識別】</p>
+<table>
+<thead><tr><th>項目</th><th>内容</th><th>関係・役割</th></tr></thead>
+<tbody>
+<tr><td>replicas</td><td>2</td><td>Podを2つ起動し冗長化する</td></tr>
+<tr><td>selector.matchLabels</td><td>app: web</td><td>管理対象Podをラベルで特定する</td></tr>
+<tr><td>template.metadata.labels</td><td>app: web</td><td>作成されるPodに付与され、selectorと一致する</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.5.5 Deployment の設定： 配置制御】</p>
+<table>
+<thead><tr><th>項目</th><th>内容</th><th>関係・役割</th></tr></thead>
+<tbody>
+<tr><td>topologySpreadConstraints</td><td>ノード分散設定</td><td>Podを異なるノードに均等配置する</td></tr>
+<tr><td>topologyKey</td><td>kubernetes.io/hostname</td><td>ノード単位で分散する</td></tr>
+<tr><td>maxSkew</td><td>1</td><td>配置の偏りを最小限に抑える</td></tr>
+<tr><td>whenUnsatisfiable</td><td>DoNotSchedule</td><td>条件を満たせない場合は配置しない</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.5.6 Deployment の設定： コンテナ設定】</p>
+<table>
+<thead><tr><th>項目</th><th>内容</th><th>関係・役割</th></tr></thead>
+<tbody>
+<tr><td>containers.name</td><td>nginx</td><td>コンテナ名</td></tr>
+<tr><td>image</td><td>nginx:1.30-alpine</td><td>軽量なnginxイメージを使用</td></tr>
+<tr><td>ports.containerPort</td><td>80</td><td>HTTP通信を受け付ける</td></tr>
+<tr><td>volumeMounts.mountPath</td><td>/usr/share/nginx/html</td><td>Webコンテンツ配置先</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.5.7 Deployment の設定： データ連携（ConfigMap）】</p>
+<table>
+<thead><tr><th>項目</th><th>内容</th><th>関係・役割</th></tr></thead>
+<tbody>
+<tr><td>volumes.name</td><td>content</td><td>ボリューム名</td></tr>
+<tr><td>configMap.name</td><td>web-content</td><td>ConfigMapを参照</td></tr>
+<tr><td>volumeMounts.name</td><td>content</td><td>ボリュームとコンテナを接続</td></tr>
+<tr><td>結果</td><td>index.htmlが配置される</td><td>nginxが静的ページを配信する</td></tr>
+</tbody>
+</table>
+<h4>3. Service (NodePort)</h4>
+<p>　Service (NodePort) の設定をリスト4.5.4に示す。Serviceは、Deploymentで作成されたPod（app: web）に対して、ノードを外部公開する仕組みである。この例では、30080番ポート経由でサービスを提供している。ロードバランサの設定 haproxy.cfg にも 30080 という記述があるので参考にしてほしい。</p>
+<p class="fig-caption">【リスト4.5.4 Service (NodePort) の設定】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  type: NodePort
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080</pre></div>
+<p class="fig-caption">【表4.5.8 Service (NodePort) の設定： 基本情報】</p>
+<table>
+<thead><tr><th>項目</th><th>内容</th><th>関係・役割</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>Service用の基本APIである</td></tr>
+<tr><td>kind</td><td>Service</td><td>Podへの通信経路を提供するリソースである</td></tr>
+<tr><td>metadata.name</td><td>web</td><td>Serviceの識別名である</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.5.9 Service (NodePort) の設定： 接続対象】</p>
+<table>
+<thead><tr><th>項目</th><th>内容</th><th>関係・役割</th></tr></thead>
+<tbody>
+<tr><td>selector</td><td>app: web</td><td>対象となるPodをラベルで指定する</td></tr>
+<tr><td>対象Pod</td><td>Deploymentで作成されたPod</td><td>app: webラベルにより紐付く</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.5.10 Service (NodePort) の設定： 公開設定】</p>
+<table>
+<thead><tr><th>項目</th><th>内容</th><th>関係・役割</th></tr></thead>
+<tbody>
+<tr><td>type</td><td>NodePort</td><td>各ノードのポートで外部公開する</td></tr>
+<tr><td>port</td><td>80</td><td>Service内部のポート</td></tr>
+<tr><td>targetPort</td><td>80</td><td>Pod（nginx）のポートに転送</td></tr>
+<tr><td>nodePort</td><td>30080</td><td>ノードのポート番号（外部からアクセス可能）</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.5.11 Service (NodePort) の設定： 通信の流れ】</p>
+<table>
+<thead><tr><th>ステップ</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>①</td><td>クライアントが ノードIP:30080 にアクセス</td></tr>
+<tr><td>②</td><td>Service（NodePort）が受信</td></tr>
+<tr><td>③</td><td>app: web のPodへロードバランス</td></tr>
+<tr><td>④</td><td>Pod内のnginx（80番ポート）が応答</td></tr>
+</tbody>
+</table>
+<h4>4. web-test.yaml 全体</h4>
+<p>　これまで紹介した3つのサービスを連結して、一つの YAML ファイル web-test.yaml にしたものをリスト4.5.5に示す。まずは、rootユーザに移行し、テキストエディタを利用してリスト4.5.5を入力する。</p>
+<div class="cmd"><pre>sv# cd　　※ カレントディレクトリを /root に移動
+sv# vi web-test.yaml</pre></div>
+<p class="fig-caption">【リスト4.5.5. /root/web-test.yaml の設定】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-content
+data:
+  index.html: |
+    &lt;html&gt;
+      &lt;head&gt;&lt;title&gt;k3s ha demo&lt;/title&gt;&lt;/head&gt;
+      &lt;body&gt;
+        &lt;h1&gt;Hello from k3s HA demo&lt;/h1&gt;
+      &lt;/body&gt;
+    &lt;/html&gt;
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: web
+      containers:
+        - name: nginx
+          image: nginx:1.30-alpine　　※ 演習時は「hub.enshu.aicit.jp/nginx:1.30-alpine」を指定（学内のみアクセス可）
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: content
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: content
+          configMap:
+            name: web-content
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  type: NodePort
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080</pre></div>
+<p class="fig-caption">【Podの配置状況の確認（web-test.yaml 定義のクラスタ反映前）】</p>
+<div class="cmd"><pre>sv# kubectl get pods -o wide
+
+【出力例】
+No resources found in default namespace.</pre></div>
+<p class="fig-caption">【Kubernetesリソース（DeploymentやServiceなど）の作成】</p>
+<div class="cmd"><pre>sv# kubectl apply -f web-test.yaml</pre></div>
+<p class="fig-caption">【Podの配置状況の確認（web-test.yaml 定義のクラスタ反映後）】</p>
+<div class="cmd"><pre>sv# kubectl get pods -o wide
+
+【出力例】
+NAME                   READY   STATUS    RESTARTS        AGE     IP           NODE                       NOMINATED NODE   READINESS GATES
+web-7b9b4489cb-5hzvj   1/1     Running   1 (104s ago)    3d18h   10.42.1.7    wk1.s____.enshu.aicit.jp   &lt;none&gt;           &lt;none&gt;
+web-7b9b4489cb-8rg2f   1/1     Running   1 (2m17s ago)   3d18h   10.42.0.37   sv.s____.enshu.aicit.jp    &lt;none&gt;           &lt;none&gt;</pre></div>
+<p>　ここで、二つ Pod がそれぞれ異なるノード（svとwk1）に分散されていることが確認できる。これは前述のトポロジー分散設定（replicas: 2）が有効に機能していることを示している。</p>
+<p>　良く見ると、サーバノードにも Pod が割り当てられている。この理由であるが、K3s は IoT にも対応した軽量 Kubernetes のため、デフォルトインストールでは、サーバノードはワーカノードとしても機能するからである。</p>
+<p class="fig-caption">【ロードバランサを経由したWebサーバへのアクセス】</p>
+<div class="cmd"><pre>sv# curl http://172.2_.__.1　　※ ネットワーク部は自分のLANの設計を適用
+
+【出力例】
+&lt;html&gt;
+  &lt;head&gt;&lt;title&gt;k3s ha demo&lt;/title&gt;&lt;/head&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Hello from k3s HA demo&lt;/h1&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</pre></div>
+<p class="fig-caption">【ロードバランサの振る舞いの観察】</p>
+<div class="cmd"><pre>lb$ doas tcpdump -i eth0 port 80</pre></div>
+<p class="fig-caption">【Kubernetesリソース（DeploymentやServiceなど）の変更】</p>
+<div class="cmd"><pre>sv# kubectl apply -f web-test.yaml</pre></div>
+<p class="fig-caption">【Kubernetesリソース（DeploymentやServiceなど）の削除】</p>
+<div class="cmd"><pre>sv# kubectl delete -f web-test.yaml</pre></div>
+
+<h2 id="s46">4.6. 総合演習</h2>
+<h3 id="s461">4.6.1. worker2 の作成</h3>
+<p>　以下の仕様に基づき、k3s-worker2を作成せよ。</p>
+<p class="fig-caption">【表4.6.1. クラスタ構成にする追加するワーカノードの基本仕様】</p>
+<table>
+<thead><tr><th>項目</th><th>仮想マシン名</th><th>メインメモリ</th><th>CPU数</th><th>ディスクサイズ</th><th>IPアドレス</th><th>ホスト名</th><th>FQDN</th></tr></thead>
+<tbody>
+<tr><td>ワーカノード 2</td><td>k3s-worker2</td><td>1024 MB</td><td>1</td><td>8 GB</td><td>.22</td><td>wk2</td><td>wk2.s____.enshu.aicit.jp</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.6.2. 仮想マシンに必要なパッケージソフトウェア】</p>
+<table>
+<thead><tr><th>仮想マシン名</th><th>第1章</th><th>第2章</th><th>第3章</th></tr></thead>
+<tbody>
+<tr><td>k3s-worker2</td><td>curl, docker</td><td>doas, htop, vim</td><td>iproute2, nano, tcpdump</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.6.3. 仮想マシンのポートフォワード設定】</p>
+<table>
+<thead><tr><th>仮想マシン名</th><th>アダプタ名</th><th>名前</th><th>プロトコル</th><th>ホストIP</th><th>ホストポート</th><th>ゲストIP</th><th>ゲストポート</th></tr></thead>
+<tbody>
+<tr><td>k3s-worker2</td><td>アダプター2</td><td>SSH</td><td>TCP</td><td>※空欄</td><td>12222</td><td>※空欄</td><td>22</td></tr>
+</tbody>
+</table>
+
+<h3 id="s462">4.6.2. Pod のスケールアウト</h3>
+<p>　worker2を起動し、Kubernetes の replicas の値を3に変更した際に、Podの数が自動的に増えてスケールアウトすることを確認せよ。この時、ロードバランサのバックエンドに worker2 に関する記述を追加するのを忘れないこと。また、二つの設定を変更した後は、次のコマンドで有効化することを忘れないこと。</p>
+<p class="fig-caption">【レプリカセット数変更後の有効化】</p>
+<div class="cmd"><pre>sv$ doas kubectl apply -f web-test.yaml</pre></div>
+<p class="fig-caption">【ロードバランサの設定の有効化】</p>
+<div class="cmd"><pre>lb$ doas rc-service haproxy restart</pre></div>
+
+<h3 id="s463">4.6.3. worker3 の作成【応用課題】</h3>
+<p>　余力のある人は、以下の仕様に基づいてworker3も作成し、replicas の値を4へ変更した際に、Podの数が自動的に増えてスケールアウトすることを確認せよ。</p>
+<p class="fig-caption">【表4.6.4. クラスタ構成にする追加するワーカノードの基本仕様】</p>
+<table>
+<thead><tr><th>項目</th><th>仮想マシン名</th><th>メインメモリ</th><th>CPU数</th><th>ディスクサイズ</th><th>IPアドレス</th><th>ホスト名</th><th>FQDN</th></tr></thead>
+<tbody>
+<tr><td>ワーカノード 3</td><td>k3s-worker3</td><td>1024 MB</td><td>1</td><td>8 GB</td><td>.23</td><td>wk3</td><td>wk3.s____.enshu.aicit.jp</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.6.5. 仮想マシンに必要なパッケージソフトウェア】</p>
+<table>
+<thead><tr><th>仮想マシン名</th><th>第1章</th><th>第2章</th><th>第3章</th></tr></thead>
+<tbody>
+<tr><td>k3s-worker3</td><td>curl, docker</td><td>doas, htop, vim</td><td>iproute2, nano, tcpdump</td></tr>
+</tbody>
+</table>
+<p class="fig-caption">【表4.6.6. 仮想マシンのポートフォワード設定】</p>
+<table>
+<thead><tr><th>仮想マシン名</th><th>アダプタ名</th><th>名前</th><th>プロトコル</th><th>ホストIP</th><th>ホストポート</th><th>ゲストIP</th><th>ゲストポート</th></tr></thead>
+<tbody>
+<tr><td>k3s-worker3</td><td>アダプター2</td><td>SSH</td><td>TCP</td><td>※空欄</td><td>12322</td><td>※空欄</td><td>22</td></tr>
+</tbody>
+</table>
+
+<div class="page-nav">
+  <a onclick="navigate('ch3-a1-snapshot')">← A3.1. スナップショット機能のすすめ</a>
+  <a onclick="navigate('ch4-a1-ipv4')">A4.1. IPv4 アドレッシング →</a>
+</div>`
   },
 
   'ch4-a1-ipv4': {
