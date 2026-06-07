@@ -159,20 +159,6 @@
     pre.cmd .prompt { color: #888; }
     pre.cmd .focus { color: #fff; font-weight: bold; }
 
-    /* Vim-style syntax highlighting */
-    pre.cmd .hl-dns-type,   .cmd pre .hl-dns-type   { color: #ff79c6; }
-    pre.cmd .hl-dns-dir,    .cmd pre .hl-dns-dir    { color: #8be9fd; }
-    pre.cmd .hl-dns-at,     .cmd pre .hl-dns-at     { color: #f1fa8c; }
-    pre.cmd .hl-conf-kw,    .cmd pre .hl-conf-kw    { color: #8be9fd; }
-    pre.cmd .hl-string,     .cmd pre .hl-string     { color: #f1fa8c; }
-    pre.cmd .hl-number,     .cmd pre .hl-number     { color: #50fa7b; }
-    pre.cmd .hl-comment,    .cmd pre .hl-comment    { color: #6272a4; font-style: italic; }
-    pre.cmd .hl-placeholder,.cmd pre .hl-placeholder{ color: #f1fa8c; text-decoration: underline; }
-    pre.cmd .hl-ip,         .cmd pre .hl-ip         { color: #ffb86c; }
-    pre.cmd .hl-yaml-key,   .cmd pre .hl-yaml-key   { color: #8be9fd; }
-    pre.cmd .hl-yaml-val,   .cmd pre .hl-yaml-val   { color: #f1fa8c; }
-    pre.cmd .hl-bash-cmd,   .cmd pre .hl-bash-cmd   { color: #50fa7b; }
-    pre.cmd .hl-bash-opt,   .cmd pre .hl-bash-opt   { color: #ffb86c; }
 
     /* Flow diagram */
     .flow-diagram {
@@ -5708,130 +5694,11 @@ function navigate(pageId) {
   document.getElementById('main').scrollTop = 0;
   window.scrollTo(0, 0);
 
-  // Syntax highlight
-  setTimeout(applySyntaxHighlight, 0);
 }
 
 function scrollToAnchor(anchor) {
   const el = document.getElementById(anchor);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// =============================================
-// SYNTAX HIGHLIGHT
-// =============================================
-function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-
-function applySyntaxHighlight() {
-  document.querySelectorAll('.cmd pre, pre.cmd').forEach(el => {
-    if (el.dataset.highlighted) return;
-    el.dataset.highlighted = '1';
-
-    let h = el.innerHTML;
-
-    // ---- 共通：※ 注釈行はコメント色 ----------------------------------------
-    h = h.replace(/(※[^\n]*)/g, '<span class="hl-comment">$1</span>');
-
-    // ---- BIND ゾーンファイル / named.conf / unbound.conf 判定 ----------------
-    const isZone    = /\$TTL|\bIN\s+(SOA|NS|A|PTR)/.test(h);
-    const isNamedConf = /\bzone\b.*\{|\bview\b|\bacl\b|\boptions\b\s*\{/.test(h);
-    const isUnbound = /\bforward-zone:|\bforward-addr:|\bunbound\b/.test(h);
-    const isYaml    = /^(services:|apiVersion:|kind:|spec:|metadata:)/m.test(el.textContent);
-    const isDockerCompose = /docker-compose|services:\n/.test(el.textContent);
-    const isHAProxy = /\bfrontend\b|\bbackend\b|\bbalance\b/.test(h);
-
-    if (isZone) {
-      // $TTL $ORIGIN ディレクティブ
-      h = h.replace(/(\$(?:TTL|ORIGIN)\b)/g, '<span class="hl-dns-dir">$1</span>');
-      // @ シンボル（行頭またはフィールド）
-      h = h.replace(/(?<![a-zA-Z0-9])(@ )(?=[^\n])/g, '<span class="hl-dns-at">$1</span>');
-      // DNS レコードタイプ
-      h = h.replace(/\b(IN)\s+(SOA|NS|A|AAAA|PTR|CNAME|MX|TXT|SRV|CAA)\b/g,
-        '$1 <span class="hl-dns-type">$2</span>');
-      // シリアル・TTL数値 (SOA内の数値列)
-      h = h.replace(/\b(\d{10})\b/g, '<span class="hl-number">$1</span>');
-      h = h.replace(/\b(\d+[smhdwSMHDW])\b/g, '<span class="hl-number">$1</span>');
-      // IPアドレス
-      h = h.replace(/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/g,
-        '<span class="hl-ip">$1</span>');
-      // ; コメント
-      h = h.replace(/(;[^\n]*)/g, '<span class="hl-comment">$1</span>');
-    }
-
-    if (isNamedConf) {
-      // クォート文字列
-      h = h.replace(/"([^"<>]*)"/g, '"<span class="hl-string">$1</span>"');
-      // BIND キーワード
-      const bindKw = ['options','zone','view','acl','type','master','slave','file',
-        'recursion','allow-recursion','allow-transfer','allow-update',
-        'listen-on','listen-on-v6','directory','logging','channel','category',
-        'match-clients','internal-nets','localhost','any','none',
-        'restart-unless-stopped'];
-      bindKw.forEach(kw => {
-        const re = new RegExp('(?<![a-zA-Z-])(' + escRe(kw) + ')(?![a-zA-Z-])', 'g');
-        h = h.replace(re, '<span class="hl-conf-kw">$1</span>');
-      });
-      // { } ; ブロック記号
-      h = h.replace(/([{}])/g, '<span class="hl-comment">$1</span>');
-      // // # ; コメント
-      h = h.replace(/(\/\/[^\n]*|#[^\n]*)/g, '<span class="hl-comment">$1</span>');
-    }
-
-    if (isUnbound) {
-      // クォート文字列
-      h = h.replace(/"([^"<>]*)"/g, '"<span class="hl-string">$1</span>"');
-      // Unbound キーワード
-      const unboundKw = ['server','interface','port','access-control','hide-identity',
-        'hide-version','prefetch','cache-max-ttl','cache-min-ttl','do-ip6',
-        'unblock-lan-zones','insecure-lan-zones','forward-zone','forward-addr','name'];
-      unboundKw.forEach(kw => {
-        const re = new RegExp('(^|\\n)([ \\t]*)(' + escRe(kw) + ')(:)', 'g');
-        h = h.replace(re, '$1$2<span class="hl-conf-kw">$3</span>$4');
-      });
-      // IPアドレス
-      h = h.replace(/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/g,
-        '<span class="hl-ip">$1</span>');
-      // # コメント
-      h = h.replace(/(#[^\n]*)/g, '<span class="hl-comment">$1</span>');
-    }
-
-    if (isYaml || isDockerCompose) {
-      // YAMLキー: (行頭スペース + key:)
-      h = h.replace(/(^|(?<=\n))([ \t]*)([a-zA-Z_][a-zA-Z0-9_\-]*)(:)(?=[ \t\n])/gm,
-        '$1$2<span class="hl-yaml-key">$3</span>$4');
-      // クォート値
-      h = h.replace(/"([^"<>]*)"/g, '"<span class="hl-yaml-val">$1</span>"');
-      // |- ブロック
-      h = h.replace(/(\|[-]?)/g, '<span class="hl-comment">$1</span>');
-      // # コメント
-      h = h.replace(/(#[^\n]*)/g, '<span class="hl-comment">$1</span>');
-    }
-
-    if (isHAProxy) {
-      const haKw = ['global','defaults','frontend','backend','mode','timeout',
-        'bind','default_backend','balance','roundrobin','server','check','daemon'];
-      haKw.forEach(kw => {
-        const re = new RegExp('(?<![a-zA-Z])(' + escRe(kw) + ')(?![a-zA-Z])', 'g');
-        h = h.replace(re, '<span class="hl-conf-kw">$1</span>');
-      });
-      h = h.replace(/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?)\b/g,
-        '<span class="hl-ip">$1</span>');
-    }
-
-    // ---- 共通：シェルコマンドブロック（プロンプト行） -----------------------
-    // プロンプト記号の後のコマンド名を緑に
-    h = h.replace(/((?:lb|sv|wk\d*|dev)?[$#]\s+)(apk|curl|rc-update|rc-service|echo|cat|ping|nslookup|traceroute|ip|netstat|ps|wg|chmod|mv|mkdir|ln|docker|kubectl|setup-dns|sysctl|iptables|doas)\b/g,
-      '$1<span class="hl-bash-cmd">$2</span>');
-    // オプションフラグ
-    h = h.replace(/([ \t])(--?[a-zA-Z][a-zA-Z0-9\-]*)/g,
-      '$1<span class="hl-bash-opt">$2</span>');
-
-    // ---- 共通：下線部プレースホルダー ----------------------------------------
-    // 2文字以上の連続アンダースコア
-    h = h.replace(/(__{2,})/g, '<span class="hl-placeholder">$1</span>');
-
-    el.innerHTML = h;
-  });
 }
 
 
