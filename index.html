@@ -6260,9 +6260,879 @@ dev# kubectl delete -f namespace.yaml</pre></div>
   },
 
   'ch7-cloud2': {
-    title: '7. クラウドサービスの利用法2',
-    toc: [{ level: 1, label: '7. クラウドサービスの利用法2', anchor: 'top' }],
-    content: `<h1 id="top">7. クラウドサービスの利用法2</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: '第7章 クラウドサービスの利用法2 クラウドデータベース',
+    toc: [
+      { level: 1, label: '第7章 クラウドサービスの利用法2', anchor: 'top' },
+      { level: 2, label: '7.1. はじめに', anchor: 's71' },
+      { level: 3, label: '7.1.1. 概要', anchor: 's711' },
+      { level: 3, label: '7.1.2. 前提となる知識・スキル', anchor: 's712' },
+      { level: 3, label: '7.1.3. 到達目標', anchor: 's713' },
+      { level: 3, label: '7.1.4. 第7章の操作対象', anchor: 's714' },
+      { level: 2, label: '7.2. PostgreSQL', anchor: 's72' },
+      { level: 2, label: '7.3. SQL', anchor: 's73' },
+      { level: 2, label: '7.4. ハンズオン1： Docker 環境（dev）', anchor: 's74' },
+      { level: 3, label: '7.4.1. 事前準備', anchor: 's741' },
+      { level: 3, label: '7.4.2. デプロイ', anchor: 's742' },
+      { level: 3, label: '7.4.3. サービスの利用確認', anchor: 's743' },
+      { level: 3, label: '7.4.4. 後始末', anchor: 's744' },
+      { level: 2, label: '7.5. ハンズオン2： K3s 試験環境（dev）', anchor: 's75' },
+      { level: 3, label: '7.5.1. 事前準備', anchor: 's751' },
+      { level: 3, label: '7.5.2. デプロイ', anchor: 's752' },
+      { level: 3, label: '7.5.3. サービスの利用確認', anchor: 's753' },
+      { level: 3, label: '7.5.4. 後始末（今回は不要）', anchor: 's754' },
+      { level: 2, label: '7.6. 総合演習', anchor: 's76' },
+      { level: 3, label: '7.6.1. users テーブルの作成', anchor: 's761' },
+      { level: 3, label: '7.6.2. rooms テーブルの作成', anchor: 's762' },
+      { level: 3, label: '7.6.3. messages テーブルの作成', anchor: 's763' },
+    ],
+    content: `<h1 id="top">第7章　クラウドサービスの利用法2 クラウドデータベース</h1>
+<p class="meta">公開日： 2026年6月6日（土）<br>開講日： 2026年6月8日（月）</p>
+
+<h2 id="s71">7.1. はじめに</h2>
+
+<h3 id="s711">7.1.1. 概要</h3>
+<p>　本演習では、クラウドデータベースとしてリレーショナルデータベースについて学習する。 リレーショナルデータベースは、単に SQL を実行する場所ではなく、アプリの状態を安全に保持し、他のサービスへつなぐ中核となる。 この章では、前章と同様に、検証用の Docker, k3s 上で PostgreSQL をデプロイし、psql コマンドや Web ブラウザから接続することで PostgreSQL の基本に関する学習を通して、クラウドで利用されるリレーショナルデータベースについて理解を深める。</p>
+
+<h3 id="s712">7.1.2. 前提となる知識・スキル</h3>
+<ul>
+<li>第6章までの内容を修了していること</li>
+<li>Alpine Linux 仮想マシンへ SSH 接続できること</li>
+<li>Linux の基本操作（ファイル作成、ディレクトリ移動、エディタ操作）ができること</li>
+<li>Docker および Docker Compose の基本的な利用方法を理解していること</li>
+<li>Kubernetes（K3s）の基本概念（Namespace、Pod、Deployment、Service）を理解していること</li>
+<li>kubectl の基本操作ができること</li>
+<li>Web アプリケーションの基本的な構成（フロントエンド・バックエンド・データベース）を理解していること</li>
+</ul>
+
+<h3 id="s713">7.1.3. 到達目標</h3>
+<ul>
+<li>PostgreSQL の役割とリレーショナルデータベースの基本概念を説明できる。</li>
+<li>SQL を用いてデータの検索・登録・更新・削除（CRUD 操作）を実行できる。</li>
+<li>Docker Compose を利用して PostgreSQL および pgAdmin を構築できる。</li>
+<li>psql および pgAdmin を利用して PostgreSQL を操作できる。</li>
+<li>Kubernetes（K3s）上に PostgreSQL をデプロイできる。</li>
+<li>Secret、PersistentVolumeClaim（PVC）、Deployment、Service の役割を説明できる。</li>
+<li>Kubernetes 上で動作する PostgreSQL に接続し、基本的なデータ操作を実施できる。</li>
+</ul>
+
+<h3 id="s714">7.1.4. 第7章の操作対象</h3>
+<p>　第7章では、以下の角括弧で囲まれたマシン上で、PostgreSQL の基本動作について確認する。</p>
+<div class="cmd"><pre>【演習環境の構成（Alpine Linux・Docker・K3s）】
+ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            │
+            │　【Web アプリケーション用クラウド環境（開発・テスト用）】
+            ├─ [Alpine Linux（alpine-k3s, core:2, ram:4G, hdd:20G）]　　※ dev.s____.enshu.aicit.jp
+            │    ├─ Docker - PostgreSQL, pgAdmin
+            │    └─ K3s（Kubernetes + containerd）- MinIO
+            │
+            │　【Web アプリケーション用クラウド環境（公開用クラスタ）】
+            ├─ Alpine Linux（k3s-lb, core:1, ram:1G, hdd:8G）　　　　 ※ lb.s____.enshu.aicit.jp
+            │    ├─ HAProxy
+            │    ├─ Unbound
+            │    └─ WireGuard Client
+            ├─ Alpine Linux（k3s-server, core:1, ram:2G, hdd:16G）　　※ sv.s____.enshu.aicit.jp
+            │    ├─ Docker ── BIND9
+            │    └─ K3s（Kubernetes + containerd）
+            ├─ Alpine Linux（k3s-worker1, core:1, ram:1G, hdd:8G）　　※ wk1.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            ├─ Alpine Linux（k3s-worker2, core:1, ram:1G, hdd:8G）　　※ wk2.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            └─ Alpine Linux（k3s-worker3, core:1, ram:1G, hdd:8G）　　※ wk3.s____.enshu.aicit.jp
+                 └─ Docker, K3s（Kubernetes + containerd）</pre></div>
+
+<h2 id="s72">7.2. PostgreSQL</h2>
+<p>　データベースは、保存するデータを構造化・定型化することで、一般的なファイル保存と異なり、大量のデータを効率よく検索・更新できる。</p>
+<p>　PostgreSQL はデータベースソフトウェアの一種で、SQL を用いるリレーショナルデータベース管理システム（RDBMS）である。 リレーショナルデータベースでは、データを「テーブル（Table）」という表形式で管理し、各テーブルの中に「行（Row）」と「列（Column）」を持つ。 また、作成した表同士の関係を定義することで、構造化されたデータを管理する。 Web アプリケーションでは、ユーザ情報、投稿データ、注文履歴、設定情報などのように、構造化されたデータを保存・検索する用途で広く利用される。</p>
+<p>　PostgreSQL では、データのまとまりを「データベース（Database）」として管理し、その中に複数のテーブルを作成する。 各テーブルは主キー（Primary Key）によって一意に識別され、必要に応じてインデックス（Index）を設定することで、検索性能を高めることができる。 また、トランザクション（Transaction）を利用することで、複数の更新処理をまとめて安全に実行し、途中で失敗した場合には元に戻すことができる。</p>
+<p>　例えば、 PostgreSQL などのリレーショナルデータベースで扱うデータには次のようなものがある。</p>
+<ul>
+<li>ユーザ情報</li>
+<li>投稿内容</li>
+<li>商品情報</li>
+<li>注文履歴</li>
+<li>アクセスログ</li>
+<li>設定値</li>
+</ul>
+<p>　Web アプリケーションでは、データの種類に応じて保存先を分けることが多い。 たとえば、検索や集計に使う情報は PostgreSQL に保存し、画像や動画などの大きなバイナリデータは別のストレージに保存することで、管理しやすさと性能の両立を図る。 このように、PostgreSQL は「構造化された情報を正確に管理するための保存先」として利用される。</p>
+<p>　例えば、図 7.2.1 に示すように、利用者は Web ブラウザ上のフロントエンドアプリケーションを利用してデータの検索や登録を行う。 フロントエンドから送られた要求はバックエンドアプリケーションで処理され、必要に応じて PostgreSQL に対して SQL が実行される。 検索処理では SELECT 文、登録処理では INSERT 文、更新処理では UPDATE 文、削除処理では DELETE 文が利用される。 このように、バックエンドアプリケーションが PostgreSQL と連携することで、アプリケーションのデータを永続的に保存し、必要なときに取り出せるようにしている。</p>
+<p class="caption">図 7.2.1. Web アプリケーションと PostgreSQL の役割分担例</p>
+<img src="images/ch7-fig1.png" alt="図7.2.1 WebアプリケーションとPostgreSQLの役割分担例" style="max-width:720px;">
+<p>　本章では、Docker を利用して PostgreSQL の簡単な動作確認を行い、Kubernetes 環境を利用して実際のデプロイ方法に触れることで、リレーショナルデータベースの基本について学ぶ。</p>
+
+<h2 id="s73">7.3. SQL</h2>
+<p>　SQL（Structured Query Language）は、リレーショナルデータベース（RDB）を操作するための言語である。 PostgreSQL をはじめ、MySQL、Oracle Database、Microsoft SQL Server など、多くのデータベースシステムで利用されている。</p>
+<p>　もう少しかみ砕いて説明すると、PostgreSQL はデータベース管理システム（ソフトウェア）の名前であり、SQL は PostgreSQL を操作するための言語である。 身近な例で考えると、PostgreSQL が「本棚」、SQL が「本を探したり並べ替えたりするための指示」と解釈することができる。</p>
+<p>　リレーショナルデータベースでは、この本棚に相当する格納場所を、表形式の「テーブル（Table）」として管理する。 このテーブルに対して SQL を実行することで、テーブル内のデータを検索したり、新しいデータを登録したり、既存データを更新したりすることができる。</p>
+<p>　ここで、図7.3.1に示すようなユーザ管理用テーブルがあるとする。 （テーブルは Excel の表のようなものと考えると理解しやすい）</p>
+<p class="caption">図7.3.1. staff テーブルの例</p>
+<img src="images/ch7-fig2.png" alt="図7.3.1 staffテーブルの例" style="max-width:320px;">
+<p>　このテーブルでは、利用者ごとに ID、氏名、メールアドレスを管理している。 Web アプリケーションは SQL を利用して、このテーブルに対してデータの追加や検索を行う。</p>
+<p>　この SQL では、CRUD（Create, Read, Update, Delete）と呼ばれる、4つの基本操作命令が用意されている。</p>
+<ul>
+<li>Create: INSERT（登録）</li>
+<li>Read: SELECT（検索）</li>
+<li>Update: UPDATE（更新）</li>
+<li>Delete: DELETE（削除）</li>
+</ul>
+
+<h4>(1) SELECT 文（検索）</h4>
+<p>　SELECT 文は、データベースに保存されているデータを検索するための命令である。</p>
+<p>　例えば、staff テーブルに保存されている全ユーザを表示する場合は次のように記述する。</p>
+<div class="cmd"><pre>SELECT * FROM staff;</pre></div>
+<p>　ここで、</p>
+<ul>
+<li>SELECT は取得したい列を指定する命令</li>
+<li>* は「すべての列」を意味する記号</li>
+<li>FROM staff は staff テーブルを対象とする指定</li>
+</ul>
+<p>を表している。</p>
+<p>　実行結果は次のようになる。</p>
+<div class="cmd"><pre> id |  name   |        email
+----+---------+----------------------
+  1 | Suzuki  | suzuki@example.com
+  2 | Tanaka  | tanaka@example.com
+  3 | Sato    | sato@example.com</pre></div>
+<p>　また、特定の列のみ取得することもできる。</p>
+<div class="cmd"><pre>SELECT name, email FROM staff;</pre></div>
+<p>　この場合、name 列と email 列のみが表示される。</p>
+
+<h4>(2) INSERT 文（登録）</h4>
+<p>　INSERT 文は、新しいデータを登録するための命令である。</p>
+<p>　例えば、新しいユーザを追加する場合は次のように記述する。</p>
+<div class="cmd"><pre>INSERT INTO staff (name, email)
+VALUES ('Yamada', 'yamada@example.com');　　※ これら2行は、1行で書くことも可能</pre></div>
+<p>　ここで、</p>
+<ul>
+<li>INSERT INTO はデータ登録命令</li>
+<li>(name, email) は値を登録する列</li>
+<li>VALUES は登録する値</li>
+</ul>
+<p>を表している。</p>
+<p>　実行後、staff テーブルには新しい行が追加される。</p>
+
+<h4>(3) UPDATE 文（更新）</h4>
+<p>　UPDATE 文は、既存データを更新するための命令である。</p>
+<p>　例えば、ID が 1 の利用者のメールアドレスを変更する場合は次のように記述する。</p>
+<div class="cmd"><pre>UPDATE staff
+SET email = 'newmail@example.com'
+WHERE id = 1;　　※ これら3行は、1行で書くことも可能</pre></div>
+<p>　ここで、</p>
+<ul>
+<li>SET は変更内容</li>
+<li>WHERE は変更対象を絞り込む条件</li>
+</ul>
+<p>を指定している。</p>
+<p>　実行後、ID が 1 のユーザのメールアドレスのみが更新される。</p>
+<p>　ここで、 WHERE 句を省略すると、対象テーブルの全レコードが更新されるので注意する。</p>
+
+<h4>(4) DELETE 文（削除）</h4>
+<p>　DELETE 文は、データを削除するための命令である。</p>
+<p>　例えば、ID が 3 の利用者を削除する場合は次のように記述する。</p>
+<div class="cmd"><pre>DELETE FROM staff
+WHERE id = 3;　　※ これら2行は、1行で書くことも可能</pre></div>
+<p>　実行後、該当するユーザの情報が削除される。</p>
+<p>　ここで、 WHERE 句を省略すると、対象テーブルの全レコードが削除されるので注意する。</p>
+
+<h4>(5) WHERE 句による条件検索</h4>
+<p>　実際のシステムでは、すべてのデータを取得することは少なく、条件を指定して検索することが多い。</p>
+<p>　例えば、ID が 2 のユーザを検索する場合は次のように記述する。</p>
+<div class="cmd"><pre>SELECT *
+FROM staff
+WHERE id = 2;　　※ これら3行は、1行で書くことも可能</pre></div>
+<p>　また、文字列に対する検索も可能である。</p>
+<div class="cmd"><pre>SELECT *
+FROM staff
+WHERE name = 'Tanaka';　　※ これら3行は、1行で書くことも可能</pre></div>
+<p>　このように、WHERE 句を利用することで必要なデータだけを取得できる。</p>
+
+<h4>(6) PostgreSQL と SQL</h4>
+<p>　PostgreSQL は SQL を利用してデータを操作するデータベース管理システムである。 本演習では、psql コマンドを利用して PostgreSQL に接続し、SQL を実行する。</p>
+<p>　例えば、PostgreSQL に接続した状態で次のように入力すると、テーブル一覧を確認できる。</p>
+<div class="cmd"><pre>\dt</pre></div>
+<p>　また、SQL 文は通常セミコロン（;）で終了する。</p>
+<div class="cmd"><pre>SELECT * FROM staff;</pre></div>
+<p>　セミコロンが入力されるまで PostgreSQL は「まだ SQL が続く」と判断するため、入力が完了しない点に注意する。</p>
+
+<h4>(7) SQL と Web アプリケーション</h4>
+<p>　Web アプリケーションでは、利用者が直接 SQL を入力することはほとんどない。 通常は、Web アプリケーションが PostgreSQL へ SQL を送信し、その結果を画面へ表示する。</p>
+<p>　例えば、SNS の投稿一覧画面では、内部的には次のような SQL が実行される。</p>
+<div class="cmd"><pre>SELECT *
+FROM posts
+ORDER BY created_at DESC;　　※ これら3行は、1行で書くことも可能</pre></div>
+<p>　また、新しい投稿を作成した場合は次のような SQL が実行される。</p>
+<div class="cmd"><pre>INSERT INTO posts (message)
+VALUES ('Hello PostgreSQL');　　※ これら2行は、1行で書くことも可能</pre></div>
+<p>　このように、Web アプリケーションの多くの機能は SQL を利用して実現されている。</p>
+
+<h2 id="s74">7.4. ハンズオン1： Docker 環境（dev）</h2>
+<p>　本節では、前章の MinIO と同じく Docker を利用して PostgreSQL サーバを開発用ホストである dev 上に構築する。 ただし、PostgreSQL は MinIO のような GUI 操作画面を持たないため、別途 pgAdmin などの GUI サービスを用意する必要がある。 そこで、本章では複数コンテナをサービスとしてまとめて管理できる Docker Compose を利用する。</p>
+<p>　この二つのサービスを利用して、サーバを構築した後は、図 7.4.1 に示すように、受講者PCの Web ブラウザから、VirtualBox および Alpine Linux の NAT ルータを経由することで、Docker コンテナ上で動作する pgAdmin にアクセスすることができる。 pgAdmin はユーザのオペレーションに従い、バックエンドにある PostgreSQL コンテナに接続してデータベースの操作を行うことができる。</p>
+<p class="caption">図7.4.1. Docker を利用した検証構成</p>
+<img src="images/ch7-fig3.png" alt="図7.4.1 Dockerを利用した検証構成" style="max-width:720px;">
+
+<h3 id="s741">7.4.1. 事前準備</h3>
+<h4>(1) 実行環境の確認</h4>
+<p>　第7章は、/root 内のオペレーションが多いため、管理者ユーザ root で操作する。 そのため、まず doas コマンドを利用して root ユーザへ移行する。</p>
+<p>【root ユーザへの移行】</p>
+<div class="cmd"><pre>dev$ doas su -</pre></div>
+
+<h4>(2) Docker Compose のインストール</h4>
+<p>　本章では、ホスト dev において、Docker Compose を利用する。 5.8.3 で、ホスト sv に Docker Compose のインストールを行った手順を dev に対しても行う。</p>
+<p>　次のコマンドを実行して、Docker Compose 環境をインストールすると共に、Docker サービスを有効化する。</p>
+<div class="cmd"><pre>dev# apk -U add docker-cli-compose　　※ Docker Compose のインストール
+dev# rc-update add docker　　　　　　　※ docker サービスの登録
+dev# rc-service docker restart　　　　 ※ docker サービスの再起動（有効化）</pre></div>
+
+<h4>(3) 作業ディレクトリの作成</h4>
+<p>　次に、PostgreSQL 用作業ディレクトリ /root/docker/postgresql を作成し、カレントディレクトリを作成したディレクトリに変更する。</p>
+<div class="cmd"><pre>dev# mkdir -p /root/docker/postgresql　　※ 「/root/docker/postgresql」ディレクトリの作成
+dev# cd /root/docker/postgresql　　　　　※ カレントワーキングディレクトリを「/root/docker/postgresql」に移動</pre></div>
+
+<h4>(4) Docker Compose ファイルの作成</h4>
+<p>　本演習では、直感的な理解がしやすいよう PostgreSQL に対して GUI インタフェースを用意する。 PostgreSQL には、様々な GUI サービスが外部ソフトウェアとして提供されているが、公式ツールとして pgAdmin が広く利用されている。 pgAdmin は PostgreSQL 専用の管理画面であり、Webブラウザからテーブル閲覧やSQL実行ができる。 ここで、PostgreSQL と pgAdmin の役割の違いは表 7.4.1 のようになる。</p>
+<p>【表 7.4.1. PostgreSQL と pgAdmin の役割の違い】</p>
+<table>
+<thead><tr><th>サービス</th><th>役割</th></tr></thead>
+<tbody>
+<tr><td>PostgreSQL</td><td>データベース本体。データの保存・検索・更新を行う。</td></tr>
+<tr><td>pgAdmin</td><td>PostgreSQL を Web ブラウザから管理するための GUI ツール。phpMyAdmin の PostgreSQL 版に相当する。</td></tr>
+</tbody>
+</table>
+<p>　前述の通り、本章では、PostgreSQL と pgAdmin の二つのコンテナを連携させる。 この連携は リスト 7.4.1 のように、Docker Compose の定義ファイル docker-compose.yml を作成することで定義する。</p>
+<p>【リスト 7.4.1. Docker Compose設定ファイル：/root/docker/postgresql/docker-compose.yml】</p>
+<div class="cmd"><pre>services:
+  postgresql:
+    image: postgres:17　　※ 演習時は「hub.enshu.aicit.jp/postgres:17」を指定（学内のみアクセス可）**
+    container_name: postgresql
+    restart: no
+    env_file:
+      - .env_pgsql
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: no
+    env_file:
+      - .env_pgadmin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgresql
+volumes:
+  postgresql-data:</pre></div>
+<p>【表 7.4.2. docker-compose.yml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>services</td><td>-</td><td>Docker Compose で起動するコンテナ（サービス）群を定義する。</td></tr>
+<tr><td>postgresql</td><td>-</td><td>PostgreSQL データベースサーバ用コンテナの設定を表す。</td></tr>
+<tr><td>image</td><td>postgres:17</td><td>PostgreSQL 17 の公式イメージを利用する。演習時は学内レジストリの hub.enshu.aicit.jp/postgres:17 を利用する。</td></tr>
+<tr><td>container_name</td><td>postgresql</td><td>コンテナ名を postgresql に固定する。</td></tr>
+<tr><td>restart</td><td>no</td><td>OS や Docker の再起動時にコンテナを自動起動しない。演習環境向けの設定である。</td></tr>
+<tr><td>env_file</td><td>.env_pgsql</td><td>PostgreSQL の環境変数を .env_pgsql ファイルから読み込む。</td></tr>
+<tr><td>volumes</td><td>postgresql-data:/var/lib/postgresql/data</td><td>PostgreSQL のデータ保存領域を Docker ボリュームへ永続化する。</td></tr>
+<tr><td>pgadmin</td><td>-</td><td>pgAdmin 管理ツール用コンテナの設定を表す。</td></tr>
+<tr><td>image</td><td>dpage/pgadmin4</td><td>pgAdmin 4 の公式イメージを利用する。</td></tr>
+<tr><td>container_name</td><td>pgadmin</td><td>コンテナ名を pgadmin に固定する。</td></tr>
+<tr><td>restart</td><td>no</td><td>OS や Docker の再起動時に自動起動しない。</td></tr>
+<tr><td>env_file</td><td>.env_pgadmin</td><td>pgAdmin の環境変数を .env_pgadmin ファイルから読み込む。</td></tr>
+<tr><td>ports</td><td>8080:80</td><td>ホストの 8080 番ポートをコンテナ内の Web サービス（80 番ポート）へ転送する。</td></tr>
+<tr><td>depends_on</td><td>postgresql</td><td>pgAdmin 起動前に PostgreSQL コンテナを起動する。</td></tr>
+<tr><td>volumes</td><td>-</td><td>Docker ボリューム定義セクションを表す。</td></tr>
+<tr><td>postgresql-data</td><td>-</td><td>PostgreSQL データ保存用の永続ボリュームを定義する。コンテナを削除してもデータは保持される。</td></tr>
+</tbody>
+</table>
+
+<h4>(5) シークレットファイルの作成</h4>
+<p>　PostgreSQL のデータベース管理情報を .env_pgsql ファイルに保存する。 MinIO の時と同様に、認証情報を Docker コマンドへ直接書かずに分離することで、設定管理を安全に行う。 なお、推測されにくいパスワードの作成方法については、第6章の .env の項を参考にすること。</p>
+<p>【Docker 用 PostgreSQL シークレットファイル：/root/docker/postgresql/.env_pgsql】</p>
+<div class="cmd"><pre>POSTGRES_USER=postgres　　　　　　 ※ データベース管理者ユーザ名
+POSTGRES_PASSWORD=postgres123　　 ※ 管理者パスワード（推測されにくい十分に長いパスワードを設定）
+POSTGRES_DB=chatapp　　　　　　　　※ 初期作成データベース名</pre></div>
+<p>　同様にして、pgAdmin の管理情報を .env_pgadmin ファイルに保存する。</p>
+<p>【Docker 用 pgAdmin シークレットファイル：/root/docker/postgresql/.env_pgadmin】</p>
+<div class="cmd"><pre>PGADMIN_DEFAULT_EMAIL=admin@s____.enshu.aicit.jp　　※ pgAdmin 用ログインアカウント
+PGADMIN_DEFAULT_PASSWORD=admin123　　　　　　　　　　※ pgAdmin の初期ログインパスワード
+　　※ 下線部は自分の情報に置き換える</pre></div>
+<p>　これらのファイルは機密情報を扱うため、作成したファイルのパーミッションを、次の通り、所有者のみ読み書き可能な状態に変更する。</p>
+<div class="cmd"><pre>dev# chmod 600 /root/docker/postgresql/.env_pgsql
+dev# chmod 600 /root/docker/postgresql/.env_pgadmin</pre></div>
+
+<h3 id="s742">7.4.2. デプロイ</h3>
+<p>　カレントディレクトリが /root/docker/postgresql であることを確認し、Docker Compose を利用してサービスを起動する。</p>
+<div class="cmd"><pre>dev# docker compose up -d</pre></div>
+
+<h3 id="s743">7.4.3. サービスの利用確認</h3>
+<p>　この項では、psql コマンドを利用してシェル上から PostgreSQL の動作を確認する方法と、pgAdmin を利用して Web ブラウザから確認する方法について説明する。</p>
+
+<h4>(1) コマンドラインによる起動の確認</h4>
+<p>　コンテナの起動状態は以下のコマンドで確認できる。 ここで、STATUS が Up になっていれば正常に動作していると判断できる。</p>
+<p>【起動コンテナの確認】</p>
+<div class="cmd"><pre># docker compose ps
+※ 出力例
+NAME         IMAGE                               COMMAND                  SERVICE      CREATED         STATUS         PORTS
+pgadmin      hub.enshu.aicit.jp/dpage/pgadmin4   "/entrypoint.sh"         pgadmin      2 minutes ago   Up 2 minutes   443/tcp, 0.0.0.0:8080-&gt;80/tcp, [::]:8080-&gt;80/tcp
+postgresql   hub.enshu.aicit.jp/postgres:17      "docker-entrypoint.s…"   postgresql   2 minutes ago   Up 2 minutes   5432/tcp</pre></div>
+<p>【ネットワークサービスの確認】</p>
+<p>　ネットワークサービスの起動には netstat コマンドを利用する。 ここで、外部公開用の8080 のポート番号が一覧にあれば正常に動作していると判断できる。</p>
+<div class="cmd"><pre># netstat -ntlp</pre></div>
+<p>【ログ確認】</p>
+<p>　もしエラーが発生した場合は、次のコマンドでログを確認し、設定ミスがないか確認する。</p>
+<div class="cmd"><pre>dev# docker compose logs
+PostgreSQLのみ確認する場合
+dev# docker compose logs postgresql</pre></div>
+
+<h4>(2) psql コマンドによるサービスの利用</h4>
+<p>　PostgreSQL は MinIO のような管理コンソールを標準で提供しないため、通常は psql などのクライアントツールを利用して接続確認を行う。</p>
+<p>　このうち、psql を利用して PostgreSQL サーバへ接続すると、ログイン認証後にデータベース操作を行うことができる。 接続時には、.env ファイルで POSTGRES_USER に代入した管理者ユーザ名と、POSTGRES_PASSWORD に代入した管理者パスワードを利用する。</p>
+<p>【psql による接続例】</p>
+<div class="cmd"><pre>dev# docker compose exec -it postgresql psql -U postgres -d chatapp</pre></div>
+<p>【表 7.4.3. psql コマンドの解説】</p>
+<table>
+<thead><tr><th>要素</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>docker compose</td><td>Docker Compose を操作するコマンド</td></tr>
+<tr><td>exec</td><td>起動中のコンテナ内でコマンドを実行する</td></tr>
+<tr><td>-it</td><td>対話モードで実行する（キーボード入力可能）</td></tr>
+<tr><td>postgresql</td><td>Docker Composeで定義されたサービス名</td></tr>
+<tr><td>psql</td><td>PostgreSQLのコマンドラインクライアント</td></tr>
+<tr><td>-U postgres</td><td>postgres ユーザーで接続する</td></tr>
+<tr><td>-d chatapp</td><td>chatapp データベースへ接続する</td></tr>
+</tbody>
+</table>
+<p>　ログイン後は、次のような操作が行える。</p>
+<ul>
+<li>データベース一覧表示</li>
+<li>テーブル作成</li>
+<li>レコード追加</li>
+<li>レコード検索</li>
+<li>レコード更新</li>
+<li>レコード削除</li>
+</ul>
+
+<h4>(3) テーブル操作</h4>
+<p>【テーブル作成例】</p>
+<p>　PostgreSQL などのリレーショナルデータベースでは、データを保存するためにテーブルを作成する。 ここでは、接続確認用の簡単なテーブルを作成する。</p>
+<div class="cmd"><pre>CREATE TABLE staff (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);</pre></div>
+<p>【レコード追加例】</p>
+<p>　テーブル作成後は、レコードを追加して動作を確認する。</p>
+<div class="cmd"><pre>INSERT INTO staff (name) VALUES ('user1');
+INSERT INTO staff (name) VALUES ('user2');
+INSERT INTO staff (name) VALUES ('user3');</pre></div>
+<p>【レコード検索例（全レコード）】</p>
+<p>　追加したレコードは、SELECT 文で確認できる。</p>
+<div class="cmd"><pre>SELECT * FROM staff;</pre></div>
+<p>　実行結果に user1, user2, user3 が表示されれば、PostgreSQL が正常に動作している。</p>
+<p>【レコード検索例（レコードのフィルタ）】</p>
+<p>　WHERE 句を利用することで、フィルタしたレコードも、SELECT 文で確認できる。</p>
+<div class="cmd"><pre>SELECT * FROM staff WHERE name='user3';</pre></div>
+<p>【レコード更新例】</p>
+<p>　レコードを更新する時は、UPDATE 文で内容を変更できる。</p>
+<div class="cmd"><pre>UPDATE staff SET name='user4' WHERE name='user3';</pre></div>
+<p>　user3 が user4 に変更されたか、SELECT 文で確認する。</p>
+<div class="cmd"><pre>SELECT * FROM staff;</pre></div>
+<p>【レコード削除例】</p>
+<p>　レコードの削除は、DELETE 文に WHERE 句を利用して対象を指定することで行える。</p>
+<div class="cmd"><pre>DELETE FROM staff WHERE name='user4';</pre></div>
+<p>　user4 が削除されたか、SELECT 文で確認する。</p>
+<div class="cmd"><pre>SELECT * FROM staff;</pre></div>
+<p>【psql コマンドの終了】</p>
+<p>　psql コマンドの実行を終える時は、\q コマンドを実行する。</p>
+<div class="cmd"><pre>\q</pre></div>
+
+<h4>(4) pgAdmin を利用したサービスの利用</h4>
+<p>【ポートフォワーディング設定】</p>
+<p>　PostgreSQL は MinIO のように Web ブラウザだけで完結するサービスではないため、通常は psql や pgAdmin などのクライアントから接続して利用する。 必要に応じて、pgAdmin を用意すれば、Web ブラウザからデータベースを管理することもできる。</p>
+<p>　alpine-k3s 上の pgAdmin に接続するためには、VirtualBox の NAT 設定において、表 7.4.4 のように pgAdmin の公開ポートを転送する設定を行う。</p>
+<p>【表7.4.4. PostgreSQL へのポートフォワーディング設定】</p>
+<table>
+<thead><tr><th>仮想マシン名</th><th>ホスト名</th><th>アダプタ名</th><th>名前</th><th>プロトコル</th><th>ホストIP</th><th>ホストポート</th><th>ゲストIP</th><th>ゲストポート</th></tr></thead>
+<tbody>
+<tr><td>alpine-k3s</td><td>dev</td><td>アダプター2</td><td>pgAdmin</td><td>TCP</td><td>※空欄</td><td>10088</td><td>※空欄</td><td>8080</td></tr>
+</tbody>
+</table>
+<p>【pgAdmin へのログイン】</p>
+<p>　ホストマシン上の Web ブラウザで以下の URL へアクセスし、Docker Compose の .env_pgadmin で設定した管理者情報を入力する。</p>
+<div class="cmd"><pre>http://localhost:10088</pre></div>
+<p>【PostgreSQL サーバの登録】</p>
+<p>　ログイン後、クイックリンク の 新しいサーバーの追加 をクリックし、表 7.4.5 の内容を入力して、Save ボタンを押す。</p>
+<p>【表 7.4.5. PostgreSQL サーバの登録内容】</p>
+<table>
+<thead><tr><th>タブ</th><th>項目</th><th>値</th></tr></thead>
+<tbody>
+<tr><td>一般</td><td>名前</td><td>PostgreSQL</td></tr>
+<tr><td>接続</td><td>ホスト名/アドレス<br>ポート番号<br>管理用データベース<br>ユーザー名<br>パスワード</td><td>postgresql<br>5432<br>chatapp<br>postgres<br>.env_pgsql で設定した値</td></tr>
+</tbody>
+</table>
+<p>【psql コマンドで作成したテーブルの確認】</p>
+<p>　左側のオブジェクトブラウザから、以下の階層を展開し、先ほど作成した staff テーブルが表示されれば接続成功である。</p>
+<div class="cmd"><pre>Servers
+ └ PostgreSQL
+    └ データベース
+       └ chatapp
+          └ スキーマ
+             └ public
+                └ テーブル</pre></div>
+<p>【SQL の実行】</p>
+<p>　メニューから ツール, クエリーツール の順に選択し、以下の SQL を入力して ▶ ボタンで実行する。</p>
+<div class="cmd"><pre>SELECT * FROM staff;</pre></div>
+<p>実行結果に次のようなデータが表示されれば正常に動作している。</p>
+<div class="cmd"><pre>| id | name    | created_at                 |
+| -- | ------- | -------------------------- |
+| 1  | user1   | 2026-06-08 10:00:08.970746 |
+| 2  | user2   | 2026-06-08 10:00:08.978697 |</pre></div>
+<p>【レコードの追加】</p>
+<p>　今度は、クエリーツール から以下の SQL を実行する。</p>
+<div class="cmd"><pre>INSERT INTO staff(name) VALUES ('user5');</pre></div>
+<p>　以下の文で追加したレコードが表示されるか確認する。</p>
+<div class="cmd"><pre>SELECT * FROM staff;</pre></div>
+<p>　ここで、user5 が表示されれば PostgreSQL と pgAdmin の連携は正常である。</p>
+
+<h3 id="s744">7.4.4. 後始末</h3>
+<h4>コンテナの停止</h4>
+<p>　Web ブラウザでログインした pgAdmin からログアウトしてウィンドウを閉じ、実行中の PostgreSQL, pgAdmin コンテナを以下のコマンドで停止・削除する。</p>
+<div class="cmd"><pre>docker compose down</pre></div>
+<h4>ボリュームの削除</h4>
+<p>　ボリュームを削除すると、保存されていたデータベースの内容も完全に削除される。 （実際に運用する時は誤って消さないよう注意） Docker Compose では、docker compose down -v コマンドでボリュームを削除することができる。 なお、ボリュームの確認は以前行った docker volume ls コマンドを利用するが、その際、ボリューム名の前にプロジェクト名が付与されているので、注意が必要である。 なお、このプロジェクト名は docker-compose.yml ファイルの保存されているディレクトリ名が自動的に用いられる。 そうすることによって、複数のプロジェクト間でそれぞれのプロジェクト内のリソース名が競合しないようになっている。</p>
+<p>　これらのことを踏まえた、一連のボリュームの削除手順は次の通りである。</p>
+<div class="cmd"><pre># docker volume ls　　　　　 ※ 事前確認
+# docker compose down -v　　※ プロジェクトのコンテナ停止・削除（ボリュームの削除を含む）
+# docker volume ls　　　　　 ※ 事後確認（postgresql_postgresql-data がなくなったことを確認）</pre></div>
+<p>　Docker Compose 環境では、比較的常用するコマンド docker compose down に2文字足すだけで、永続ボリュームが簡単に削除されるため、運用時に注意が必要である。 （万一の時を考えて、定期的なバックアップを取るなど）</p>
+
+<h2 id="s75">7.5. ハンズオン2： K3s 試験環境（dev）</h2>
+<p>　本節では、ハンズオン 1 で試した内容を K3s 上で展開する。 展開後は、図 7.5.1 に示すように、受講者 PC から VirtualBox および Alpine Linux の NAT ルータを経由して、K3s 上の PostgreSQL に pgAdmin 経由でアクセスする。</p>
+<p>　Docker 単体構成とは異なり、Kubernetes では Pod・Service などのリソースを組み合わせることで、可用性と拡張性を持つサービスとして PostgreSQL を運用することができる。</p>
+<p class="caption">図 7.5.1. Kubernetes を利用した検証構成</p>
+<img src="images/ch7-fig4.png" alt="図7.5.1 Kubernetesを利用した検証構成" style="max-width:720px;">
+
+<h3 id="s751">7.5.1. 事前準備</h3>
+<p>　事前準備では、K3s 上で PostgreSQL を構築するための確認と作業ディレクトリの作成を行う。 具体的には、図 7.5.2 に示すように、ディレクトリ /root/k3s/chat-app/k3s 下で 7 つのファイルを用意する。</p>
+<p>　これらの定義ファイルをデプロイした後は、図7.5.1 に示したように、ホストマシンの Web ブラウザから pgAdmin へアクセスすることができる。 なお、Web ブラウザを利用した検証手順は Docker の時と同じである。</p>
+<p>【図 7.5.2. ディレクトリ構成】</p>
+<div class="cmd"><pre>/root/k3s
+      └── chat-app
+              └── k3s
+                   ├── namespace.yaml　　※すでに作成済み
+                   ├── pgadmin-deploy.yaml
+                   ├── pgadmin-secret.yaml
+                   ├── pgadmin-service.yaml
+                   ├── postgresql-pvc.yaml
+                   ├── postgresql-deploy.yaml
+                   └── postgresql-secret.yaml</pre></div>
+
+<h4>(1) K3s ノードの確認</h4>
+<p>　まず、Kubernetes ノードが正常に動作していることを確認する。 具体的には、STATUS が Ready であること、および表示されるノードに内部 IP (INTERNAL-IP) が割り当てられていることを確認する。</p>
+<div class="cmd"><pre>dev# kubectl get nodes -o wide
+※ 出力例
+NAME                          STATUS   ROLES           AGE   VERSION        INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
+dev.s24g3199.enshu.aicit.jp   Ready    control-plane   8d    v1.34.6+k3s1   172.24.199.51   &lt;none&gt;        Alpine Linux v3.23   6.18.22-0-lts    containerd://2.2.2-bd1.34</pre></div>
+
+<h4>(2) 名前空間の確認</h4>
+<p>　PostgreSQL をデプロイする前に、利用する Kubernetes 名前空間を確認する。 本演習では、アプリケーション一式を chat-app 名前空間へ配置するため、MinIO の時に作成した名前空間 chat-app がすでに存在することを確認する。</p>
+<div class="cmd"><pre>dev# kubectl get namespace
+※ 出力例
+NAME              STATUS   AGE
+chat-app          Active   7d
+default           Active   43d
+kube-node-lease   Active   43d
+kube-public       Active   43d
+kube-system       Active   43d</pre></div>
+
+<h4>(3) ストレージクラスの確認</h4>
+<p>　PostgreSQL はデータベースであるため、永続化ストレージが必要となる。 そのため、K3s にデフォルトの StorageClass が設定されていることを確認する。</p>
+<div class="cmd"><pre>dev# kubectl get storageclass</pre></div>
+<p>　通常の K3s 環境では local-path がデフォルトの StorageClass として表示される。 PostgreSQL の PersistentVolumeClaim（PVC）は、この StorageClass を利用して永続ボリュームを自動作成する。</p>
+
+<h3 id="s752">7.5.2. デプロイ</h3>
+<p>　Kubernetes では、コンテナを単体で起動するのではなく、複数の設定ファイル（YAML ファイル）を組み合わせてサービス全体を構築する。 本演習では、PostgreSQL と pgAdmin を構築するために、表 7.5.1 に示す 7 個の YAML 形式の定義ファイルを利用する。</p>
+<p>【表 7.5.1. ハンズオン 2 で作成する定義ファイル（ディレクトリ： /root/k3s/chat-app/k3s）】</p>
+<table>
+<thead><tr><th colspan="4">共通</th></tr><tr><th>No.</th><th>定義ファイル名</th><th>内容</th><th>Docker との比較</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>namespace.yaml</td><td>名前空間（管理グループ）の定義</td><td>Docker Compose のプロジェクト単位に近い（第6章で作成済）</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th colspan="4">PostgreSQL 関連</th></tr><tr><th>No.</th><th>定義ファイル名</th><th>内容</th><th>Docker との比較</th></tr></thead>
+<tbody>
+<tr><td>2</td><td>postgresql-pvc.yaml</td><td>永続ボリューム要求の定義</td><td>永続ボリューム postgresql-data に相当</td></tr>
+<tr><td>3</td><td>postgresql-secret.yaml</td><td>PostgreSQL のシークレット定義</td><td>.env_pgsql に相当</td></tr>
+<tr><td>4</td><td>postgresql-deploy.yaml</td><td>PostgreSQL のデプロイ定義</td><td>docker run コマンドに相当</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th colspan="4">pgAdmin 関連</th></tr><tr><th>No.</th><th>定義ファイル名</th><th>内容</th><th>Docker との比較</th></tr></thead>
+<tbody>
+<tr><td>5</td><td>pgadmin-secret.yaml</td><td>pgAdmin のシークレット定義</td><td>.env_pgadmin に相当</td></tr>
+<tr><td>6</td><td>pgadmin-deploy.yaml</td><td>pgAdmin のデプロイ定義</td><td>Docker Compose の pgadmin サービスに相当</td></tr>
+<tr><td>7</td><td>pgadmin-service.yaml</td><td>pgAdmin のサービス定義</td><td>Docker Compose の ports: "8080:80" に相当</td></tr>
+</tbody>
+</table>
+<p>　なお、各定義ファイルは、互いに連携して動作している。</p>
+<ul>
+<li>Service → Pod → PVC</li>
+<li>Secret → Deployment</li>
+<li>pgAdmin → PostgreSQL Service</li>
+</ul>
+<p>　ここで、PostgreSQL は postgresql-service 経由でアクセスし、pgAdmin は Web ブラウザから利用する。 このように Kubernetes では、役割ごとにリソースを分離して管理することで、大規模システムでも柔軟に運用できる。</p>
+
+<h4>(1) シークレットの作成</h4>
+<p>　リスト 7.5.1, 7.5.2 に示すシークレットファイルは、認証情報などの機密情報を保存するための定義ファイルである。 例えば、ユーザ名やパスワードを YAML ファイルへ直接書くと、第三者に閲覧される危険がある。 そこで Kubernetes では、Secret リソースを利用して機密情報を分離管理する。</p>
+<p>　本演習では、Docker 利用時の .env_pgsql, .env_pgadmin ファイルの内容をシークレットファイル postgresql-secret.yaml, pgadmin-secret.yaml に置き換えている。</p>
+<p>【リスト 7.5.1. シークレットの定義： /root/k3s/chat-app/k3s/postgresql-secret.yaml】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: Secret
+metadata:
+  name: postgresql-secret
+  namespace: chat-app
+type: Opaque
+stringData:
+  POSTGRES_USER: postgres　　　　　　※ データベース管理者ユーザ名
+  POSTGRES_PASSWORD: postgres123　　※ 管理者パスワード（実際は推測されにくい十分に長いパスワードを設定）
+  POSTGRES_DB: chatapp　　　　　　※ 初期作成データベース名</pre></div>
+<p>【表 7.5.2. postgresql-secret.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>Kubernetes API のバージョン。Secret は基本機能なので v1 を使用。</td></tr>
+<tr><td>kind</td><td>Secret</td><td>作成するリソースの種類。ここでは「機密情報」を保存する Secret を作成。</td></tr>
+<tr><td>metadata</td><td>（オブジェクト）</td><td>リソースの名前や所属先などの情報を設定する部分。</td></tr>
+<tr><td>metadata.name</td><td>postgresql-secret</td><td>Secret の名前。他の Pod や Deployment からこの名前で参照。</td></tr>
+<tr><td>metadata.namespace</td><td>chat-app</td><td>この Secret を配置する Namespace。chat-app 内で利用。</td></tr>
+<tr><td>type</td><td>Opaque</td><td>Secret の種類。Opaque は「任意のキーと値を保存する一般的な Secret」を意味。</td></tr>
+<tr><td>stringData</td><td>（オブジェクト）</td><td>平文（そのまま読める文字列）で Secret を記述する場所。Kubernetes が自動で Base64 エンコードして保存。</td></tr>
+<tr><td>stringData.POSTGRES_USER</td><td>postgres</td><td>PostgreSQL の管理者ユーザ名。</td></tr>
+<tr><td>stringData.POSTGRES_PASSWORD</td><td>postgres123</td><td>PostgreSQL の管理者パスワード。</td></tr>
+<tr><td>stringData.POSTGRES_DB</td><td>chatapp</td><td>初期作成されるデータベース名。</td></tr>
+</tbody>
+</table>
+<p>【リスト 7.5.2. シークレットの定義： /root/k3s/chat-app/k3s/pgadmin-secret.yaml】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: Secret
+metadata:
+  name: pgadmin-secret
+  namespace: chat-app
+type: Opaque
+stringData:
+  PGADMIN_DEFAULT_EMAIL: admin@s____.enshu.aicit.jp　　※ 管理者ユーザ名
+  PGADMIN_DEFAULT_PASSWORD: admin123　　※ 管理者パスワード（実際は推測されにくい十分に長いパスワードを設定）
+　　※ 下線部は自分の情報に置き換える</pre></div>
+<p>【表 7.5.3. pgadmin-secret.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>Kubernetes API のバージョン。</td></tr>
+<tr><td>kind</td><td>Secret</td><td>「機密情報」を保存する Secret を作成。</td></tr>
+<tr><td>metadata.name</td><td>pgadmin-secret</td><td>Secret の名前。他の Pod や Deployment からこの名前で参照。</td></tr>
+<tr><td>metadata.namespace</td><td>chat-app</td><td>chat-app 内で利用。</td></tr>
+<tr><td>type</td><td>Opaque</td><td>任意のキーと値を保存する一般的な Secret。</td></tr>
+<tr><td>stringData.PGADMIN_DEFAULT_EMAIL</td><td>admin@s____.enshu.aicit.jp</td><td>pgAdmin 用ログインアカウント。</td></tr>
+<tr><td>stringData.PGADMIN_DEFAULT_PASSWORD</td><td>admin123</td><td>pgAdmin の初期ログインパスワード。</td></tr>
+</tbody>
+</table>
+<p>　作成した YAML ファイルのデプロイと確認は次の手順で行う。</p>
+<div class="cmd"><pre>dev# kubectl apply -f postgresql-secret.yaml　　 ※ PostgreSQL 用定義の適用
+※ 成功時の出力（created が出力される）
+secret/postgresql-secret created
+dev# kubectl apply -f pgadmin-secret.yaml　　 ※ pgAdmin 用定義の適用
+※ 成功時の出力（created が出力される）
+secret/pgadmin-secret created</pre></div>
+<div class="cmd"><pre>dev# kubectl get secrets -n chat-app　※ 確認（名前空間 chat-app を指定）
+※ 成功時の出力例（postgresql-secret と pgadmin-secret が表示される）
+NAME                TYPE     DATA   AGE
+minio-secret        Opaque   2      7d
+pgadmin-secret      Opaque   2      36s
+postgresql-secret   Opaque   3      42s</pre></div>
+
+<h4>(2) 永続ボリューム要求（PVC）の定義： postgresql-pvc.yaml</h4>
+<p>　リスト 7.5.3 に示す postgresql-pvc.yaml は、PersistentVolumeClaim（PVC）を定義するファイルである。 PVC は「永続ボリュームを利用したい」という要求を Kubernetes に伝えるための仕組みである。 コンテナは通常、一度削除すると内部データも失われるが、PVC を利用することでデータを永続化できる。</p>
+<p>　本演習では、PostgreSQL のデータ保存先として PVC を利用している。 そのため、Pod が再起動してもデータベースの内容は保持される。 （Docker 環境では、-v postgresql-data:/var/lib/postgresql/data の記述がボリューム設定に相当する。 つまり、Docker Volume に近い役割を Kubernetes では PV/PVC の組み合わせで実現する。）</p>
+<p>【リスト 7.5.3. 永続ボリューム要求の定義： /root/k3s/chat-app/k3s/postgresql-pvc.yaml】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgresql-pvc
+  namespace: chat-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi</pre></div>
+<p>【表 7.5.4. postgresql-pvc.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>PVC は基本 API の v1 を使用。</td></tr>
+<tr><td>kind</td><td>PersistentVolumeClaim</td><td>「永続ストレージを要求するリソース」。略語は PVC。</td></tr>
+<tr><td>metadata.name</td><td>postgresql-pvc</td><td>PVC の名前。この名前を Pod 側から参照して使用。</td></tr>
+<tr><td>metadata.namespace</td><td>chat-app</td><td>chat-app 名前空間にこの PVC を作成。</td></tr>
+<tr><td>spec.accessModes</td><td>ReadWriteOnce</td><td>「1つのノードから読み書き可能」を意味する。</td></tr>
+<tr><td>spec.resources.requests.storage</td><td>1Gi</td><td>必要なストレージ容量。1Gi は約 1GB を意味する。</td></tr>
+</tbody>
+</table>
+<div class="cmd"><pre>dev# kubectl apply -f postgresql-pvc.yaml
+persistentvolumeclaim/postgresql-pvc created
+
+dev# kubectl get pvc -n chat-app
+※ 成功時の出力例（まだ Pod に紐づけていないため、現時点では Pending）
+NAME             STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+minio-pvc        Bound     ...      1Gi        RWO            local-path     52m
+postgresql-pvc   Pending                                      local-path     58s</pre></div>
+
+<h4>(3) PostgreSQL のデプロイ定義</h4>
+<p>　リスト 7.5.4 に示す postgresql-deploy.yaml は、PostgreSQL コンテナを実際に起動するための Deployment 定義ファイルである。 Deployment は、Kubernetes 上で Pod を管理するための仕組みであり、コンテナの起動・再起動・複製数管理などを担当する。</p>
+<p>【リスト 7.5.4. PostgreSQL のデプロイ定義： /root/k3s/chat-app/k3s/postgresql-deploy.yaml】</p>
+<div class="cmd"><pre>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  namespace: chat-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+        - name: postgresql
+          image: postgres:17
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_DB
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgresql-storage
+      volumes:
+        - name: postgresql-storage
+          persistentVolumeClaim:
+            claimName: postgresql-pvc</pre></div>
+<p>【表 7.5.5. postgresql-deploy.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>apps/v1</td><td>Deployment リソースの API バージョン。</td></tr>
+<tr><td>kind</td><td>Deployment</td><td>Pod の自動復旧や更新管理を行うリソース。</td></tr>
+<tr><td>metadata.name</td><td>postgresql</td><td>Deployment の名前。</td></tr>
+<tr><td>metadata.namespace</td><td>chat-app</td><td>配置する Namespace。</td></tr>
+<tr><td>replicas</td><td>1</td><td>PostgreSQL を 1 台だけ起動。</td></tr>
+<tr><td>selector.matchLabels.app</td><td>postgresql</td><td>管理対象 Pod のラベル。</td></tr>
+<tr><td>containers.image</td><td>postgres:17</td><td>PostgreSQL 17 系コンテナを取得して起動。</td></tr>
+<tr><td>env</td><td>（オブジェクト）</td><td>環境変数設定。postgresql-secret から各値を参照。</td></tr>
+<tr><td>ports.containerPort</td><td>5432</td><td>PostgreSQL が待ち受ける標準ポート。</td></tr>
+<tr><td>volumeMounts.mountPath</td><td>/var/lib/postgresql/data</td><td>コンテナ内で永続データを保存するディレクトリ。</td></tr>
+<tr><td>volumes.persistentVolumeClaim.claimName</td><td>postgresql-pvc</td><td>利用する PVC 名。</td></tr>
+</tbody>
+</table>
+<p>【リスト 7.5.5. pgAdmin のデプロイ定義： /root/k3s/chat-app/k3s/pgadmin-deploy.yaml】</p>
+<div class="cmd"><pre>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgadmin
+  namespace: chat-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgadmin
+  template:
+    metadata:
+      labels:
+        app: pgadmin
+    spec:
+      containers:
+        - name: pgadmin
+          image: dpage/pgadmin4:8
+          env:
+            - name: PGADMIN_DEFAULT_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: pgadmin-secret
+                  key: PGADMIN_DEFAULT_EMAIL
+            - name: PGADMIN_DEFAULT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgadmin-secret
+                  key: PGADMIN_DEFAULT_PASSWORD
+          ports:
+            - containerPort: 80</pre></div>
+<p>【表 7.5.6. pgadmin-deploy.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>apps/v1</td><td>Deployment を定義する Kubernetes API バージョン。</td></tr>
+<tr><td>kind</td><td>Deployment</td><td>pgAdmin を起動・管理するためのリソース。</td></tr>
+<tr><td>metadata.name</td><td>pgadmin</td><td>Deployment 名。</td></tr>
+<tr><td>metadata.namespace</td><td>chat-app</td><td>chat-app 名前空間に配置する。</td></tr>
+<tr><td>replicas</td><td>1</td><td>pgAdmin を 1 台だけ起動する。</td></tr>
+<tr><td>containers.image</td><td>dpage/pgadmin4:8</td><td>pgAdmin 4 のイメージ。</td></tr>
+<tr><td>PGADMIN_DEFAULT_EMAIL</td><td>admin@s____.enshu.aicit.jp</td><td>pgAdmin のログイン用メールアドレス。</td></tr>
+<tr><td>PGADMIN_DEFAULT_PASSWORD</td><td>admin123</td><td>pgAdmin のログイン用パスワード。</td></tr>
+<tr><td>containerPort</td><td>80</td><td>コンテナ内の Web サービス待受ポート。</td></tr>
+</tbody>
+</table>
+<p>　作成した YAML ファイルのデプロイと確認は次の手順で行う。</p>
+<div class="cmd"><pre>dev# kubectl apply -f postgresql-deploy.yaml
+deployment.apps/postgresql created
+dev# kubectl apply -f pgadmin-deploy.yaml
+deployment.apps/pgadmin created</pre></div>
+<div class="cmd"><pre>dev# kubectl get pods -n chat-app -o wide
+※ 成功時の出力例（STATUS が Running になっていることを確認）
+NAME                          READY   STATUS    RESTARTS   AGE    IP           NODE
+minio-7448f458-wsjcc          1/1     Running   0          7d    10.42.1.37   dev.s24g3199.enshu.aicit.jp
+pgadmin-67f9984468-bdl48      1/1     Running   0          45s    10.42.1.46   dev.s24g3199.enshu.aicit.jp
+postgresql-85678fc4b8-wvs4t   1/1     Running   0          45m    10.42.1.39   dev.s24g3199.enshu.aicit.jp</pre></div>
+<div class="cmd"><pre>dev# kubectl get pvc -n chat-app
+※ 成功時の出力例（STATUS が Pending から Bound に変化する）
+NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+minio-pvc        Bound    pvc-d5150526-a9f7-43cd-8530-751a04b6c9c9   1Gi        RWO            local-path     57m
+postgresql-pvc   Bound    pvc-85b79153-e016-40e4-b8e9-2e1187a14423   1Gi        RWO            local-path     6m14s</pre></div>
+
+<h4>(4) PostgreSQL のサービス定義</h4>
+<p>　リスト 7.5.6 に示す pgadmin-service.yaml は、Pod を Kubernetes クラスタ内部へ公開するための定義ファイルである。 Kubernetes の Pod は、再起動時に IP アドレスが変化する可能性がある。 そのため、Pod を直接利用するのではなく、Service を経由して通信する。</p>
+<p>　本演習では、pgAdmin Pod の 80 番ポートを Service として公開している。 （Docker 環境では、-"8080:80" のポート公開オプションに相当する。）</p>
+<p>【リスト 7.5.6. pgAdmin のサービス定義： /root/k3s/chat-app/k3s/pgadmin-service.yaml】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: Service
+metadata:
+  name: pgadmin-service
+  namespace: chat-app
+spec:
+  type: NodePort
+  selector:
+    app: pgadmin
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 30088</pre></div>
+<p>【表 7.5.7. pgadmin-service.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>Service を定義する Kubernetes API バージョン。</td></tr>
+<tr><td>kind</td><td>Service</td><td>pgAdmin を外部公開するための Service。</td></tr>
+<tr><td>metadata.name</td><td>pgadmin-service</td><td>Service 名。</td></tr>
+<tr><td>metadata.namespace</td><td>chat-app</td><td>chat-app 名前空間に配置する。</td></tr>
+<tr><td>type</td><td>NodePort</td><td>クラスタ外からアクセスできるようにする。</td></tr>
+<tr><td>selector.app</td><td>pgadmin</td><td>app=pgadmin の Pod に通信を転送する。</td></tr>
+<tr><td>port</td><td>80</td><td>Service が受け付けるポート。</td></tr>
+<tr><td>targetPort</td><td>80</td><td>Pod 内の pgAdmin が待ち受けるポート。</td></tr>
+<tr><td>nodePort</td><td>30088</td><td>ノード外部へ公開するポート。</td></tr>
+</tbody>
+</table>
+<div class="cmd"><pre>dev# kubectl apply -f pgadmin-service.yaml
+service/pgadmin-service created
+
+dev# kubectl get service -n chat-app
+NAME              TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)                         AGE
+minio-service     NodePort   10.43.230.52   &lt;none&gt;        9000:30090/TCP,9001:30091/TCP   108m
+pgadmin-service   NodePort   10.43.70.161   &lt;none&gt;        8080:30088/TCP                  10s</pre></div>
+
+<h4>(5) PostgreSQL へのポートフォワーディング設定</h4>
+<p>　pgAdmin を K3s 上に公開した場合、前章の MinIO や本章のハンズオン 1 のように、VirtualBox 上のポートフォワーディングを設定することで、ホストマシンからWebブラウザでアクセスできるようにする。 具体的には、表 7.4.3 で設定した内容を表 7.5.8 のように変更することで、ホストマシンからアクセスできるようになる。</p>
+<p>【表 7.5.8. pgAdmin へのポートフォワーディング設定】</p>
+<table>
+<thead><tr><th>仮想マシン名</th><th>ホスト名</th><th>アダプタ名</th><th>名前</th><th>プロトコル</th><th>ホストポート</th><th>ゲストポート</th></tr></thead>
+<tbody>
+<tr><td>alpine-k3s</td><td>dev</td><td>アダプター2</td><td>pgAdmin</td><td>TCP</td><td>10088</td><td>30088</td></tr>
+</tbody>
+</table>
+
+<h3 id="s753">7.5.3. サービスの利用確認</h3>
+<p>　基本的な確認手順は Docker の時と同じため、ハンズオン1の 7.4.3 の項を参照して取り組むことができる。 ただし、コンテナの実行環境が異なるので、psql コマンドの実行は以下の通り読み替える。</p>
+<p>　なお、テーブル等の作成は総合演習で行うため、この項では実施しなくて良い。</p>
+<div class="cmd"><pre>【PostgreSQL コンテナのコンソールへ接続（Docker）】
+dev# docker compose exec -it postgresql psql -U postgres -d chatapp
+
+【PostgreSQL コンテナのコンソールへ接続（Kubernetes）】
+dev# kubectl get pods -n chat-app　　※ 表示された postgresql コンテナの NAME がコンテナ名
+dev# kubectl exec -n chat-app -it コンテナ名 -- psql -U postgres -d chatapp　※「コンテナ名」の箇所を置き換えて実行</pre></div>
+
+<h3 id="s754">7.5.4. 後始末（今回は不要）</h3>
+<p>今後の演習で利用するため、Kubernetes 用に構築した PostgreSQL および pgAdmin は後始末不要である。 ただし、各定義ファイルの削除は次のコマンドで行うことができる。</p>
+<div class="cmd"><pre>dev# kubectl delete -f pgadmin-service.yaml
+dev# kubectl delete -f pgadmin-deploy.yaml
+dev# kubectl delete -f pgadmin-secret.yaml
+dev# kubectl delete -f postgresql-deploy.yaml
+dev# kubectl delete -f postgresql-secret.yaml
+dev# kubectl delete -f postgresql-pvc.yaml</pre></div>
+
+<h2 id="s76">7.6. 総合演習</h2>
+<p>　総合演習では、図 7.6.1 のエンティティ・リレーションマップ（ER図）に示すチャットアプリ用テーブルを作成する。</p>
+<p>【図 7.6.1. チャットアプリ用テーブルの ER 図（外部キーを含む）】</p>
+<div class="cmd"><pre>USERS ─────── MESSAGES ─────── ROOMS
+               (contains)</pre></div>
+
+<h3 id="s761">7.6.1. users テーブルの作成</h3>
+<p>　dev 上の K3s の pgAdmin を利用して、 図 7.6.2, リスト 7.6.1 に示す users テーブルを作成せよ。</p>
+<p class="caption">図 7.6.2. users テーブルの設計データ</p>
+<img src="images/ch7-fig5.png" alt="図7.6.2 usersテーブルの設計データ" style="max-width:320px;">
+<p>【リスト 7.6.1. users テーブルの作成（SQL文）】</p>
+<div class="cmd"><pre>CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  display_name VARCHAR(100) NOT NULL,
+  icon_bucket VARCHAR(100),
+  icon_object TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);</pre></div>
+
+<h3 id="s762">7.6.2. rooms テーブルの作成</h3>
+<p>　dev 上の K3s の pgAdmin を利用して、pgAdmin を利用して 図 7.6.3, リスト 7.6.2 に示す rooms テーブルを作成せよ。</p>
+<p class="caption">図 7.6.3. rooms テーブルの設計データ</p>
+<img src="images/ch7-fig6.png" alt="図7.6.3 roomsテーブルの設計データ" style="max-width:320px;">
+<p>【リスト 7.6.2. rooms テーブルの作成（SQL文）】</p>
+<div class="cmd"><pre>CREATE TABLE IF NOT EXISTS rooms (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) UNIQUE NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);</pre></div>
+
+<h3 id="s763">7.6.3. messages テーブルの作成</h3>
+<p>　dev 上の K3s の pgAdmin を利用して、pgAdmin を利用して 図 7.6.4, リスト 7.6.3 に示す messages テーブルを作成せよ。</p>
+<p class="caption">図 7.6.4. messages テーブルの設計データ</p>
+<img src="images/ch7-fig7.png" alt="図7.6.4 messagesテーブルの設計データ" style="max-width:320px;">
+<p>【リスト 7.6.3. messages テーブルの作成（SQL文）】</p>
+<div class="cmd"><pre>CREATE TABLE IF NOT EXISTS messages (
+  id SERIAL PRIMARY KEY,
+  room_id INTEGER NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  message_type VARCHAR(20) NOT NULL DEFAULT 'text',
+  body TEXT,
+  object_bucket VARCHAR(100),
+  object_key TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);</pre></div>`
   },
 
   'ch7-a1-sql': {
