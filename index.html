@@ -4980,9 +4980,552 @@ $ ping sv.s____.enshu.aicit.jp　　※ FQDNによる通信確認</pre></div>
 </div>`
   },
   'ch5-lan2-2': {
-    title: '5. LANの設計2(2)',
-    toc: [{ level: 1, label: '5. LANの設計2(2)', anchor: 'top' }],
-    content: `<h1 id="top">5. LANの設計2(2)</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: '第5章 LANの設計2(2)',
+    toc: [
+      { level: 1, label: '5.5. はじめに', anchor: 's55' },
+      { level: 2, label: '5.5.1. 概要', anchor: 's551' },
+      { level: 2, label: '5.5.2. 前提となる知識・スキル', anchor: 's552' },
+      { level: 2, label: '5.5.3. 到達目標', anchor: 's553' },
+      { level: 2, label: '5.5.4. 第5章(2)の操作対象', anchor: 's554' },
+      { level: 1, label: '5.6. ハンズオン1：フルリゾルバの構築', anchor: 's56' },
+      { level: 2, label: '5.6.1. Unboundの設定', anchor: 's561' },
+      { level: 2, label: '5.6.2. ホストlbのゲートウェイ化', anchor: 's562' },
+      { level: 2, label: '5.6.3. lbのスタブリゾルバ設定', anchor: 's563' },
+      { level: 2, label: '5.6.4. lb以外のスタブリゾルバ設定', anchor: 's564' },
+      { level: 2, label: '5.6.5. lb以外のゲートウェイ設定', anchor: 's565' },
+      { level: 2, label: '5.6.6. CoreDNSのフォワード設定', anchor: 's566' },
+      { level: 1, label: '5.7. ハンズオン2：仮想インターネット接続', anchor: 's57' },
+      { level: 2, label: '5.7.1. WireGuardクライアントの設定', anchor: 's571' },
+      { level: 1, label: '5.8. ハンズオン3：権威DNSサーバの構築', anchor: 's58' },
+      { level: 2, label: '5.8.1. BINDの設定', anchor: 's581' },
+      { level: 2, label: '5.8.2. 正引きゾーンの設定', anchor: 's582' },
+      { level: 2, label: '5.8.3. Docker Compose上での起動', anchor: 's583' },
+      { level: 2, label: '5.8.4. lbのフォワード設定', anchor: 's584' },
+      { level: 1, label: '5.9. 総合演習', anchor: 's59' },
+      { level: 2, label: '5.9.1. スタブリゾルバの設定', anchor: 's591' },
+      { level: 2, label: '5.9.2. 外部ネットワークからの名前解決', anchor: 's592' },
+      { level: 2, label: '5.9.3. 逆引きゾーンの設定', anchor: 's593' },
+    ],
+    content: `
+<h1 id="top">第5章　LANの設計2(2)</h1>
+<p class="meta" style="font-weight:600">名前解決（DNS）</p>
+<p class="meta">公開日： 2026年5月23日（土）<br>開講日： 2026年5月25日（月）<br>修正日： 2026年5月25日（月）</p>
+<p class="meta">［設定追加］</p>
+<ul>
+<li>プライベートアドレスを利用した逆引きゾーンの外部参照許可（DNSSEC無効化を含む）： 「unblock-lan-zones: yes」「insecure-lan-zones: yes」</li>
+<li>wg0インタフェース用NATルールの追加： 「iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE　※ NAT の有効化（wg0）」</li>
+</ul>
+<p class="meta">［誤り修正］</p>
+<ul>
+<li>「nslookup www.aicit.jp. 172.24.199.11」→「nslookup www.aicit.jp. 172.24.199.1」</li>
+<li>「10.42.0.0/24 via 172.24.199.11 dev eth0」→「net 10.42.0.0 netmask 255.255.255.0 gw 172.24.199.11 dev eth0」</li>
+<li>「doas apk -U add wireguard-tools」→「apk -U add wireguard-tools」</li>
+</ul>
+<p class="meta">修正日： 2026年5月27日（水）</p>
+<ul><li>演習環境の構成が不正確でしたので修正しました。</li></ul>
+
+<h2 id="s55">5.5. はじめに</h2>
+<h3 id="s551">5.5.1. 概要</h3>
+<p>　前回は、DNS の基本的な仕組みを学ぶとともに、名前解決の基本となる静的な名前解決データベースである /etc/hosts の設定方法について学んだ。 DNS の第2弾では、DNS サーバの持つフルリゾルバと権威サーバという二つの役割を実装することで、小規模プライベートクラウドのベース環境を完成させる。</p>
+
+<h3 id="s552">5.5.2. 前提となる知識・スキル</h3>
+<ul>
+<li>IP アドレス、ホスト名、FQDN の基本を理解していること。</li>
+<li>Linux の基本操作と ping コマンドの使い方を理解していること。</li>
+<li>設定ファイルをテキストエディタで編集し、保存できること。</li>
+<li>第5回の内容を理解していること。</li>
+</ul>
+
+<h3 id="s553">5.5.3. 到達目標</h3>
+<ol>
+<li>DNS の役割と仕組みについて理解できる。</li>
+<li>DNS サーバの機能の一つであるフルリゾルバの設定が行える。</li>
+<li>DNS サーバの機能の一つである権威サーバの設定が行える。</li>
+<li>ロードバランサから WireGuard を通して演習用仮想インターネットに接続できる。</li>
+</ol>
+
+<h3 id="s554">5.5.4. 第5章(2)の操作対象</h3>
+<p>　第5章(2)では、学習したDNSの仕組みをもとにして、以下の角括弧で囲まれたマシン上でDNSの動作に必要な設定を行い、演習用仮想インターネットへ接続する。</p>
+<p class="fig-caption">【演習環境の構成（Alpine Linux・Docker・K3s）】</p>
+<div class="cmd"><pre>ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            │
+            │　【Web アプリケーション用クラウド環境（開発・テスト用）】
+            ├─ [Alpine Linux（alpine-k3s, core:2, ram:4G, hdd:20G）]　　※ dev.s____.enshu.aicit.jp
+            │    ├─ Docker
+            │    └─ K3s（Kubernetes + containerd）
+            │
+            │　【Web アプリケーション用クラウド環境（公開用クラスタ）】
+            ├─ [Alpine Linux（k3s-lb, core:1, ram:1G, hdd:8G）]　　　　 ※ lb.s____.enshu.aicit.jp
+            │    ├─ HAProxy
+            │    ├─ Unbound
+            │    └─ WireGuard Client
+            ├─ [Alpine Linux（k3s-server, core:1, ram:2G, hdd:16G）]　　※ sv.s____.enshu.aicit.jp
+            │    ├─ Docker ── BIND9
+            │    └─ K3s（Kubernetes + containerd）
+            ├─ [Alpine Linux（k3s-worker1, core:1, ram:1G, hdd:8G）]　　※ wk1.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            ├─ [Alpine Linux（k3s-worker2, core:1, ram:1G, hdd:8G）]　　※ wk2.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            └─ [Alpine Linux（k3s-worker3, core:1, ram:1G, hdd:8G）]　　※ wk3.s____.enshu.aicit.jp
+                 └─ Docker, K3s（Kubernetes + containerd）</pre></div>
+
+<h2 id="s56">5.6. ハンズオン1：フルリゾルバの構築</h2>
+<p>　本演習では、プライベートクラウド環境の出入口になっているロードバランサ lb にフルリゾルバの機能を割り当てる。 フルリゾルバのソフトウェアには、前回紹介した Unbound を利用する。 本来であれば、負荷分散の観点からフルリゾルバとロードバランサは異なるホストに用意した方が良いが、本演習では実行環境のリソースの観点からロードバランサ上に構築する。 第5章(2)で目指す名前解決環境を図5.6.1に示す。</p>
+<p class="fig-caption">【図5.6.1. 第5章(2)で実現する名前解決環境】</p>
+<div class="fig-img"><img src="images/ch5b-fig1.png" alt="図5.6.1 第5章(2)で実現する名前解決環境" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5b-fig1.png</div></div>
+
+<h3 id="s561">5.6.1. Unboundの設定</h3>
+<p>　まず、Unbound をインストールする前に Unbound の設定ファイルである unbound.conf をリスト5.6.1のテンプレートを基に作成する。</p>
+<p class="fig-caption">【リスト5.6.1. /etc/unbound/unbound.conf（要管理者権限）】　※下線部を自分の情報に置き換える</p>
+<div class="cmd"><pre>server:
+    interface: 172.2_.__.1
+    port: 53
+    unblock-lan-zones: yes　　※ 2026/5/25 追記
+    insecure-lan-zones: yes　 ※ 2026/5/25 追記
+    access-control: 127.0.0.0/8 allow
+    access-control: 10.0.0.0/8 allow
+    access-control: 172.2_.__.0/24 allow
+    hide-identity: yes
+    hide-version: yes
+    prefetch: yes
+    cache-max-ttl: 300
+    cache-min-ttl: 60
+    do-ip6: no
+forward-zone:
+    name: "enshu.aicit.jp"
+    forward-addr: 172.30.4.129
+forward-zone:
+    name: "172.in-addr.arpa"
+    forward-addr: 172.30.4.129
+forward-zone:
+    name: "s____.enshu.aicit.jp"
+    forward-addr: 172.2_.___.11
+forward-zone:
+    name: "___.2_.172.in-addr.arpa"
+    forward-addr: 172.2_.___.11</pre></div>
+<p class="fig-caption">【表5.6.1. リスト5.6.1の補足】</p>
+<table>
+<thead><tr><th>設定項目</th><th>設定値例</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>interface</td><td>172.2_.__.1</td><td>Unbound が待ち受ける IP アドレスを指定する。</td></tr>
+<tr><td>port</td><td>53</td><td>DNS サービスで使用するポート番号。標準の DNS ポートは 53。</td></tr>
+<tr><td>unblock-lan-zones</td><td>yes</td><td>RFC1918逆引きのローカルゾーン定義（プライベートアドレスのローカル定義）を無効化。※2026/5/25追記</td></tr>
+<tr><td>access-control</td><td>127.0.0.0/8 allow</td><td>localhost からの DNS 問い合わせを許可する。</td></tr>
+<tr><td>access-control</td><td>10.0.0.0/8 allow</td><td>Podネットワーク（10.0.0.0/8）からの問い合わせを許可する。</td></tr>
+<tr><td>access-control</td><td>172.2_.__.0/24 allow</td><td>管理用LAN（172.2_.__.0/24）からの問い合わせを許可する。</td></tr>
+<tr><td>hide-identity</td><td>yes</td><td>セキュリティ対策。DNS サーバのホスト名情報を外部に公開しない。</td></tr>
+<tr><td>hide-version</td><td>yes</td><td>セキュリティ対策。Unbound のバージョン情報を外部に公開しない。</td></tr>
+<tr><td>prefetch</td><td>yes</td><td>キャッシュの有効期限が近いレコードを事前取得し、応答速度を向上させる。</td></tr>
+<tr><td>cache-max-ttl</td><td>300</td><td>DNS キャッシュの最大保持時間（秒）。ここでは 300 秒（5 分）。</td></tr>
+<tr><td>cache-min-ttl</td><td>60</td><td>DNS キャッシュの最小保持時間（秒）。ここでは 60 秒（1 分）。</td></tr>
+<tr><td>do-ip6</td><td>no</td><td>IPv6 を無効化する設定。IPv4 のみ利用する場合に設定する。</td></tr>
+<tr><td>forward-zone</td><td>name: "enshu.aicit.jp"</td><td>enshu.aicit.jp ドメイン宛の問い合わせを転送する設定。</td></tr>
+<tr><td>forward-addr</td><td>172.30.4.129</td><td>転送先 DNS サーバ（ns.enshu.aicit.jp）の IP アドレス。</td></tr>
+<tr><td>forward-zone</td><td>name: "172.in-addr.arpa"</td><td>演習用WAN/LAN（172.0.0.0/8）の IP アドレスの逆引き問い合わせを転送する設定。</td></tr>
+<tr><td>forward-addr</td><td>172.30.4.129</td><td>逆引き問い合わせの転送先 DNS サーバ（ns.enshu.aicit.jp）の IP アドレス。</td></tr>
+<tr><td>forward-zone</td><td>name: "s____.enshu.aicit.jp"</td><td>s____.enshu.aicit.jp ドメイン宛の問い合わせを転送する設定。</td></tr>
+<tr><td>forward-addr</td><td>172.2_.___.11</td><td>転送先 DNS サーバの IP アドレス。自分で構築する権威サーバ。</td></tr>
+<tr><td>forward-zone</td><td>name: "___.2_.172.in-addr.arpa"</td><td>管理用LAN（172.2_.___.0/24）の IP アドレスの逆引き問い合わせを転送する設定。</td></tr>
+<tr><td>forward-addr</td><td>172.2_.___.11</td><td>逆引き問い合わせの転送先 DNS サーバ。自分で構築する権威サーバ。</td></tr>
+</tbody>
+</table>
+<p>　上記の設定では、演習で取り扱う次の2つのゾーンを、仮想インターネットにある ns.enshu.aicit.jp（172.30.4.129）へフォワード（転送）する。</p>
+<ul>
+<li>正引きゾーン： enshu.aicit.jp.</li>
+<li>逆引きゾーン： 172.in-addr.arpa.</li>
+</ul>
+<p>　また、次の2つのゾーンを、これから作る権威サーバ ns.s____.enshu.aicit.jp（172.2_.___.11）へフォワード（転送）する。</p>
+<ul>
+<li>正引きゾーン： s____.enshu.aicit.jp.</li>
+<li>逆引きゾーン： ___.2_.172.in-addr.arpa.</li>
+</ul>
+<p>　この4つ以外のゾーンは、本物のインターネットに問い合わせする。 なお、name に指定するゾーン名はルートゾーン「.」を省略していることに注意する。</p>
+<p class="fig-caption">【Unboundのインストール（要管理者権限）】</p>
+<div class="cmd"><pre>lb$ doas apk add unbound　　　　　　　※ Unbound のインストール
+lb$ doas rc-update add unbound　　　　※ Unbound サービスの登録
+lb$ doas rc-service unbound restart　※ Unbound サービスの再起動（設定の有効化）</pre></div>
+<p class="fig-caption">【確認1： Unboundプロセスの起動確認】</p>
+<div class="cmd"><pre>lb$ ps | grep unbound</pre></div>
+<p class="fig-caption">【確認2： DNSサービスの起動確認（53番）】</p>
+<div class="cmd"><pre>lb$ netstat -anutlp</pre></div>
+<p class="fig-caption">【確認3： フルリゾルバの動作確認】</p>
+<p>　unbound によって提供されるフルリゾルバサービスの動作をフルリゾルバの IP アドレスを指定する形で確認する。 Server Address のIP アドレスがロードバランサとなり、かつ www.aicit.jp のIP アドレスが 202.17.20.3 と表示されればフルリゾルバの設定は完了である。</p>
+<div class="cmd"><pre>lb$ nslookup www.aicit.jp. 172.2_.__.1　　※問い合わせ内容「www.aicit.jp.」，問い合わせ先「172.2_.__.1」　　※ 2026/5/25 修正
+
+※ 出力例
+Server:         172.2_.__.1
+Address:        172._.__.1:53
+
+Non-authoritative answer:
+Name:   www.aicit.jp
+Address: 202.17.20.3
+
+Non-authoritative answer:</pre></div>
+
+<h3 id="s562">5.6.2. ホストlbのゲートウェイ化</h3>
+<p>　現在、プライベートクラウド内の各ホストの通信はすべてメンテナンス用インタフェース eth1 を利用している。 しかし、最終的なゴールは図5.6.2に示した構成である（図4.1.1 再掲）。</p>
+<p class="fig-caption">【図5.6.2. 本演習で作るクラスタ環境】</p>
+<div class="fig-img"><img src="images/ch5b-fig2.png" alt="図5.6.2 本演習で作るクラスタ環境" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5b-fig2.png</div></div>
+<p>　　※ eth0に書かれている数値はIP アドレスの第4オクテット　　※ 下線部は自分のLAN用の情報に書き換える</p>
+<p>　この図に示すように、Kubernetes環境の正規の通信は、各ノードのインタフェースeth0からロードバランサlbを経由して外部につながる。 そのため、この lb をルータ化すると同時に、以下の2点を踏まえてパケット転送時にNAT（Network Address Translation）を適用する。</p>
+<ul>
+<li>外部から管理用 LAN へ直接アクセスできないようにする</li>
+<li>外部への通信にプライベートアドレスが漏れないようにする</li>
+</ul>
+<h4>(1) 事前準備（要管理者権限）</h4>
+<p>　本演習で紹介する手順はリダイレクトを含むため、doas 利用時に記述が煩雑となる。 そのため、設定前の事前準備として、まずは管理者ユーザ root へ移行する。</p>
+<div class="cmd"><pre>lb$ doas su -</pre></div>
+<p>　その後、NAT の設定に必要となる iptables パッケージをインストールし、サービスを登録する。</p>
+<div class="cmd"><pre>lb# apk add iptables　　　　　※ iptables パッケージのインストール
+lb# rc-update add iptables　　※ iptables サービスの登録</pre></div>
+<h4>(2) NATルータの設定1： ロードバランサのルータ化（要管理者権限）</h4>
+<div class="cmd"><pre>lb# echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf　　※ IPv4 のフォワード設定を「sysctl.conf」に保存
+lb# sysctl -p　　　　　　　　　　　　　　　　　　　　　　　 ※ sysctl.confの設定の即時有効化</pre></div>
+<h4>(3) NATルータの設定2： NATの有効化（要管理者権限）</h4>
+<div class="cmd"><pre>lb# iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE　　※ NAT の有効化（eth1）
+lb# iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE　　 ※ NAT の有効化（wg0）　　※2026/5/25追加
+lb# /etc/init.d/iptables save　　　　　　　　　　　　　　　　　※ NAT エントリの保存</pre></div>
+<h4>(4) CoreDNSへの対応： コントロールプレーンのルート情報追加</h4>
+<p>　Kubernetes クラスタの DNS サービスである CoreDNS がフルリゾルバとして lb と通信した際に、CoreDNSが存在するコントロールプレーン用ネットワークと通信が行えるよう、このルート情報をlbのルーティングテーブルに追加する。</p>
+<p class="fig-caption">【事前確認： ルーティングテーブルの確認（ルート情報追加前）】</p>
+<div class="cmd"><pre>lb$ ip route list
+
+※ 出力例
+default via 10.0.3.2 dev eth1 metric 203　　　　　　　　　　　　　　※ デフォルトルート
+10.0.3.0/24 dev eth1 proto kernel scope link src 10.0.3.15　　　　※ eth1のネットワークのルート
+172.2_.__.0/24 dev eth0 proto kernel scope link src 172.2_.__.1　※ eth0のネットワークのルート</pre></div>
+<p class="fig-caption">【設定変更： スタティックルートの追加と有効化（要管理者権限）】</p>
+<div class="cmd"><pre>lb# echo 'staticroute="net 10.42.0.0 netmask 255.255.255.0 gw 172.2_.___.11 dev eth0"' >> /etc/conf.d/staticroute　　※ 2026/5/25 修正
+lb# rc-update add staticroute　　　　　※ staticroute サービスの登録
+lb# rc-service staticroute restart　　※ staticroute サービスの再起動（設定の有効化）</pre></div>
+<p class="fig-caption">【事後確認： ルーティングテーブルの確認（ルート情報追加後）】</p>
+<div class="cmd"><pre>lb$ ip route list
+
+※ 出力例
+default via 10.0.3.2 dev eth1 metric 203
+10.0.3.0/24 dev eth1 proto kernel scope link src 10.0.3.15
+10.42.0.0/24 via 172.24.199.11 dev eth0　　※新たに追加されたコントロールプレーンへのルート（CoreDNSのルート）
+172.2_.__.0/24 dev eth0 proto kernel scope link src 172.2_.__.1</pre></div>
+
+<h3 id="s563">5.6.3. lbのスタブリゾルバ設定</h3>
+<p>　5.6.1の手順において、DNS サーバの一機能としてフルリゾルバを設定した。 しかし、フルリゾルバのサービスを提供する設定と、利用する設定は別である。 つまり、サーバを起動している lb 自身にもスタブリゾルバの設定が必要となる。</p>
+<p class="fig-caption">【事前確認1： スタブリゾルバの設定確認】</p>
+<div class="cmd"><pre>lb$ cat /etc/resolv.conf
+
+※出力例
+nameserver 10.0.3.3</pre></div>
+<p class="fig-caption">【事前確認2：名前解決による確認】</p>
+<div class="cmd"><pre>lb$ nslookup www.aicit.jp.
+
+※ 出力例
+Server:         10.0.3.3
+Address:        10.0.3.3:53
+
+Non-authoritative answer:
+Name:   www.aicit.jp
+Address: 202.17.20.3</pre></div>
+<p class="fig-caption">【設定変更1： DHCPによるスタブリゾルバの書換禁止（要管理者権限）】</p>
+<p>　DHCP クライアントの設定 /etc/udhcpc/udhcpc.conf を修正することで、DHCP による resolv.conf の自動書き換えを無効にする。</p>
+<div class="cmd"><pre># Do not overwrite /etc/resolv.conf
+RESOLV_CONF="no"　　※コメントアウト「#」を削除して、DHCP 利用時の「resolv.conf」書き換えを禁止する
+# Use alternative path for resolv.conf
+#RESOLV_CONF="/tmp/resolv.conf"
+# Prevent overwriting of resolv.conf on a per-interface basis
+#NO_DNS="eth1 wlan1"
+# List of interfaces where DHCP routes are ignored
+#NO_GATEWAY="eth1 wlan1"</pre></div>
+<p class="fig-caption">【設定変更2： スタブリゾルバの設定（要管理者権限）】</p>
+<div class="cmd"><pre>lb$ doas setup-dns -d s____.enshu.aicit.jp -n 172.2_.__.1　　※下線部を自分の情報に置き換える</pre></div>
+<p class="fig-caption">【事後確認1： スタブリゾルバの設定確認】</p>
+<div class="cmd"><pre>lb$ cat /etc/resolv.conf
+
+search s____.enshu.aicit.jp　　※下線部を自分の情報に置き換える
+nameserver 172.2_.__.1　　　　　※下線部を自分の情報に置き換える</pre></div>
+<p class="fig-caption">【事後確認2： 名前解決による確認】</p>
+<div class="cmd"><pre>lb$ nslookup www.aicit.jp.
+
+※ 出力例
+Server:         172.2_.__.1
+Address:        172._.__.1:53
+
+Non-authoritative answer:
+Name:   www.aicit.jp
+Address: 202.17.20.3</pre></div>
+
+<h3 id="s564">5.6.4. lb以外のスタブリゾルバ設定</h3>
+<p>　前節では、lb に対してスタブリゾルバの設定をした。 この節では、sv を例にして、lb 以外のホストの設定方法について説明する。</p>
+<p class="fig-caption">【設定変更1： DHCPによるスタブリゾルバ、ゲートウェイの書換禁止（要管理者権限）】</p>
+<p>　lb の時と同様に、DHCPによるスタブリゾルバの自動更新を無効にする。 ただし、次の節で行うゲートウェイの手動設定のため、lb の時の設定に加えて、DHCP によるゲートウェイの自動設定も無効にする（NO_GATEWAY の設定）。</p>
+<div class="cmd"><pre># Do not overwrite /etc/resolv.conf
+RESOLV_CONF="no"　　※コメント「#」を削除して、DHCP 利用時の「resolv.conf」書き換えを禁止する
+# Use alternative path for resolv.conf
+#RESOLV_CONF="/tmp/resolv.conf"
+# Prevent overwriting of resolv.conf on a per-interface basis
+#NO_DNS="eth1 wlan1"
+# List of interfaces where DHCP routes are ignored
+NO_GATEWAY="eth1 wlan1"　　※コメント「#」を削除して、DHCP 利用時の「eth1」のゲートウェイ追加を禁止</pre></div>
+<p class="fig-caption">【設定変更2： スタブリゾルバの設定（要管理者権限）】　※下線部を自分の情報に置き換える</p>
+<div class="cmd"><pre>sv$ doas setup-dns -d s____.enshu.aicit.jp -n 172.2_.__.1</pre></div>
+<p>　変更完了後は、lb と同じ事後確認を行う。</p>
+
+<h3 id="s565">5.6.5. lb以外のゲートウェイ設定</h3>
+<p>　図5.6.2で示したように、NATルータをデフォルトゲートウェイとすることで、プライベートクラウドのベースとなる通信環境を完成させる。 この変更を行うことで、SSHによるメンテナンス通信を除くすべての通信が lb を経由して行われるようになる。</p>
+<p class="fig-caption">【事前確認： ルートの確認】</p>
+<div class="cmd"><pre>sv$ traceroute -n 202.17.20.1 -m 1　　※202.17.20.1 までのルートのうち、一つ目までのルータを表示
+
+※表示例
+ 1   10.0.3.2   0.016 ms   0.509 ms   0.193 ms</pre></div>
+<p class="fig-caption">【設定変更： デフォルトゲートウェイの変更（要管理者権限）】</p>
+<p>　ネットワークインタフェースの設定ファイルである /etc/network/interfaces を編集して、lb の IP アドレスをゲートウェイとして登録する。</p>
+<div class="cmd"><pre>auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+        address 172.2_.__.__
+        netmask 255.255.255.0
+        gateway 172.2_.__.1　　※この行を追加（lb の IP アドレス）
+
+auto eth1
+iface eth1 inet dhcp</pre></div>
+<div class="cmd"><pre>sv$ doas rc-service networking restart</pre></div>
+<p class="fig-caption">【事後確認： ルートの確認】</p>
+<div class="cmd"><pre>sv$ traceroute -n 202.17.20.1 -m 1
+
+※表示例
+ 1   172.2_.__.1   1.686 ms   1.146 ms   0.851 ms</pre></div>
+
+<h3 id="s566">5.6.6. CoreDNSのフォワード設定</h3>
+<p>　Kubernetes のデフォルト DNS 環境には CoreDNS が利用されている。 この DNS サーバは K3s 用の resolv.conf ファイルとして、 /etc/rancher/k3s/resolv.conf を持つ。 このファイルに nameserver の指定を行うことで、上位リゾルバへクライアントの問い合わせを中継することができる。</p>
+<p>　本演習では、ゾーンenshu.aicit.jp とその逆引きゾーンを仮想インターネット内で処理し、ゾーンs____.enshu.aicit.jp とその逆引きゾーンを管理用LAN内で処理している。 そのため、CoreDNSのフォワードの設定を行うことで、クラスタ内の名前は CoreDNS、自分の管理するLANの名前は管理用 LAN の BIND、演習ゾーンは 仮想インターネットの BIND、それ以外はインターネット上の DNS サーバ、といった具合に役割分担している。</p>
+<div class="cmd"><pre>sv# echo  "nameserver 172.2_.__.1" > /etc/rancher/k3s/resolv.conf</pre></div>
+
+<h2 id="s57">5.7. ハンズオン2： 仮想インターネット接続</h2>
+<p>　この演習では、WireGuard を利用した VPN 接続によってオーバレイネットワークを作ることで、演習用の仮想インターネットを用意している。 このネットワークに各学習者が自分のプライベートクラウドを接続することで、大規模なクラウド検証環境を構築する。 この接続は図5.7.1のように、仮想インターネットの中心にある WireGuard サーバに対して、lb が WireGuard クライアントとして参加することで実現している。</p>
+<p class="fig-caption">【図5.7.1. WireGuardを利用した仮想インターネット環境（オーバレイネットワーク）】</p>
+<div class="fig-img"><img src="images/ch5b-fig3.png" alt="図5.7.1 WireGuardを利用した仮想インターネット環境" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5b-fig3.png</div></div>
+
+<h3 id="s571">5.7.1. WireGuardクライアントの設定</h3>
+<p class="fig-caption">【事前準備： rootユーザへの移行】</p>
+<div class="cmd"><pre>lb$ doas su -</pre></div>
+<p class="fig-caption">【インストール1： WireGuardのインストール（要管理者権限）】</p>
+<div class="cmd"><pre>lb# apk -U add wireguard-tools　　※ 2026/5/25 修正</pre></div>
+<p class="fig-caption">【インストール2： wstunnelのインストール（要管理者権限）】</p>
+<div class="cmd"><pre>lb# curl -L https://github.com/erebe/wstunnel/releases/download/v10.5.5/wstunnel_10.5.5_linux_amd64.tar.gz | tar xvz -C /tmp
+lb# mv /tmp/wstunnel /usr/local/bin
+lb# chmod +x /usr/local/bin/wstunnel</pre></div>
+<p class="fig-caption">【設定： インタフェースwg0の設定（要管理者権限）】</p>
+<p>　VPNクライアント用のインタフェース wg0 を作成する。 設定は /etc/wireguard/wg0.conf で定義されるが、本演習では以下のURLからダウンロードされるファイルを利用する。</p>
+<div class="cmd"><pre>https://els.naka.ai.chibatech.ac.jp/cloud/download/wg0.conf　　※学習者ごとに内容は異なる</pre></div>
+<p>　本 e-Leaning サーバ（要ログイン）を表示しているWebブラウザ上で、上記の URL を開き、wg0.conf ファイルをダウンロードする。 次に、lb 上で、テキストエディタを利用して、 /etc/wireguard/wg0.conf ファイルの編集を開始し、wg0.conf の内容を転記する（可能ならコピー＆ペーストがおすすめ）。</p>
+<div class="cmd"><pre>lb# ln -s /etc/init.d/wg-quick /etc/init.d/wg-quick.wg0　　※ 登録するサービス wg-quick.wg0 の定義
+lb# rc-update add wg-quick.wg0　　　　　　　　　　　　　　　　※ wg-quick.wg0 サービスの登録
+lb# rc-service wg-quick.wg0 restart　　　　　　　　　　　　　※ wg-quick.wg0 サービスの再起動（有効化）</pre></div>
+<p class="fig-caption">【事後確認： インタフェースの有効化の確認】</p>
+<div class="cmd"><pre>lb# ip address show wg0　　※ インターフェス wg0 が作成されたか確認（IP アドレス：172.31.2_.___）
+lb# wg show　　　　　　　　 ※ VPN 接続状況の確認</pre></div>
+<p class="fig-caption">【仮想インターネット上のホストとの疎通確認】</p>
+<div class="cmd"><pre>lb# ping 172.31.255.1</pre></div>
+
+<h2 id="s58">5.8. ハンズオン3： 権威DNSサーバの構築</h2>
+<p>　この節では、権威サーバを実際に構築する。 本演習では sv 上に権威サーバを作成するが、ベースとなる環境を保護するために Docker 上で動作をさせる。 また、管理・運用しやすいように、Docker Compose による自動管理機能も合わせて利用する。 これから作成するファイル・ディレクトリ構造を図5.8.1に示す。</p>
+<p class="fig-caption">【図5.8.1. sv上で作成する権威サーバに関連したファイル】</p>
+<div class="fig-img"><img src="images/ch5b-fig4.png" alt="図5.8.1 sv上で作成する権威サーバに関連したファイル" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5b-fig4.png</div></div>
+
+<h3 id="s581">5.8.1. BINDの設定</h3>
+<p>　BINDの設定ファイルは /etc/bind/named.conf （sv 上では /root/docker/bind9/config/named.conf）に記述される。</p>
+<p class="fig-caption">【事前準備1： rootユーザへの移行】</p>
+<div class="cmd"><pre>lb$ doas su -</pre></div>
+<p class="fig-caption">【事前準備2： 作業ディレクトリの作成】</p>
+<div class="cmd"><pre>sv# mkdir -p /root/docker/bind9/config/zones</pre></div>
+<p class="fig-caption">【リスト5.8.1. 全体設定 /etc/bind/named.conf（sv: /root/docker/bind9/config/named.conf）】　※下線部を自分の情報に置き換える</p>
+<div class="cmd"><pre>options {
+    directory "/var/cache/bind";
+    listen-on { any; };
+    listen-on-v6 { none; };
+    allow-recursion { none; };
+    allow-transfer { none; };
+    allow-update { none; };
+};
+logging {
+    channel docker_stderr {
+        stderr;
+    };
+    category default { docker_stderr; };
+};
+acl internal-nets {
+    10.0.0.0/8;
+    172.2_.___.0/24;
+};
+view "internal" {
+    match-clients { internal-nets; localhost; };
+    recursion no;
+    zone "s____.enshu.aicit.jp" IN {
+        type master;
+        file "/etc/bind/zones/db.s____.enshu.aicit.jp.int";
+    };
+};
+view "external" {
+    match-clients { any; };
+    recursion no;
+    zone "s____.enshu.aicit.jp" IN {
+        type master;
+        file "/etc/bind/zones/db.s____.enshu.aicit.jp.ext";
+    };
+};</pre></div>
+<p class="fig-caption">【表5.8.1. リスト5.8.1の解説】</p>
+<table>
+<thead><tr><th>設定項目</th><th>設定値</th><th>意味・役割</th><th>補足</th></tr></thead>
+<tbody>
+<tr><td>options { ... };</td><td>-</td><td>BIND全体の基本動作を定義するセクション</td><td>DNSサーバ全体に適用</td></tr>
+<tr><td>directory "/var/cache/bind";</td><td>/var/cache/bind</td><td>BINDが使用する作業ディレクトリ</td><td>キャッシュや一時ファイル保存先</td></tr>
+<tr><td>listen-on { any; };</td><td>any</td><td>IPv4で全てのIP アドレスからの問い合わせを受け付ける</td><td>特定IPに限定も可能</td></tr>
+<tr><td>listen-on-v6 { none; };</td><td>none</td><td>IPv6で全てのIP アドレスからの問い合わせを受け付けない</td><td>IPv6対応設定</td></tr>
+<tr><td>allow-recursion { none; };</td><td>none</td><td>再帰問い合わせを禁止する</td><td>キャッシュDNSとして使わせない設定</td></tr>
+<tr><td>allow-transfer { none; };</td><td>none</td><td>ゾーン転送を禁止する</td><td>セカンダリDNSへの転送を防止</td></tr>
+<tr><td>allow-update { none; };</td><td>none</td><td>動的DNS更新を禁止する</td><td>不正更新防止</td></tr>
+<tr><td>zone "s____.enshu.aicit.jp" IN { ... };</td><td>-</td><td>DNSゾーン定義</td><td>ドメイン単位の設定</td></tr>
+<tr><td>type master;</td><td>master</td><td>このDNSサーバが正引きゾーンのマスターであることを示す</td><td>primary DNS</td></tr>
+<tr><td>file "/etc/bind/zones/...";</td><td>ゾーンファイルパス</td><td>DNSレコードを記述したファイル</td><td>Aレコード等を記載</td></tr>
+</tbody>
+</table>
+
+<h3 id="s582">5.8.2. 正引きゾーンの設定</h3>
+<p>　続いて named.conf で指定された正引きゾーンデータベースを作成する。 このデータベースには、lb, sv, wk1, wk2, wk3, dev に加えて sv の別名である ns のレコードを登録する。</p>
+<p>　なお、リスト5.8.3の外部向けゾーンDBは、外部から見てサービスが提供される IP アドレス（ロードバランサのインタフェース wg0 のIP アドレス 172.31.2_.___ ）を設定する。</p>
+<p class="fig-caption">【リスト5.8.2. 内部向けゾーンDB（sv: /root/docker/bind9/config/zones/db.s____.enshu.aicit.jp.int）】　※下線部を自分の情報に置き換える</p>
+<div class="cmd"><pre>$TTL 1h
+@   IN SOA ns.s____.enshu.aicit.jp. root.ns.s____.enshu.aicit.jp. (
+        2026052501 1h 15m 1w 1h )
+    IN NS  ns.s____.enshu.aicit.jp.
+lb  IN A   172.2_.___.1
+ns  IN A   172.2_.___.11
+sv  IN A   172.2_.___.11
+wk1 IN A   172.2_.___.21
+wk2 IN A   172.2_.___.22
+wk3 IN A   172.2_.___.23
+dev IN A   172.2_.___.51</pre></div>
+<p class="fig-caption">【リスト5.8.3. 外部向けゾーンDB（sv: /root/docker/bind9/config/zones/db.s____.enshu.aicit.jp.ext）】　※下線部を自分の情報に置き換える</p>
+<div class="cmd"><pre>$TTL 1h
+@   IN SOA ns.s____.enshu.aicit.jp. root.ns.s____.enshu.aicit.jp. (
+        2026052501 1h 15m 1w 1h )
+    IN NS  ns.s____.enshu.aicit.jp.
+ns  IN A   172.31.2_.___
+www IN A   172.31.2_.___</pre></div>
+<p class="fig-caption">【表5.8.2. リスト5.8.2, 5.8.3の解説】</p>
+<table>
+<thead><tr><th>設定</th><th>意味</th><th>解説</th></tr></thead>
+<tbody>
+<tr><td>$TTL 1h</td><td>TTL設定</td><td>DNS情報をキャッシュする時間を1時間に設定</td></tr>
+<tr><td>@</td><td>ゾーン名自身</td><td>s____.enshu.aicit.jp を表す特殊記号</td></tr>
+<tr><td>IN</td><td>インターネットクラス</td><td>通常DNSでは IN を使用</td></tr>
+<tr><td>SOA</td><td>Start Of Authority</td><td>ゾーン情報の管理者設定</td></tr>
+<tr><td>ns.s____.enshu.aicit.jp.</td><td>プライマリDNSサーバ</td><td>このゾーンを管理するDNSサーバ名</td></tr>
+<tr><td>hostmaster.s____.enshu.aicit.jp.</td><td>管理者メールアドレス</td><td>root@ns.s____.enshu.aicit.jp を意味</td></tr>
+<tr><td>2026052501</td><td>シリアル番号</td><td>ゾーン更新番号</td></tr>
+<tr><td>1h</td><td>Refresh</td><td>セカンダリDNSが更新確認する間隔</td></tr>
+<tr><td>15m</td><td>Retry</td><td>更新失敗時の再試行間隔</td></tr>
+<tr><td>1w</td><td>Expire</td><td>更新できない状態が続いた場合の有効期限</td></tr>
+<tr><td>1h</td><td>Negative Cache TTL</td><td>存在しないレコード情報のキャッシュ時間</td></tr>
+<tr><td>IN NS ns.s____....</td><td>NSレコード</td><td>このゾーンのDNSサーバ指定</td></tr>
+<tr><td>ns IN A ...</td><td>Aレコード</td><td>DNSサーバ ns のIP アドレス</td></tr>
+</tbody>
+</table>
+
+<h3 id="s583">5.8.3. Docker Compose上での起動</h3>
+<p>　BIND の設定は、全体設定である named.conf とゾーンデータベースを作成し、サービスを起動すれば終了である。 本演習では、VM上の OS 環境を極力壊さないよう、BIND をコンテナ上で起動する。</p>
+<p class="fig-caption">【準備】</p>
+<div class="cmd"><pre>sv# apk -U add docker-cli-compose　　※ Docker Compose のインストール
+sv# rc-update add docker　　　　　　　※ docker サービスの登録
+sv# rc-service docker restart　　　　 ※ docker サービスの再起動（有効化）</pre></div>
+<p class="fig-caption">【リスト5.8.4. Docker Compose定義ファイル（sv: /root/docker/bind9/docker-compose.yml）（要管理者権限）】</p>
+<div class="cmd"><pre>services:
+  bind9:
+    image: internetsystemsconsortium/bind9:9.20　　※ 演習時は「hub.enshu.aicit.jp/internetsystemsconsortium/bind9:9.20」を指定（学内のみアクセス可）
+    container_name: bind9
+    restart: unless-stopped
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - ./config:/etc/bind</pre></div>
+<p class="fig-caption">【サービス起動】</p>
+<div class="cmd"><pre>sv# docker compose up -d</pre></div>
+<p class="fig-caption">【確認： コンテナが起動しているか確認】</p>
+<div class="cmd"><pre>sv# docker compose ps</pre></div>
+<p class="fig-caption">【確認： 起動時にエラーがないか確認】</p>
+<div class="cmd"><pre>docker compose logs　　　　　　　　 ※ ログすべてを表示
+docker compose logs | grep zone　　※ zone に関するログのみ表示</pre></div>
+<p class="fig-caption">【サービス停止】</p>
+<div class="cmd"><pre># docker compose down</pre></div>
+
+<h3 id="s584">5.8.4. lbのフォワード設定</h3>
+<p>　これまで設定してきた権威サーバは、プライベートアドレスで管理されるLAN内に収まっている。また、外部からはNATによって守られているため、そのままでは外部から権威サーバを利用することができない。 そこで、外部との通信の中継路となっている lb 上で DNS サービス（53番）を転送することにより、外部のネットワークからも権威サーバによる名前解決ができるようにする。</p>
+<p class="fig-caption">【UDP/TCP53番の転送設定（DNAT： Destination NAT）】</p>
+<div class="cmd"><pre>lb# iptables -t nat -A PREROUTING  -i wg0  -p udp --dport 53 -j DNAT --to-destination 172.2_.___.11:53　　※ UDP 53 番の転送許可
+lb# iptables -t nat -A PREROUTING  -i wg0  -p tcp --dport 53 -j DNAT --to-destination 172.2_.___.11:53　　※ TCP 53 番の転送許可
+lb# /etc/init.d/iptables save　　※ 設定した NAT エントリの保存</pre></div>
+
+<h2 id="s59">5.9. 総合演習</h2>
+<h3 id="s591">5.9.1. スタブリゾルバの設定</h3>
+<p>　wk1, wk2, dev, (wk3) も sv と同様にスタブリゾルバの設定を行い、ミニインターネット、インターネット、LAN の各ゾーンに所属するホストについて名前解決が行えるか確かめよ。</p>
+<p class="fig-caption">【名前解決の確認例】</p>
+<div class="cmd"><pre>$ nslookup www.aicit.jp.　　 　　　　　　　　　　　 ※ インターネット上のゾーン情報
+$ nslookup ns.enshu.aicit.jp.　　　　　　　　　　　 ※ ミニインターネット上のゾーン情報
+$ nslookup ns.s____.enshu.aicit.jp.　　　　　　　　※ LAN 上のゾーン情報</pre></div>
+
+<h3 id="s592">5.9.2. 外部ネットワークからの名前解決</h3>
+<p>　学習者間でお互いの権威サーバレコードについて情報交換し、お互いに外部向けゾーン情報で名前解決ができることを確認せよ。</p>
+
+<h3 id="s593">5.9.3. 逆引きゾーンの設定【応用課題】</h3>
+<p>　以下の逆引きゾーンを権威サーバに登録し、各ホストから名前解決ができることを確かめよ。</p>
+<p class="fig-caption">【リスト5.9.1. /etc/bind/named.conf（抜粋）】</p>
+<div class="cmd"><pre>～ 省略 ～
+view "internal" {
+    ～ 省略 ～
+    zone "__.2_.172.in-addr.arpa" IN {
+        type master;
+        file "/etc/bind/zones/db.__.2_.172.in-addr.arpa.int";
+    };
+};
+view "external" {
+    ～ 省略 ～
+    zone "__.2_.172.in-addr.arpa" IN {
+        type master;
+        file "/etc/bind/zones/db.__.2_.172.in-addr.arpa.ext";
+    };
+};</pre></div>
+<p class="fig-caption">【リスト5.9.2. 内部向けゾーンDB： db.__.2_.172.in-addr.arpa.int】　※下線部を自分の情報に置き換える</p>
+<div class="cmd"><pre>$TTL 1h
+@   IN SOA ns.s____.enshu.aicit.jp. root.ns.s____.enshu.aicit.jp. (
+        2026052501 1h 15m 1w 1h )
+    IN NS  ns.s____.enshu.aicit.jp.
+1   IN PTR lb.s____.enshu.aicit.jp.
+11  IN PTR ns.s____.enshu.aicit.jp.
+11  IN PTR sv.s____.enshu.aicit.jp.
+21  IN PTR wk1.s____.enshu.aicit.jp.
+22  IN PTR wk2.s____.enshu.aicit.jp.
+23  IN PTR wk3.s____.enshu.aicit.jp.
+51  IN PTR dev.s____.enshu.aicit.jp.</pre></div>
+<p class="fig-caption">【リスト5.9.3. 外部向けゾーンDB： db.__.2_.172.in-addr.arpa.ext】　※下線部を自分の情報に置き換える</p>
+<p>　PTRレコードの下線部は、172.31.2_.___ の lb の wg0 のIP アドレスの第4オクテットを記述する。</p>
+<div class="cmd"><pre>$TTL 1h
+@   IN SOA ns.s____.enshu.aicit.jp. root.ns.s____.enshu.aicit.jp. (
+        2026052501 1h 15m 1w 1h )
+    IN NS  ns.s____.enshu.aicit.jp.
+___ IN PTR ns.s____.enshu.aicit.jp.
+___ IN PTR www.s____.enshu.aicit.jp.</pre></div>
+<p class="fig-caption">【名前解決の確認例】</p>
+<div class="cmd"><pre>$ nslookup 202.17.20.1　　 　　　　　　　　　　　　※ インターネット上の IP アドレス
+$ nslookup 172.30.4.129　　　　　　　　　　　　　　※ ミニインターネット上の IP アドレス
+$ nslookup 172.2_.___.11　　　　　　　　　　　　　 ※ LAN上の IP アドレス</pre></div>
+
+<div class="page-nav">
+  <a onclick="navigate('ch5-lan2')">← 5. LANの設計2</a>
+  <a onclick="navigate('ch5-a1-dns')">A5.1. 名前解決の詳細 →</a>
+</div>`
   },
 
   'ch5-a1-dns': {
