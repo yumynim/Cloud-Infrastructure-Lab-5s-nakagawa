@@ -6781,15 +6781,196 @@ dev# kubectl delete -f namespace.yaml</pre></div>
   },
 
   'ref-docker-cmd': {
-    title: 'Docker コマンド',
-    toc: [{ level: 1, label: 'Docker コマンド', anchor: 'top' }],
-    content: `<h1 id="top">Docker コマンド</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: 'Docker コマンドリファレンス',
+    toc: [
+      { level: 1, label: 'Docker コマンドリファレンス', anchor: 'top' },
+      { level: 2, label: 'Docker コマンド', anchor: 'docker-cmd' },
+      { level: 2, label: 'Docker Compose コマンド', anchor: 'compose-cmd' },
+      { level: 2, label: 'Docker Compose 運用でよく使う組み合わせ', anchor: 'compose-tips' },
+    ],
+    content: `<h1 id="top">Docker コマンドリファレンス</h1>
+<p class="meta">公開日： 2026年 5月30日（土）</p>
+
+<h2 id="docker-cmd">Docker コマンド</h2>
+<table>
+<thead><tr><th>コマンド名</th><th>コマンドの説明</th><th>代表的なオプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>docker</td><td>コンテナ操作の基本コマンド</td><td>なし</td><td><code>docker ps</code></td></tr>
+<tr><td>docker run</td><td>コンテナを起動</td><td>-d バックグラウンド<br>-p ポート指定<br>--name 名前指定<br>-v ボリュームマウント<br>-e 環境変数設定</td><td><code>docker run -d -p 80:80 nginx</code></td></tr>
+<tr><td>docker ps</td><td>起動中コンテナ一覧</td><td>-a 全表示</td><td><code>docker ps -a</code></td></tr>
+<tr><td>docker images</td><td>ローカルイメージ一覧</td><td>なし</td><td><code>docker images</code></td></tr>
+<tr><td>docker pull</td><td>イメージ取得</td><td>なし</td><td><code>docker pull nginx</code></td></tr>
+<tr><td>docker build</td><td>Dockerfileからイメージ作成</td><td>-t タグ指定</td><td><code>docker build -t myapp .</code></td></tr>
+<tr><td>docker exec</td><td>コンテナ内でコマンド実行</td><td>-it 対話モード</td><td><code>docker exec -it container sh</code></td></tr>
+<tr><td>docker logs</td><td>コンテナログ表示</td><td>-f リアルタイム表示<br>--tail 表示件数指定</td><td><code>docker logs -f container</code></td></tr>
+<tr><td>docker stop</td><td>コンテナ停止</td><td>なし</td><td><code>docker stop container</code></td></tr>
+<tr><td>docker start</td><td>停止済みコンテナ起動</td><td>なし</td><td><code>docker start container</code></td></tr>
+<tr><td>docker restart</td><td>コンテナ再起動</td><td>なし</td><td><code>docker restart container</code></td></tr>
+<tr><td>docker rm</td><td>コンテナ削除</td><td>-f 強制削除</td><td><code>docker rm -f container</code></td></tr>
+<tr><td>docker rmi</td><td>イメージ削除</td><td>-f 強制削除</td><td><code>docker rmi nginx</code></td></tr>
+<tr><td>docker inspect</td><td>詳細情報表示</td><td>なし</td><td><code>docker inspect container</code></td></tr>
+<tr><td>docker stats</td><td>リソース使用状況表示</td><td>なし</td><td><code>docker stats</code></td></tr>
+<tr><td>docker top</td><td>コンテナ内プロセス表示</td><td>なし</td><td><code>docker top container</code></td></tr>
+<tr><td>docker cp</td><td>ファイルコピー</td><td>なし</td><td><code>docker cp file.txt container:/tmp</code></td></tr>
+<tr><td>docker network ls</td><td>ネットワーク一覧</td><td>なし</td><td><code>docker network ls</code></td></tr>
+<tr><td>docker network inspect</td><td>ネットワーク詳細表示</td><td>なし</td><td><code>docker network inspect bridge</code></td></tr>
+<tr><td>docker volume ls</td><td>ボリューム一覧</td><td>なし</td><td><code>docker volume ls</code></td></tr>
+<tr><td>docker volume inspect</td><td>ボリューム詳細表示</td><td>なし</td><td><code>docker volume inspect myvolume</code></td></tr>
+</tbody>
+</table>
+
+<h2 id="compose-cmd">Docker Compose コマンド</h2>
+<table>
+<thead><tr><th>コマンド名</th><th>コマンドの説明</th><th>代表的なオプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>docker compose up</td><td>サービス作成・起動</td><td>-d バックグラウンド<br>--build イメージ再作成</td><td><code>docker compose up -d</code></td></tr>
+<tr><td>docker compose down</td><td>サービス停止・削除</td><td>-v ボリューム削除</td><td><code>docker compose down -v</code></td></tr>
+<tr><td>docker compose start</td><td>停止済みサービス起動</td><td>なし</td><td><code>docker compose start</code></td></tr>
+<tr><td>docker compose stop</td><td>サービス停止</td><td>なし</td><td><code>docker compose stop</code></td></tr>
+<tr><td>docker compose restart</td><td>サービス再起動</td><td>なし</td><td><code>docker compose restart</code></td></tr>
+<tr><td>docker compose ps</td><td>サービス状態確認</td><td>なし</td><td><code>docker compose ps</code></td></tr>
+<tr><td>docker compose logs</td><td>ログ表示</td><td>-f リアルタイム表示</td><td><code>docker compose logs -f</code></td></tr>
+<tr><td>docker compose exec</td><td>サービス内でコマンド実行</td><td>-it 対話モード</td><td><code>docker compose exec web sh</code></td></tr>
+<tr><td>docker compose build</td><td>イメージ作成</td><td>--no-cache キャッシュ無効</td><td><code>docker compose build</code></td></tr>
+<tr><td>docker compose pull</td><td>イメージ取得</td><td>なし</td><td><code>docker compose pull</code></td></tr>
+<tr><td>docker compose config</td><td>設定内容確認</td><td>なし</td><td><code>docker compose config</code></td></tr>
+<tr><td>docker compose images</td><td>使用イメージ一覧</td><td>なし</td><td><code>docker compose images</code></td></tr>
+<tr><td>docker compose top</td><td>コンテナ内プロセス表示</td><td>なし</td><td><code>docker compose top</code></td></tr>
+<tr><td>docker compose rm</td><td>停止済みコンテナ削除</td><td>-f 確認省略</td><td><code>docker compose rm -f</code></td></tr>
+</tbody>
+</table>
+
+<h2 id="compose-tips">Docker Compose 運用でよく使う組み合わせ</h2>
+<div class="cmd"><pre># イメージ作成 → 起動
+docker compose up -d --build
+# ログ確認
+docker compose logs -f
+# コンテナへ接続（web コンテナへ ボーンシェル sh を利用して接続する例）
+docker compose exec web sh
+# サービス再起動
+docker compose restart
+# 停止・削除（ボリュームも削除）
+docker compose down -v</pre></div>`
   },
 
   'ref-k8s-cmd': {
-    title: 'Kubernetes コマンド',
-    toc: [{ level: 1, label: 'Kubernetes コマンド', anchor: 'top' }],
-    content: `<h1 id="top">Kubernetes コマンド</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: 'Kubernetes（K8s） コマンドリファレンス',
+    toc: [
+      { level: 1, label: 'Kubernetes（K8s） コマンドリファレンス', anchor: 'top' },
+      { level: 2, label: 'Kubernetes コマンド', anchor: 'kubectl-cmd' },
+      { level: 2, label: 'よく利用するリソース種別', anchor: 'resources' },
+      { level: 2, label: 'k3s コマンド', anchor: 'k3s-cmd' },
+      { level: 2, label: 'crictl コマンド', anchor: 'crictl-cmd' },
+      { level: 2, label: 'Kubernetes運用で頻出のコマンド', anchor: 'k8s-tips' },
+    ],
+    content: `<h1 id="top">Kubernetes（K8s） コマンドリファレンス</h1>
+<p class="meta">公開日： 2026年 5月30日（土）</p>
+
+<h2 id="kubectl-cmd">Kubernetes コマンド</h2>
+<table>
+<thead><tr><th>コマンド名</th><th>コマンドの説明</th><th>代表的なオプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>kubectl</td><td>Kubernetesクラスタ操作CLI</td><td>様々なオプションを組み合わせて実行</td><td><code>kubectl get pods</code></td></tr>
+<tr><td>kubectl get</td><td>リソース一覧取得</td><td>-o wide 詳細表示<br>-A 全Namespace</td><td><code>kubectl get nodes -o wide</code></td></tr>
+<tr><td>kubectl describe</td><td>リソース詳細表示</td><td>なし</td><td><code>kubectl describe pod nginx</code></td></tr>
+<tr><td>kubectl apply</td><td>マニフェスト適用</td><td>-f ファイル指定</td><td><code>kubectl apply -f deploy.yaml</code></td></tr>
+<tr><td>kubectl delete</td><td>リソース削除</td><td>-f ファイル指定</td><td><code>kubectl delete -f deploy.yaml</code></td></tr>
+<tr><td>kubectl create</td><td>リソース作成</td><td>deployment, namespace</td><td><code>kubectl create namespace dev</code></td></tr>
+<tr><td>kubectl edit</td><td>リソース編集</td><td>なし</td><td><code>kubectl edit deployment nginx</code></td></tr>
+<tr><td>kubectl logs</td><td>Podログ確認</td><td>-f 追跡<br>-c コンテナ指定</td><td><code>kubectl logs -f pod-name</code></td></tr>
+<tr><td>kubectl exec</td><td>Pod内でコマンド実行</td><td>-it 対話モード</td><td><code>kubectl exec -it pod-name -- sh</code></td></tr>
+<tr><td>kubectl cp</td><td>Podとローカル間でファイルコピー</td><td>なし</td><td><code>kubectl cp pod:/tmp/a.txt .</code></td></tr>
+<tr><td>kubectl scale</td><td>レプリカ数変更</td><td>--replicas</td><td><code>kubectl scale deploy app --replicas=3</code></td></tr>
+<tr><td>kubectl expose</td><td>Service公開</td><td>--port</td><td><code>kubectl expose deployment app --port=80</code></td></tr>
+<tr><td>kubectl port-forward</td><td>ローカルとPodのポート転送</td><td>なし</td><td><code>kubectl port-forward pod/nginx 8080:80</code></td></tr>
+<tr><td>kubectl top</td><td>リソース使用量表示</td><td>pod, node</td><td><code>kubectl top pods</code></td></tr>
+<tr><td>kubectl label</td><td>ラベル追加・変更</td><td>なし</td><td><code>kubectl label pod nginx env=dev</code></td></tr>
+<tr><td>kubectl annotate</td><td>アノテーション追加</td><td>なし</td><td><code>kubectl annotate pod nginx owner=admin</code></td></tr>
+<tr><td>kubectl taint</td><td>ノード制御</td><td>なし</td><td><code>kubectl taint node node1 key=value:NoSchedule</code></td></tr>
+<tr><td>kubectl cordon</td><td>ノードをスケジューリング対象外にする</td><td>なし</td><td><code>kubectl cordon node1</code></td></tr>
+<tr><td>kubectl uncordon</td><td>ノードを再度有効化</td><td>なし</td><td><code>kubectl uncordon node1</code></td></tr>
+<tr><td>kubectl drain</td><td>ノード退避（メンテナンス）</td><td>--ignore-daemonsets</td><td><code>kubectl drain node1 --ignore-daemonsets</code></td></tr>
+<tr><td>kubectl config</td><td>kubeconfig管理</td><td>get-contexts<br>use-context</td><td><code>kubectl config use-context dev</code></td></tr>
+<tr><td>kubectl rollout</td><td>デプロイ更新管理</td><td>status<br>history<br>restart<br>undo</td><td><code>kubectl rollout restart deploy app</code></td></tr>
+<tr><td>kubectl api-resources</td><td>利用可能なリソース一覧</td><td>なし</td><td><code>kubectl api-resources</code></td></tr>
+<tr><td>kubectl api-versions</td><td>APIバージョン確認</td><td>なし</td><td><code>kubectl api-versions</code></td></tr>
+<tr><td>kubectl cluster-info</td><td>クラスタ情報表示</td><td>なし</td><td><code>kubectl cluster-info</code></td></tr>
+<tr><td>kubectl version</td><td>バージョン確認</td><td>--short</td><td><code>kubectl version</code></td></tr>
+</tbody>
+</table>
+
+<h2 id="resources">よく利用するリソース種別</h2>
+<table>
+<thead><tr><th>リソース</th><th>説明</th><th>確認コマンド</th></tr></thead>
+<tbody>
+<tr><td>Pod</td><td>コンテナ実行単位</td><td><code>kubectl get pods</code></td></tr>
+<tr><td>Deployment</td><td>Pod管理・ローリング更新</td><td><code>kubectl get deploy</code></td></tr>
+<tr><td>ReplicaSet</td><td>Podレプリカ管理</td><td><code>kubectl get rs</code></td></tr>
+<tr><td>Service</td><td>通信公開</td><td><code>kubectl get svc</code></td></tr>
+<tr><td>Ingress</td><td>HTTP/HTTPSルーティング</td><td><code>kubectl get ingress</code></td></tr>
+<tr><td>Namespace</td><td>論理分離</td><td><code>kubectl get ns</code></td></tr>
+<tr><td>ConfigMap</td><td>設定情報管理</td><td><code>kubectl get configmap</code></td></tr>
+<tr><td>Secret</td><td>機密情報管理</td><td><code>kubectl get secret</code></td></tr>
+<tr><td>PersistentVolume</td><td>永続ストレージ</td><td><code>kubectl get pv</code></td></tr>
+<tr><td>PersistentVolumeClaim</td><td>PV要求</td><td><code>kubectl get pvc</code></td></tr>
+<tr><td>Node</td><td>ワーカーノード</td><td><code>kubectl get nodes</code></td></tr>
+<tr><td>Job</td><td>バッチ処理</td><td><code>kubectl get jobs</code></td></tr>
+<tr><td>CronJob</td><td>定期実行ジョブ</td><td><code>kubectl get cronjobs</code></td></tr>
+</tbody>
+</table>
+
+<h2 id="k3s-cmd">k3s コマンド</h2>
+<table>
+<thead><tr><th>コマンド名</th><th>コマンドの説明</th><th>代表的なオプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>k3s</td><td>軽量Kubernetesの実行・管理</td><td>server<br>agent</td><td><code>k3s server</code></td></tr>
+<tr><td>k3s kubectl</td><td>k3s内蔵kubectl</td><td>なし</td><td><code>k3s kubectl get pods</code></td></tr>
+<tr><td>k3s ctr</td><td>containerd操作</td><td>images<br>containers</td><td><code>k3s ctr images ls</code></td></tr>
+<tr><td>k3s crictl</td><td>CRI操作</td><td>ps<br>images</td><td><code>k3s crictl ps</code></td></tr>
+<tr><td>k3s check-config</td><td>カーネル設定確認</td><td>なし</td><td><code>k3s check-config</code></td></tr>
+<tr><td>k3s certificate</td><td>証明書管理</td><td>rotate</td><td><code>k3s certificate rotate</code></td></tr>
+<tr><td>k3s etcd-snapshot</td><td>etcdバックアップ</td><td>save<br>ls<br>delete</td><td><code>k3s etcd-snapshot save</code></td></tr>
+</tbody>
+</table>
+
+<h2 id="crictl-cmd">crictl コマンド</h2>
+<table>
+<thead><tr><th>コマンド名</th><th>コマンドの説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>crictl ps</td><td>コンテナ一覧</td><td><code>crictl ps</code></td></tr>
+<tr><td>crictl ps -a</td><td>全コンテナ一覧</td><td><code>crictl ps -a</code></td></tr>
+<tr><td>crictl images</td><td>イメージ一覧</td><td><code>crictl images</code></td></tr>
+<tr><td>crictl inspect</td><td>コンテナ詳細表示</td><td><code>crictl inspect &lt;id&gt;</code></td></tr>
+<tr><td>crictl logs</td><td>コンテナログ表示</td><td><code>crictl logs &lt;id&gt;</code></td></tr>
+<tr><td>crictl exec</td><td>コンテナ内コマンド実行</td><td><code>crictl exec -it &lt;id&gt; sh</code></td></tr>
+<tr><td>crictl pods</td><td>Pod一覧</td><td><code>crictl pods</code></td></tr>
+<tr><td>crictl stopp</td><td>Pod停止</td><td><code>crictl stopp &lt;pod-id&gt;</code></td></tr>
+<tr><td>crictl rmp</td><td>Pod削除</td><td><code>crictl rmp &lt;pod-id&gt;</code></td></tr>
+</tbody>
+</table>
+
+<h2 id="k8s-tips">Kubernetes運用で頻出のコマンド</h2>
+<div class="cmd"><pre># Pod確認
+kubectl get pods -A
+# Pod詳細確認
+kubectl describe pod nginx
+# ログ確認
+kubectl logs -f nginx
+# Podへ接続
+kubectl exec -it nginx -- sh
+# Deployment再起動
+kubectl rollout restart deployment app
+# ローリングアップデート状況確認
+kubectl rollout status deployment app
+# 更新のロールバック
+kubectl rollout undo deployment app
+# ノード状態確認
+kubectl get nodes -o wide
+# リソース使用量確認
+kubectl top pods
+kubectl top nodes
+# クラスタ全体の主要リソース確認
+kubectl get all -A</pre></div>`
   },
 
 };
