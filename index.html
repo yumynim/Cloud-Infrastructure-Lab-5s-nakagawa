@@ -6307,9 +6307,272 @@ dev# kubectl delete -f namespace.yaml</pre></div>
   },
 
   'ref-linux-cmd': {
-    title: 'Linux コマンド（Alpine版）',
-    toc: [{ level: 1, label: 'Linux コマンド（Alpine版）', anchor: 'top' }],
-    content: `<h1 id="top">Linux コマンド（Alpine版）</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: 'Linux コマンドリファレンス（Alpine Linux）',
+    toc: [
+      { level: 1, label: '1. 基本操作', anchor: 'r1' },
+      { level: 2, label: '1.1. シェル操作', anchor: 'r11' },
+      { level: 2, label: '1.2. ディレクトリ・ファイル管理', anchor: 'r12' },
+      { level: 1, label: '2. テキスト管理', anchor: 'r2' },
+      { level: 2, label: '2.1. 表示', anchor: 'r21' },
+      { level: 2, label: '2.2. 検索・加工', anchor: 'r22' },
+      { level: 2, label: '2.3. 編集', anchor: 'r23' },
+      { level: 1, label: '3. システム確認', anchor: 'r3' },
+      { level: 2, label: '3.1. システム', anchor: 'r31' },
+      { level: 2, label: '3.2. ディスク', anchor: 'r32' },
+      { level: 2, label: '3.3. プロセス', anchor: 'r33' },
+      { level: 1, label: '4. ユーザ管理', anchor: 'r4' },
+      { level: 2, label: '4.1. 情報', anchor: 'r41' },
+      { level: 2, label: '4.2. 管理', anchor: 'r42' },
+      { level: 1, label: '5. ネットワーク', anchor: 'r5' },
+      { level: 2, label: '5.1. 基本', anchor: 'r51' },
+      { level: 2, label: '5.2. 名前解決', anchor: 'r52' },
+      { level: 2, label: '5.3. リモート接続', anchor: 'r53' },
+      { level: 1, label: '6. Web通信', anchor: 'r6' },
+      { level: 1, label: '7. マニュアル', anchor: 'r7' },
+      { level: 1, label: '8. Alpine Linux', anchor: 'r8' },
+      { level: 2, label: '8.1. パッケージ管理', anchor: 'r81' },
+      { level: 2, label: '8.2. サービス管理（OpenRC）', anchor: 'r82' },
+      { level: 2, label: '8.3. 初期セットアップ', anchor: 'r83' },
+    ],
+    content: `<h1 id="top">Linux コマンドリファレンス（Alpine Linux）</h1>
+<p class="meta">公開日： 2026年4月25日（土）</p>
+
+<h2 id="r1">1. 基本操作</h2>
+<h3 id="r11">1.1. シェル操作</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>オプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>echo</td><td>文字列出力</td><td>-n 改行なし</td><td>echo "Hello"</td></tr>
+<tr><td>history</td><td>コマンド履歴</td><td>なし</td><td>history</td></tr>
+<tr><td>alias</td><td>別名定義</td><td>なし</td><td>alias ll='ls -l'</td></tr>
+<tr><td>unalias</td><td>エイリアス削除</td><td>なし</td><td>unalias ll</td></tr>
+<tr><td>env</td><td>環境変数表示</td><td>-i 初期化</td><td>env</td></tr>
+<tr><td>export</td><td>環境変数設定</td><td>なし</td><td>export PATH=$PATH:/usr/bin</td></tr>
+<tr><td>unset</td><td>変数削除</td><td>なし</td><td>unset VAR</td></tr>
+<tr><td>source</td><td>設定反映</td><td>なし</td><td>source ~/.profile</td></tr>
+<tr><td>which</td><td>コマンド場所表示</td><td>なし</td><td>which ls</td></tr>
+<tr><td>type</td><td>コマンド種別確認</td><td>なし</td><td>type ls</td></tr>
+</tbody>
+</table>
+
+<h3 id="r12">1.2. ディレクトリ・ファイル管理</h3>
+<h4>1.2.1. ディレクトリ操作</h4>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>オプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>mkdir</td><td>ディレクトリ作成</td><td>-p</td><td>mkdir -p a/b</td></tr>
+<tr><td>rmdir</td><td>空ディレクトリ削除</td><td>なし</td><td>rmdir dir</td></tr>
+</tbody>
+</table>
+<h4>1.2.2. ファイル操作</h4>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>オプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>ls</td><td>一覧表示</td><td>-l, -a</td><td>ls -la</td></tr>
+<tr><td>cd</td><td>移動</td><td>なし</td><td>cd /home</td></tr>
+<tr><td>pwd</td><td>現在位置</td><td>なし</td><td>pwd</td></tr>
+<tr><td>cp</td><td>コピー</td><td>-r, -i</td><td>cp -r a b</td></tr>
+<tr><td>mv</td><td>移動/改名</td><td>-i</td><td>mv a b</td></tr>
+<tr><td>rm</td><td>削除</td><td>-r, -f</td><td>rm -rf dir</td></tr>
+<tr><td>touch</td><td>作成</td><td>なし</td><td>touch a.txt</td></tr>
+<tr><td>find</td><td>ファイル検索</td><td>-name</td><td>find . -name "*.txt"</td></tr>
+<tr><td>ln</td><td>リンク作成</td><td>-s</td><td>ln -s a b</td></tr>
+</tbody>
+</table>
+<p class="meta">※ rm -rf は強制削除のため注意</p>
+<h4>1.2.3. 属性操作</h4>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>オプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>chmod</td><td>権限変更</td><td>数値指定</td><td>chmod 755 file</td></tr>
+<tr><td>chown</td><td>所有者変更</td><td>-R</td><td>chown user:group file</td></tr>
+</tbody>
+</table>
+<h4>1.2.4. アーカイブ</h4>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>オプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>tar</td><td>圧縮/展開</td><td>-c, -x, -f</td><td>tar -czf a.tar.gz dir</td></tr>
+<tr><td>gzip</td><td>圧縮</td><td>-d</td><td>gzip file</td></tr>
+<tr><td>unzip</td><td>解凍</td><td>なし</td><td>unzip file.zip</td></tr>
+</tbody>
+</table>
+
+<h2 id="r2">2. テキスト管理</h2>
+<h3 id="r21">2.1. 表示</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>オプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>cat</td><td>内容表示</td><td>-n</td><td>cat file</td></tr>
+<tr><td>less</td><td>ページ表示</td><td>-N</td><td>less file</td></tr>
+<tr><td>head</td><td>先頭表示</td><td>-n</td><td>head -n 10 file</td></tr>
+<tr><td>tail</td><td>末尾表示</td><td>-f</td><td>tail -f log</td></tr>
+</tbody>
+</table>
+<h3 id="r22">2.2. 検索・加工</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>オプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>grep</td><td>文字列検索</td><td>-i, -r</td><td>grep -r "error" .</td></tr>
+<tr><td>wc</td><td>行数/文字数</td><td>-l</td><td>wc -l file</td></tr>
+<tr><td>sort</td><td>並び替え</td><td>なし</td><td>sort file</td></tr>
+<tr><td>uniq</td><td>重複削除</td><td>なし</td><td>uniq file</td></tr>
+<tr><td>cut</td><td>列抽出</td><td>-d, -f</td><td>cut -d: -f1 file</td></tr>
+<tr><td>sed</td><td>置換</td><td>なし</td><td>sed 's/a/b/' file</td></tr>
+</tbody>
+</table>
+<h3 id="r23">2.3. 編集</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>vi</td><td>標準エディタ</td><td>vi file</td></tr>
+<tr><td>vim</td><td>高機能版（追加パッケージ）</td><td>vim file</td></tr>
+<tr><td>nano</td><td>簡易エディタ（追加パッケージ）</td><td>nano file</td></tr>
+</tbody>
+</table>
+
+<h2 id="r3">3. システム確認</h2>
+<h3 id="r31">3.1. システム</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>uname</td><td>OS情報</td><td>uname -a</td></tr>
+<tr><td>hostname</td><td>ホスト名</td><td>hostname</td></tr>
+<tr><td>uptime</td><td>稼働時間</td><td>uptime</td></tr>
+<tr><td>free</td><td>メモリ</td><td>free -h</td></tr>
+<tr><td>dmesg</td><td>カーネルログ</td><td>dmesg</td></tr>
+<tr><td>date</td><td>日時</td><td>date</td></tr>
+</tbody>
+</table>
+<h3 id="r32">3.2. ディスク</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>df</td><td>容量</td><td>df -h</td></tr>
+<tr><td>du</td><td>使用量</td><td>du -sh *</td></tr>
+<tr><td>lsblk</td><td>デバイス</td><td>lsblk</td></tr>
+</tbody>
+</table>
+<h3 id="r33">3.3. プロセス</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>ps</td><td>プロセス</td><td>ps aux</td></tr>
+<tr><td>top</td><td>監視</td><td>top</td></tr>
+<tr><td>htop</td><td>topの拡張版</td><td>htop</td></tr>
+<tr><td>kill</td><td>終了</td><td>kill 1234</td></tr>
+<tr><td>killall</td><td>名前指定終了</td><td>killall nginx</td></tr>
+<tr><td>pstree</td><td>ツリー表示</td><td>pstree</td></tr>
+</tbody>
+</table>
+
+<h2 id="r4">4. ユーザ管理</h2>
+<h3 id="r41">4.1. 情報</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>whoami</td><td>ユーザー</td><td>whoami</td></tr>
+<tr><td>id</td><td>ID確認</td><td>id</td></tr>
+<tr><td>groups</td><td>グループ</td><td>groups</td></tr>
+<tr><td>who</td><td>ログイン</td><td>who</td></tr>
+</tbody>
+</table>
+<h3 id="r42">4.2. 管理</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>adduser</td><td>ユーザー追加</td><td>adduser user</td></tr>
+<tr><td>addgroup</td><td>グループ追加</td><td>addgroup dev</td></tr>
+<tr><td>passwd</td><td>パスワード変更</td><td>passwd</td></tr>
+<tr><td>doas</td><td>権限昇格</td><td>doas apk update</td></tr>
+</tbody>
+</table>
+
+<h2 id="r5">5. ネットワーク</h2>
+<h3 id="r51">5.1. 基本</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>ip</td><td>ネットワーク確認</td><td>ip address show</td></tr>
+<tr><td>ping</td><td>疎通確認</td><td>ping ai.chibatech.ac.jp</td></tr>
+<tr><td>netstat</td><td>接続確認</td><td>netstat -tuln</td></tr>
+<tr><td>ss</td><td>接続確認</td><td>ss -tuln</td></tr>
+<tr><td>traceroute</td><td>経路確認</td><td>traceroute ai.chibatech.ac.jp</td></tr>
+</tbody>
+</table>
+<h3 id="r52">5.2. 名前解決</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>nslookup</td><td>DNS確認</td><td>nslookup ai.chibatech.ac.jp</td></tr>
+<tr><td>dig</td><td>詳細DNS</td><td>dig ai.chibatech.ac.jp</td></tr>
+<tr><td>host</td><td>簡易DNS</td><td>host ai.chibatech.ac.jp</td></tr>
+</tbody>
+</table>
+<h3 id="r53">5.3. リモート接続</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>ssh</td><td>リモート接続</td><td>ssh user@host</td></tr>
+<tr><td>ssh-keygen</td><td>鍵生成</td><td>ssh-keygen</td></tr>
+</tbody>
+</table>
+
+<h2 id="r6">6. Web通信</h2>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>curl</td><td>HTTP通信</td><td>curl -I https://example.com</td></tr>
+<tr><td>wget</td><td>ダウンロード</td><td>wget URL</td></tr>
+</tbody>
+</table>
+
+<h2 id="r7">7. マニュアル</h2>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>man</td><td>マニュアル表示</td><td>man ls</td></tr>
+</tbody>
+</table>
+
+<h2 id="r8">8. Alpine Linux</h2>
+<h3 id="r81">8.1. パッケージ管理</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>オプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>apk</td><td>Alpineのパッケージ管理ツール</td><td>add, del, update, upgrade</td><td>apk add nginx</td></tr>
+<tr><td>apk add</td><td>パッケージのインストール</td><td>--no-cache キャッシュ無効</td><td>apk add --no-cache curl</td></tr>
+<tr><td>apk del</td><td>パッケージの削除</td><td>なし</td><td>apk del nginx</td></tr>
+<tr><td>apk update</td><td>パッケージリスト更新</td><td>なし</td><td>apk update</td></tr>
+<tr><td>apk upgrade</td><td>インストール済みパッケージ更新</td><td>なし</td><td>apk upgrade</td></tr>
+</tbody>
+</table>
+<h3 id="r82">8.2. サービス管理（OpenRC）</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>オプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>rc-service</td><td>サービスの開始・停止・状態確認</td><td>start, stop, restart, status</td><td>rc-service nginx start</td></tr>
+<tr><td>rc-update</td><td>自動起動の設定</td><td>add, del</td><td>rc-update add nginx default</td></tr>
+<tr><td>openrc</td><td>サービス管理フレームワーク</td><td>なし</td><td>openrc</td></tr>
+</tbody>
+</table>
+<h3 id="r83">8.3. 初期セットアップ</h3>
+<table>
+<thead><tr><th>コマンド名</th><th>説明</th><th>オプション</th><th>実行例</th></tr></thead>
+<tbody>
+<tr><td>setup-alpine</td><td>Alpineの初期セットアップ（対話形式）</td><td>なし</td><td>setup-alpine</td></tr>
+<tr><td>setup-interfaces</td><td>ネットワーク設定</td><td>なし</td><td>setup-interfaces</td></tr>
+<tr><td>setup-hostname</td><td>ホスト名設定</td><td>なし</td><td>setup-hostname</td></tr>
+<tr><td>setup-sshd</td><td>SSHサーバ設定</td><td>なし</td><td>setup-sshd</td></tr>
+<tr><td>setup-timezone</td><td>タイムゾーン設定</td><td>なし</td><td>setup-timezone</td></tr>
+<tr><td>setup-keymap</td><td>キーボード設定</td><td>なし</td><td>setup-keymap</td></tr>
+</tbody>
+</table>
+
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('books-ta')">← TA 推薦図書</a>
+  <a onclick="navigate('ref-vi-cmd')">vi コマンド →</a>
+</div>`
   },
 
   'ref-vi-cmd': {
