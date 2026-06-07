@@ -6273,8 +6273,37 @@ dev# kubectl delete -f namespace.yaml</pre></div>
 
   'books-ta': {
     title: 'TA 推薦図書',
-    toc: [{ level: 1, label: 'TA 推薦図書', anchor: 'top' }],
-    content: `<h1 id="top">TA 推薦図書</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    toc: [
+      { level: 1, label: 'TA 推薦図書', anchor: 'top' },
+      { level: 2, label: 'Linux・ネットワーク', anchor: 'books-linux' },
+      { level: 2, label: 'Docker・Kubernetes', anchor: 'books-k8s' },
+    ],
+    content: `<h1 id="top">TA 推薦図書</h1>
+<p>　普段から Kubernetes を利用している TA の井上さんから、次の書籍の推薦がありました。 基本から応用まで幅広くカバーしていますので、授業の内容を超えて学習を取り組みたい方はぜひ参考にしてみて下さい。</p>
+
+<h2 id="books-linux">Linux・ネットワーク</h2>
+<ul>
+<li><a href="https://www.hanmoto.com/bd/isbn/9784814400218" target="_blank">入門 モダンLinux オンプレミスからクラウドまで、幅広い知識を会得する</a></li>
+<li><a href="https://www.hanmoto.com/bd/isbn/9784296205493" target="_blank">動かしながらゼロから学ぶLinuxカーネルの教科書　第2版</a></li>
+<li><a href="https://www.hanmoto.com/bd/isbn/9784798192123" target="_blank">実務で役立つ ログの教科書 基礎知識から収集方法・分析手法・トラブルシューティング・パフォーマンス最適化・機械学習での活用まで</a></li>
+<li><a href="https://www.hanmoto.com/bd/isbn/9784296208692" target="_blank">上級ネットワーク技術者になる本 ゼロから分かる動的経路制御</a></li>
+<li><a href="https://www.hanmoto.com/bd/isbn/9784873118642" target="_blank">入門監視 モダンなモニタリングのためのデザインパターン</a></li>
+</ul>
+
+<h2 id="books-k8s">Docker・Kubernetes</h2>
+<ul>
+<li><a href="https://www.hanmoto.com/bd/isbn/9784798071503" target="_blank">開発系エンジニアのためのDocker絵とき入門</a></li>
+<li><a href="https://www.hanmoto.com/bd/isbn/9784798183961" target="_blank">つくって、壊して、直して学ぶ Kubernetes入門</a></li>
+<li><a href="https://www.hanmoto.com/bd/isbn/9784839972745" target="_blank">仕組みと使い方がわかる Docker&amp;Kubernetesのきほんのきほん</a></li>
+<li><a href="https://www.hanmoto.com/bd/isbn/9784798182780" target="_blank">リスクから学ぶ Kubernetesコンテナセキュリティ コンテナ開発者がおさえておくべき基礎知識</a></li>
+<li><a href="https://www.hanmoto.com/bd/isbn/9784297148997" target="_blank">Docker &amp; Kubernetesネットワークのしくみ　クラウドネイティブに求められる情報通信の知識</a></li>
+<li><a href="https://www.hanmoto.com/bd/isbn/9784295016403" target="_blank">コンテナセキュリティ　コンテナ化されたアプリケーションを保護する要素技術</a></li>
+</ul>
+
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch7-a1-sql')">← A7.1. SQL リファレンス</a>
+  <a onclick="navigate('ref-linux-cmd')">Linux コマンド（Alpine版） →</a>
+</div>`
   },
 
   'ref-linux-cmd': {
