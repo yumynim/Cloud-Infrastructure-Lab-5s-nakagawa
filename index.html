@@ -5808,8 +5808,8 @@ nameserver 172.2_.__.1</pre></div>
 
 <h4>(2) 作業ディレクトリの作成</h4>
 <p>　次に、MinIO 用作業ディレクトリ /root/docker/minio を作成し、カレントディレクトリを作成したディレクトリに変更する。</p>
-<div class="cmd"><pre>dev# mkdir -p /root/docker/minio　　※ `/root/docker/minio`ディレクトリの作成
-dev# cd /root/docker/minio　　　　　 ※ カレントワーキングディレクトリを`/root/docker/minio`に移動</pre></div>
+<div class="cmd"><pre>dev# mkdir -p /root/docker/minio　　※ /root/docker/minio ディレクトリの作成
+dev# cd /root/docker/minio　　　　　 ※ カレントワーキングディレクトリを /root/docker/minio に移動</pre></div>
 
 <h4>(3) ボリュームの事前作成</h4>
 <p>　MinIO のデータ保存先として Docker ボリュームを作成する。 Docker ボリュームを利用することで、コンテナを削除してもデータを保持できる。 具体的には、docker volume create により minio-data という名前の永続ボリュームを作成する。</p>
