@@ -4715,9 +4715,251 @@ OR) ネットマスク（論理反転）   0.  0.  0. 15     00000000.00000000.0
   },
 
   'ch5-lan2': {
-    title: '5. LANの設計2',
-    toc: [{ level: 1, label: '5. LANの設計2', anchor: 'top' }],
-    content: `<h1 id="top">5. LANの設計2</h1><p class="meta">（コンテンツを貼り付けてください）</p>`
+    title: '第5章 LANの設計2',
+    toc: [
+      { level: 1, label: '5.1. はじめに', anchor: 's51' },
+      { level: 2, label: '5.1.1. 概要', anchor: 's511' },
+      { level: 2, label: '5.1.2. 前提となる知識・スキル', anchor: 's512' },
+      { level: 2, label: '5.1.3. 到達目標', anchor: 's513' },
+      { level: 2, label: '5.1.4. 第5章の操作対象', anchor: 's514' },
+      { level: 1, label: '5.2 DNSの役割', anchor: 's52' },
+      { level: 2, label: '5.2.1 ホストの名前解決', anchor: 's521' },
+      { level: 2, label: '5.2.2 名前解決の仕組み', anchor: 's522' },
+      { level: 2, label: '5.2.3 名前解決ルールの共通化', anchor: 's523' },
+      { level: 2, label: '5.2.4 ゾーン名とパス名の類似性', anchor: 's524' },
+      { level: 2, label: '5.2.5 DNSの名前空間', anchor: 's525' },
+      { level: 2, label: '5.2.6 DNSサーバの種類', anchor: 's526' },
+      { level: 1, label: '5.3. ハンズオン1：hostsの設定', anchor: 's53' },
+      { level: 1, label: '5.4. 総合演習', anchor: 's54' },
+      { level: 2, label: '5.4.1. hostsの設定2', anchor: 's541' },
+      { level: 2, label: '5.4.2. ホストdevの設定', anchor: 's542' },
+    ],
+    content: `
+<h1 id="top">第5章　LANの設計2</h1>
+<p class="meta" style="font-weight:600">名前解決（DNS）</p>
+<p class="meta">公開日： 2026年5月16日（土）<br>開講日： 2026年5月18日（月）<br>修正日： 2026年5月23日（土）</p>
+<ul><li>ロードバランサのホスト名「lb」が一部「ld」となっていたので、正しい記述に修正しました。</li></ul>
+
+<h2 id="s51">5.1. はじめに</h2>
+<h3 id="s511">5.1.1. 概要</h3>
+<p>　この章では、DNS の基本的な仕組みを学ぶとともに、名前解決の基本となる静的な名前解決データベースである /etc/hosts の設定方法を学ぶ。 そして、第4章で構築したクラスタ用管理 LAN 内で、お互いに名前を用いた通信ができることを確認する。</p>
+
+<h3 id="s512">5.1.2. 前提となる知識・スキル</h3>
+<ul>
+<li>IP アドレス、ホスト名、FQDN の基本を理解していること。</li>
+<li>Linux の基本操作と ping コマンドの使い方を理解していること。</li>
+<li>設定ファイルをテキストエディタで編集し、保存できること。</li>
+</ul>
+
+<h3 id="s513">5.1.3. 到達目標</h3>
+<ol>
+<li>DNS の役割と仕組みについて理解できる。</li>
+<li>hostsに必要なレコードを追加し、ホスト間で通信できる。</li>
+</ol>
+
+<h3 id="s514">5.1.4. 第5章の操作対象</h3>
+<p>　第5章では、DNSの仕組みを学ぶと共に、以下の角括弧で括られた6つの仮想マシンの名前解決データベースの設定を行う。</p>
+<p class="fig-caption">【演習環境の構成（Alpine Linux・Docker・K3s）】</p>
+<div class="cmd"><pre>ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            │
+            │　【Web アプリケーション用クラウド環境（開発・テスト用）】
+            ├─ [Alpine Linux（alpine-k3s, core:2, ram:4G, hdd:20G）]　　※ dev.s____.enshu.aicit.jp
+            │    ├─ Docker
+            │    └─ K3s（Kubernetes + containerd）
+            │
+            │　【Web アプリケーション用クラウド環境（公開用クラスタ）】
+            ├─ [Alpine Linux（k3s-lb, core:1, ram:1G, hdd:8G）]　　　　 ※ lb.s____.enshu.aicit.jp
+            │    └─ HAProxy
+            ├─ [Alpine Linux（k3s-server, core:1, ram:2G, hdd:16G）]　　※ sv.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            ├─ [Alpine Linux（k3s-worker1, core:1, ram:1G, hdd:8G）]　　※ wk1.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            ├─ [Alpine Linux（k3s-worker2, core:1, ram:1G, hdd:8G）]　　※ wk2.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            └─ [Alpine Linux（k3s-worker3, core:1, ram:1G, hdd:8G）]　　※ wk3.s____.enshu.aicit.jp
+                 └─ Docker, K3s（Kubernetes + containerd）</pre></div>
+
+<h2 id="s52">5.2 DNSの役割</h2>
+<p>　DNS は Domain Name System の略であり、名前解決に関する分散型・階層型データベースを管理・運用する仕組みである。 この節ではこの DNS の仕組みについて説明する。</p>
+
+<h3 id="s521">5.2.1 ホストの名前解決</h3>
+<p>　インターネットにおいて名前解決と言った場合、一般的に世界でユニークなIPアドレスと完全修飾ドメイン名であるFQDN（Fully Qualified Domain Name）を相互に変換することを指す。 この時、FQDNからIPアドレスを調べることを「正引き名前解決」と呼び、IPアドレスからFQDNを調べることを「逆引き名前解決」と呼ぶ。</p>
+<p>　例として、FQDNをns1.enshu.aicit.jpとし、 IPアドレスを172.30.1.1とした時の名前解決の関係を図5.2.1に示す。</p>
+<p class="fig-caption">【図5.2.1. FQDN、IPアドレスの名前解決の関係】</p>
+<div class="fig-img"><img src="images/ch5-fig1.png" alt="図5.2.1 FQDN、IPアドレスの名前解決の関係" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5-fig1.png</div></div>
+<p>　また、FQDN、ホスト名、ドメイン名の関係は図5.2.2のように表せる。</p>
+<p class="fig-caption">【図5.2.2. FQDN、ホスト名、ドメイン名の関係】</p>
+<div class="fig-img"><img src="images/ch5-fig2.png" alt="図5.2.2 FQDN、ホスト名、ドメイン名の関係" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5-fig2.png</div></div>
+
+<h3 id="s522">5.2.2 名前解決の仕組み</h3>
+<p>　アプリケーションプログラムの名前解決では、まずローカルの /etc/hosts を参照し、見つからない場合にスタブリゾルバがフルリゾルバへ問い合わせる。 この様子を図5.2.3に示す。また、図の解説を表5.2.1に示す。</p>
+<p class="fig-caption">【図5.2.3. Linux におけるホスト名前解決の仕組み】</p>
+<div class="fig-img"><img src="images/ch5-fig3.png" alt="図5.2.3 Linuxにおけるホスト名前解決の仕組み" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5-fig3.png</div></div>
+<p class="fig-caption">【表5.2.1. 名前解決の手順】</p>
+<table>
+<thead><tr><th>手順</th><th>処理主体</th><th>処理内容</th></tr></thead>
+<tbody>
+<tr><td>①</td><td>アプリケーションプログラム → 名前解決処理</td><td>アプリケーションプログラムがホスト名の名前解決を要求する</td></tr>
+<tr><td>②</td><td>名前解決処理 → hosts</td><td>まずローカルの /etc/hosts を参照する</td></tr>
+<tr><td>③</td><td>hosts → 名前解決処理</td><td>該当エントリがあればIPアドレスを返す（ここで解決完了）</td></tr>
+<tr><td>④</td><td>名前解決処理 → フルリゾルバ</td><td>hostsで解決できない場合、DNSサーバへ問い合わせる</td></tr>
+<tr><td>⑤</td><td>フルリゾルバ → 権威DNSサーバ</td><td>フルリゾルバが権威サーバへ問い合わせる</td></tr>
+<tr><td>⑥</td><td>権威DNSサーバ → フルリゾルバ</td><td>DNSレコード（A/AAAA/CNAMEなど）を返す</td></tr>
+<tr><td>⑦</td><td>フルリゾルバ → 名前解決処理</td><td>フルリゾルバが結果を返す（キャッシュされる場合あり）</td></tr>
+<tr><td>⑧</td><td>名前解決処理 → アプリケーションプログラム</td><td>最終的なIPアドレスをアプリケーションプログラムに返す</td></tr>
+</tbody>
+</table>
+<p>　この図に示されているように、アプリケーションプログラムが名前解決をする際、「hostsファイル（以下、hosts）」「スタブリゾルバ」「フルサービスリゾルバ（フルリゾルバ）」「権威サーバ」の4つの仕組みを必要とする。 ここで、「hosts」はテキストファイルに静的に名前解決情報を記載したローカルデータベースである。 また、「スタブリゾルバ」は複数のプロセスの問い合わせ窓口、「フルリゾルバ」は複数のホストの問い合わせ窓口として使用され、外部データベースの情報を取得する。「権威サーバ」は外部データベースとして公式に名前解決情報を提供する。 これら4つが主体となり、世界規模で名前解決を行う。</p>
+<p>　これらの特徴を表5.2.2に示す。</p>
+<p class="fig-caption">【表5.2.2. 名前解決の主体】</p>
+<table>
+<thead><tr><th>主体</th><th>主な役割</th><th>動作内容</th><th>キャッシュ</th><th>代表的な配置場所</th><th>身近な例え</th></tr></thead>
+<tbody>
+<tr><td>hosts</td><td>ローカルデータベース</td><td>ファイルに記載されたレコードを確認して名前解決を行う</td><td>なし</td><td>ホスト上のファイル<br>/etc/hosts</td><td>手元のメモ</td></tr>
+<tr><td>スタブリゾルバ</td><td>問い合わせ窓口</td><td>アプリケーションプログラムからの名前解決要求を受け取り、hosts参照やキャッシュ確認を行い、必要に応じてフルリゾルバへ問い合わせる</td><td>あり</td><td>ホスト上のOS内</td><td>受付係</td></tr>
+<tr><td>フルリゾルバ</td><td>名前解決の実行主体（再帰解決）</td><td>ルートDNS→TLD→権威サーバへ段階的に問い合わせて最終的なIPアドレスを取得する</td><td>あり</td><td>企業内DNS<br>ISP内DNSサーバ<br>Public DNS</td><td>調査員</td></tr>
+<tr><td>権威サーバ</td><td>正式な名前情報の提供元<br>外部データベース</td><td>ドメインのDNSレコードを保持し、問い合わせに対して最終的な正解を返す</td><td>基本なし</td><td>各ドメインの管理者が運用するDNSサーバ</td><td>公式の情報源</td></tr>
+</tbody>
+</table>
+<p>　ところで、Alpine Linux は軽量なmuslライブラリを利用しているため、高機能なglibcライブラリを利用しているLinux環境と比べて名前解決の処理が簡素となる。 具体的な違いとしては、資料A5.1に示した/etc/nsswitch.confの設定による名前解決の優先順位変更などがあげられる。</p>
+
+<h3 id="s523">5.2.3 名前解決ルールの共通化</h3>
+<p>　アプリケーションプログラムはスタブリゾルバへ正引き・逆引きの問い合わせを行うことで、FQDNとIPアドレスの関係を調べることができる。 ここで、問い合わせ対象となるDNSの名前は権威サーバ上でゾーンと呼ばれる単位で管理されている。 ゾーンはピリオド単位で区切ることができ、FQDNではサブドメイン単位、IPアドレスではオクテット単位で区切ることができる。 名前解決において、ドメイン名、IPアドレスは上位の管理領域から順に情報を調べていくが、この展開順序を矢印で指し示すと、図5.2.4, 5.2.5のように表現できる。</p>
+<p class="fig-caption">【図5.2.4. FQDNのゾーンの展開順序】</p>
+<div class="fig-img"><img src="images/ch5-fig4.png" alt="図5.2.4 FQDNのゾーンの展開順序" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5-fig4.png</div></div>
+<p class="fig-caption">【図5.2.5. IPアドレスのゾーン展開順序（順序変更前）】</p>
+<div class="fig-img"><img src="images/ch5-fig5.png" alt="図5.2.5 IPアドレスのゾーン展開順序（順序変更前）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5-fig5.png</div></div>
+<p>　これらの図を見ると、ドメイン名とIPアドレスの展開順序が逆になっていることがわかる。 そのため、一貫性を持つ同じ仕組みで名前解決を統一的に扱うためには、まずこの方向を揃える必要がある。</p>
+<p>　次に、IPアドレスの表記を左右反転して、ゾーンの展開順序をドメインと同じ方向に揃えると図5.2.6のように表現することができる。</p>
+<p class="fig-caption">【図5.2.6. IPアドレスのゾーン展開順序（ドメインと同じ順序に対応）】</p>
+<div class="fig-img"><img src="images/ch5-fig6.png" alt="図5.2.6 IPアドレスのゾーン展開順序（ドメインと同じ順序に対応）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5-fig6.png</div></div>
+<p>　今度は順序こそ揃ったものの、このままではIPアドレスそのものなのか、それとも逆転させたものなのか判別がつかない。</p>
+<p>　IPv4 の逆引きでは、このようにアドレスの並びを逆順にした名前を in-addr.arpa 配下で扱い、図5.2.7のように示すことで、対応するホスト名を返す。 この表記で示された逆引きレコードの情報は PTR レコードと呼ばれる。</p>
+<p class="fig-caption">【図5.2.7. IPアドレスのゾーン展開順序（in-addr.arpaの追加）】</p>
+<div class="fig-img"><img src="images/ch5-fig7.png" alt="図5.2.7 IPアドレスのゾーン展開順序（in-addr.arpaの追加）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5-fig7.png</div></div>
+<p>　最後に正引きと逆引きの名前空間を一緒にするためにお互いに最初に参照するためのルートゾーン「.」を加える。 このルートゾーンを加えて正引き・逆引きゾーンを連結した様子を図5.2.8に示す。</p>
+<p class="fig-caption">【図5.2.8. IPアドレスのゾーン展開順序（名前解決の共通の出発点の追加（ルートゾーンの追加））】</p>
+<div class="fig-img"><img src="images/ch5-fig8.png" alt="図5.2.8 IPアドレスのゾーン展開順序（ルートゾーンの追加）" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5-fig8.png</div></div>
+<p>　最終的なゾーン名は次の通りとなる。</p>
+<div class="cmd"><pre>正引きゾーン名： sv.s____.enshu.aicit.jp.
+逆引きゾーン名： 1.199.24.172.in-addr.arpa.</pre></div>
+<p>　ここで、実際に DNS サーバに登録されるレコード情報は表5.2.3のようになる。</p>
+<p class="fig-caption">【表5.2.3. DNSの名前解決におけるレコードタイプ】</p>
+<table>
+<thead><tr><th>レコードタイプ</th><th>名前</th><th>値</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>sv.s____.enshu.aicit.jp.</td><td>172.24.199.1</td></tr>
+<tr><td>PTR</td><td>1.199.24.172.in-addr.arpa.</td><td>sv.enshu.aicit.jp.</td></tr>
+</tbody>
+</table>
+
+<h3 id="s524">5.2.4 ゾーン名とパス名の類似性</h3>
+<p>　ゾーン名の表記とファイル管理におけるパス名の表記には類似性がある。</p>
+<p>　ルートゾーンを示す末端の「ピリオド」を加えたゾーン表記を「絶対ドメイン名」と呼び、末端の「ピリオド」を省略した表記を「相対ドメイン名」と呼ぶ。 相対ドメインでは、現在情報を参照しているドメインから見た相対的な表記となる。</p>
+<p>　これらの用語と関係性はファイル管理における「絶対パス」「相対パス」に対応する。</p>
+<p>　例えば、正引きゾーン名である絶対ドメイン名 ns1.s____.enshu.aicit.jp. は、ゾーン s____.enshu.aicit.jp. に所属するホスト ns1 を表す。 これをパスに置き換えて考えると、絶対パス /jp/aicit/enshu/s____/ns1 は、ディレクトリ /jp/aicit/enshu/s____ 内に保存されているファイル ns1 と解釈することができる。</p>
+<p>　同様にして、逆引きゾーン名 1.199.24.172.in-addr.arpa. は、ゾーン 199.24.172.in-addr.arpa. に所属するホスト 1 を表す。 パスの場合も同様に、絶対パス /arpa/in-addr/172/24/199/1 は、ディレクトリ /arpa/in-addr/172/24/199 内に保存されている 1 という名前のファイルと解釈することができる。</p>
+<p>　パスについて補足すると、1番目の「/」はルートディレクトリと呼ばれる実際に存在するディレクトリである。2番目以降の「/」は、ただの区切り記号である。 ゾーン情報も、1番目の「.」はルートゾーンと呼ばれる実際に存在するゾーンである。2番目以降の「.」は、やはりただの区切り記号である。</p>
+<p>　相対ドメイン名、相対パスともにルートの記号「.」「/」を取ったものを指す。</p>
+<p>　これらのことからわかるように、ファイル／ディレクトリの概念は DNS を理解する上で大きな助けになる。</p>
+<p>　ちなみに、FQDNは文脈によって異なる。 つまり、設定ファイルや説明によって絶対ドメイン名を指す場合と、ルートゾーンの記載を含めない場合の両方がある。 そのため、設定時やコマンド実行時はどちらを用いる必要があるのか注意すること。</p>
+
+<h3 id="s525">5.2.5 DNSの名前空間</h3>
+<p>　前述のように、名前解決はルートゾーンを頂点にして、正引きと逆引きを行う。 ここで、名前解決の扱う範囲、別の言葉で表すと、ピリオドで区切られて名前が一意に管理される論理的な範囲を「DNSの名前空間」と呼ぶ。 図5.2.9に演習にゆかりのあるゾーンを含めた名前空間の一例を示す。</p>
+<p class="fig-caption">【図5.2.9. 階層化されたゾーン情報の一例】</p>
+<div class="fig-img"><img src="images/ch5-fig9.png" alt="図5.2.9 階層化されたゾーン情報の一例" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="img-placeholder" style="display:none">画像: ch5-fig9.png</div></div>
+<p>　基本的に、一つのゾーンにつき、一つの権威サーバが情報を管理すると考えるとわかりやすい。 実際の運用では、障害対策のために一つのゾーン情報を複数のサーバで分散管理（セカンダリサーバの利用）したり、 効率化のために一つのDNSコンテンツサーバで複数のゾーンを管理することもある。</p>
+
+<h3 id="s526">5.2.6 DNSサーバの種類</h3>
+<p>　単にDNSサーバと言った場合は、問い合わせの処理内容によって二つの役割を持つ。 一つは自身が管理するドメイン情報を持つ「権威サーバ」（「DNSコンテンツサーバ」「権威DNS」とも呼ぶ）、そしてもう一つは、スタブリゾルバ（DNSクライアント）の要請で権威サーバ群に問い合わせを行う「フルサービスリゾルバ／フルリゾルバ」（「DNSキャッシュサーバ」「再帰DNS」とも呼ぶ）である。</p>
+<p>　フルリゾルバは権威サーバへ問い合わせた情報をキャッシュ（一時保存）することで、別のスタブリゾルバからの問い合わせを迅速に行うことができる。 この仕組みを利用することで、インターネット上の重複するDNSトラフィックを効果的に減らすことができ、その結果、名前解決プロセスの簡略化、通信の高速化を実現することができる。</p>
+<p>　なお、DNSサーバには様々な種類があるが、代表的なものを表5.2.4に示す。</p>
+<p class="fig-caption">【表5.2.4. 代表的なDNSサーバ】</p>
+<table>
+<thead><tr><th>ソフトウェア</th><th>種別</th><th>主な用途</th><th>強み</th><th>弱み</th></tr></thead>
+<tbody>
+<tr><td>BIND9</td><td>権威サーバ<br>フルリゾルバ</td><td>DNS全般</td><td>DNS標準実装に近い<br>情報量が圧倒的に多い</td><td>設定がやや複雑</td></tr>
+<tr><td>Unbound</td><td>フルリゾルバ</td><td>再帰DNS</td><td>設定がシンプルで高速<br>DNSSECが強い</td><td>権威機能を持たない</td></tr>
+<tr><td>PowerDNS Authoritative</td><td>権威サーバ</td><td>SaaS/Hosting向け</td><td>API・DB連携・自動化が強力</td><td>基礎学習としては抽象度が高い</td></tr>
+<tr><td>Knot DNS / Knot Resolver</td><td>権威サーバ<br>フルリゾルバ</td><td>ISP向け高性能DNS</td><td>超高性能、モダン設計<br>Anycast向き</td><td>初学者には少し難しい</td></tr>
+<tr><td>CoreDNS</td><td>フルリゾルバ寄り<br>（plugin型DNS）</td><td>Kubernetes内部DNS</td><td>K8s標準<br>設定が比較的わかりやすい</td><td>基礎学習としては抽象度が高い</td></tr>
+</tbody>
+</table>
+<p>　本演習では、このうち実績と情報量に強みを持つものとして、表5.2.5に示すように、権威サーバに「BIND9」、フルリゾルバに「Unbound」を利用する。 Kubernetesには、標準的に利用されている「CoreDNS」を利用する。</p>
+<p class="fig-caption">【表5.2.5. 本演習で利用するDNSサーバ】</p>
+<table>
+<thead><tr><th>役割</th><th>サーバソフトウェア</th></tr></thead>
+<tbody>
+<tr><td>権威サーバ</td><td>BIND9</td></tr>
+<tr><td>フルリゾルバ</td><td>Unbound</td></tr>
+<tr><td>Kubernetes 用内部 DNS</td><td>CoreDNS</td></tr>
+</tbody>
+</table>
+
+<h2 id="s53">5.3. ハンズオン1：hostsの設定</h2>
+<p>　hostsファイルはWindows, macOS, Linuxに関わらずホストに備わる静的な名前解決データベースである。 このファイルはテキスト形式で記述されており、IPアドレス、ホスト名、FQDNの3つの情報の対応関係を1行で記述することで、ホスト内の名前解決に利用することができる。 この1行で書かれたデータをレコードと呼ぶ。 このレコードの記述ルールとしては、まず、対応する IP アドレスとホスト名を記述し、必要に応じて FQDN や別名を続けて書く必要がある。 通常は、先頭に正規名を置く。</p>
+<p>　ここで、ホストsvのレコードを追加した一例をリスト5.3.1に示す。</p>
+<p class="fig-caption">【リスト5.3.1. hostsのレコード記述例（ホスト：sv）】</p>
+<div class="cmd"><pre>172.2_.__.11    sv.s____.enshu.aicit.jp sv　　※下線部は自分の情報に置き換える</pre></div>
+<p>　ところで、本演習で行った Alpine Linux のインストールでは、自身で割り当てたIPアドレスに関するレコードがhostsファイルに記述されていないため、設定が不完全になっている。 そのため、テキストエディタを利用して、リスト5.3.2のようにhostsファイルを完成させる必要がある。</p>
+<p class="fig-caption">【リスト5.3.2. 静的名前解決データベースhostsの設定例（パス：/etc/hosts, ホスト：sv）】</p>
+<div class="cmd"><pre>172.2_.__.11    sv.s____.enshu.aicit.jp sv　　※下線部は自分の情報に置き換える
+127.0.0.1       localhost.localdomain localhost
+::1             localhost.localdomain localhost</pre></div>
+<p>　この変更が終われば、サービスの再起動なしにローカルで名前解決ができるようになる。 実際に、pingコマンドを利用して、IPアドレス、ホスト名、FQDNのどの情報を用いても通信確認することができる。</p>
+<p class="fig-caption">【通信確認】</p>
+<div class="cmd"><pre>$ ping 172.2_.__.11　　　　　　　　※ IPアドレスによる通信確認
+$ ping sv　　　　　　　　　　　　　 ※ ホスト名による通信確認
+$ ping sv.s____.enshu.aicit.jp　　※ FQDNによる通信確認</pre></div>
+<p>　通常、hosts にはローカルホストと自ホストの名前解決情報のみ記載すれば良い。 しかし、権威DNSサーバがない場合は他のホストの情報も追加することで、登録したホストの名前解決もできるようになる。 この場合、登録するホストの一覧が同じであれば、hostsの設定は対象となる全てのホストで設定となる。</p>
+<p>　リスト5.3.3に、プライベートクラウド環境の管理LANに共通するhostsの設定例を示す。</p>
+<p class="fig-caption">【リスト5.3.3. LAN内共通のhosts設定例（パス：/etc/hosts）】</p>
+<div class="cmd"><pre>172.2_.__.1     lb lb.s____.enshu.aicit.jp　　※下線部は自分の情報に置き換える（以下同様）
+172.2_.__.11    sv sv.s____.enshu.aicit.jp
+172.2_.__.21    wk1 wk1.s____.enshu.aicit.jp
+172.2_.__.22    wk2 wk2.s____.enshu.aicit.jp
+172.2_.__.23    wk3 wk3.s____.enshu.aicit.jp
+127.0.0.1       localhost localhost.localdomain
+::1             localhost localhost.localdomain</pre></div>
+<p>　この登録が終了した段階で、svを登録した時と同じように、他のホストにもpingコマンドで疎通確認が行えるようになる。</p>
+
+<h2 id="s54">5.4. 総合演習</h2>
+<p>　ハンズオン1では、sv に対して静的名前解決データベースの設定を行った。 総合演習ではすべてのホストについて同様の設定を行うとともに、開発用仮想マシンをプライベートクラウド環境に組み入れる。</p>
+
+<h3 id="s541">5.4.1. hostsの設定2</h3>
+<p>　(1) wk1, wk2（必要ならwk3も）もlb, svと同様にhostsの設定をせよ。</p>
+<p>　(2) お互いにIP、ホスト名、FQDNを利用して通信ができることを確認せよ。</p>
+
+<h3 id="s542">5.4.2. ホストdevの設定</h3>
+<p>　(1) 第1章で作成した開発環境用ホストdevのネットワーク情報を表5.4.1, 5.4.2で指定された内容に変更せよ。</p>
+<p>　　　※ インストール後のFQDNの変更は「/etc/hostname」で行う（変更後は要再起動）</p>
+<p>　(2) 他のホストのhostsにdevを追加すると共に、ホストdevのhostsも他のホストと通信できるよう全ホストのレコードを追加せよ。</p>
+<p>　(3) お互いにIP、ホスト名、FQDNを利用して通信ができることを確認せよ。</p>
+<p class="fig-caption">【表5.4.1. alpine-k3s の基本仕様】</p>
+<table>
+<thead><tr><th>用途</th><th>仮想マシン名</th><th>IPアドレス</th><th>ホスト名</th><th>FQDN</th></tr></thead>
+<tbody>
+<tr><td>開発用VM</td><td>alpine-k3s</td><td>eth0: 172.2_.__.51<br>eth1: dhcp</td><td>dev</td><td>dev.s____.enshu.aicit.jp</td></tr>
+</tbody>
+</table>
+<p>　　※ 下線部は自分のLANの情報に置き換える</p>
+<p class="fig-caption">【表5.4.2. alpine-k3s のネットワークアダプタの設定】</p>
+<table>
+<thead><tr><th>アダプター名</th><th>有効化</th><th>割り当て</th><th>アダプタータイプ</th></tr></thead>
+<tbody>
+<tr><td>アダプター1</td><td>ON（デフォルト）</td><td>ホストオンリーアダプター（変更）</td><td>準仮想化ネットワーク virtio-net（変更）</td></tr>
+<tr><td>アダプター2</td><td>ON（変更）</td><td>NAT（変更）</td><td>準仮想化ネットワーク virtio-net（変更）</td></tr>
+<tr><td>アダプター3</td><td>OFF（デフォルト）</td><td>—</td><td>—</td></tr>
+<tr><td>アダプター4</td><td>OFF（デフォルト）</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+
+<div class="page-nav">
+  <a onclick="navigate('ch4-a1-ipv4')">← A4.1. IPv4 アドレッシング</a>
+  <a onclick="navigate('ch5-lan2-2')">5. LANの設計2(2) →</a>
+</div>`
   },
 };
 
