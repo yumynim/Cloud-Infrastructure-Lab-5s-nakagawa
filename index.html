@@ -5639,6 +5639,9 @@ function navigate(pageId) {
   // Scroll to top
   document.getElementById('main').scrollTop = 0;
   window.scrollTo(0, 0);
+
+  // Syntax highlight
+  requestAnimationFrame(applySyntaxHighlight);
 }
 
 function scrollToAnchor(anchor) {
@@ -5763,12 +5766,6 @@ function applySyntaxHighlight() {
   });
 }
 
-// navigate後にハイライトを適用（元のnavigate関数を拡張）
-const _origNavigate = navigate;
-function navigate(pageId) {
-  _origNavigate(pageId);
-  requestAnimationFrame(applySyntaxHighlight);
-}
 
 // =============================================
 // SEARCH
