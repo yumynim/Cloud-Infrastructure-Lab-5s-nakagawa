@@ -684,6 +684,7 @@
     <span class="nav-chapter-label">第7章</span>
     <a class="nav-item" onclick="navigate('ch7-cloud2')">7. クラウドサービスの利用法2</a>
     <a class="nav-item" onclick="navigate('ch7-a1-sql')">A7.1. SQL リファレンス</a>
+    <a class="nav-item" onclick="navigate('ch7-a2-trouble')">A7.2. トラブル対応</a>
 
     <span class="nav-chapter-label">関連書籍</span>
     <a class="nav-item" onclick="navigate('books-ta')">TA 推薦図書</a>
@@ -7595,7 +7596,163 @@ name = VALUES(name);</pre></div>
 <div class="cmd"><pre>INSERT OR REPLACE INTO users
 (id, name)
 VALUES
-(1, '田中');</pre></div>`
+(1, '田中');</pre></div>
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch7-cloud2')">← 7. クラウドサービスの利用法2</a>
+  <a onclick="navigate('ch7-a2-trouble')">A7.2. トラブル対応 →</a>
+</div>`
+  },
+
+  'ch7-a2-trouble': {
+    title: 'A7.2. トラブル対応',
+    toc: [
+      { level: 1, label: 'A7.2. トラブル対応', anchor: 'top' },
+      { level: 2, label: '(1) イメージのダウンロード失敗', anchor: 's1' },
+      { level: 3, label: '【検証方法（Alpine Linux）】', anchor: 's1-verify' },
+      { level: 3, label: '【削除方法（Alpine Linux）】', anchor: 's1-remove' },
+      { level: 3, label: '補足', anchor: 's1-note' },
+      { level: 2, label: 'iptables / nftables ルールの初期化', anchor: 's2' },
+    ],
+    content: `<h1 id="top">A7.2. トラブル対応</h1>
+
+<h2 id="s1">(1) イメージのダウンロード失敗</h2>
+<p>　さまざまな原因が考えられるが、対応した中の顕著なトラブルの一つにロードバランサ lb の不良がある。 具体的には、lb に Docker, K3s をインストールしているケースである。</p>
+<p>　これらのソフトウェアは NAT 環境を作るため、内部的なルータの役割も担っている。 そのため、lb のルータ設定（iptables/nftables、ルーティングテーブル等）に大きく干渉し、クラスタノードからレジストリへの通信が正常に行えなくなる場合がある。</p>
+<p>　他の要因も含めて正しい状態に戻すには、一から作り直す方法もあるが、これらのソフトウェアを削除した上で一連の手順を踏むことで、ルータの機能を取り戻すことができる。</p>
+<p>　以下に、具体的な検証方法とアンインストール手順を示す。</p>
+
+<h3 id="s1-verify">【検証方法（Alpine Linux）】</h3>
+<h4>Docker がインストールされている場合</h4>
+<p>　Docker パッケージおよびサービスの有無を確認する。</p>
+<div class="cmd"><pre>apk info | grep docker</pre></div>
+<div class="cmd"><pre>rc-service docker status</pre></div>
+<div class="cmd"><pre>docker version</pre></div>
+<p>　Docker が動作している場合、<code>docker0</code> ブリッジインタフェースが作成されていることが多い。</p>
+<div class="cmd"><pre>ip addr show docker0</pre></div>
+<p>　また、Docker が作成した NAT ルールを確認する。</p>
+<div class="cmd"><pre>iptables -t nat -L -n</pre></div>
+<p>　または</p>
+<div class="cmd"><pre>nft list ruleset</pre></div>
+
+<h4>K3s がインストールされている場合</h4>
+<p>　K3s サービスの状態を確認する。</p>
+<div class="cmd"><pre>rc-service k3s status</pre></div>
+<p>　インストール有無を確認する。</p>
+<div class="cmd"><pre>which k3s</pre></div>
+<div class="cmd"><pre>k3s --version</pre></div>
+<p>　K3s が動作している場合、CNI 用のネットワークインタフェースが作成されていることがある。</p>
+<div class="cmd"><pre>ip link show | grep cni</pre></div>
+<div class="cmd"><pre>ip route</pre></div>
+<p>　また、K3s が生成した iptables ルールを確認する。</p>
+<div class="cmd"><pre>iptables-save | grep KUBE</pre></div>
+
+<h3 id="s1-remove">【削除方法（Alpine Linux）】</h3>
+<h4>Docker をアンインストールする方法</h4>
+<ol>
+<li>Docker サービスを停止する。
+<div class="cmd"><pre>rc-service docker stop</pre></div></li>
+<li>自動起動設定を削除する。
+<div class="cmd"><pre>rc-update del docker default</pre></div></li>
+<li>Docker パッケージを削除する。
+<div class="cmd"><pre>apk del docker docker-cli</pre></div></li>
+<li>Docker 関連データを削除する（必要に応じて）。
+<div class="cmd"><pre>rm -rf /var/lib/docker</pre></div></li>
+<li>サーバを再起動する。
+<div class="cmd"><pre>reboot</pre></div></li>
+</ol>
+
+<h4>K3s をアンインストールする方法</h4>
+<p>K3s 標準のアンインストールスクリプトを実行する。</p>
+<div class="cmd"><pre>/usr/local/bin/k3s-uninstall.sh
+/usr/local/bin/k3s-agent-uninstall.sh</pre></div>
+<p>　スクリプトが存在しない場合は、サービス停止後に関連ファイルを削除する。</p>
+<div class="cmd"><pre>rc-service k3s stop</pre></div>
+<div class="cmd"><pre>rm -f /usr/local/bin/k3s</pre></div>
+<div class="cmd"><pre>rm -rf /etc/rancher
+rm -rf /var/lib/rancher
+rm -rf /var/lib/kubelet
+rm -rf /var/lib/cni</pre></div>
+<p>　作成されたネットワークインタフェースが残存していないことを確認する。</p>
+<div class="cmd"><pre>ip link show</pre></div>
+<p>最後にサーバを再起動する。</p>
+<div class="cmd"><pre>reboot</pre></div>
+
+<h3 id="s1-note">補足</h3>
+<p>　Docker や K3s を削除後も通信異常が継続する場合は、ルーティングテーブルや NAT 設定が残存している可能性があるため、以下を確認する。</p>
+<div class="cmd"><pre>ip route</pre></div>
+<div class="cmd"><pre>iptables -t nat -L -n</pre></div>
+<div class="cmd"><pre>nft list ruleset</pre></div>
+<p>　不要な設定が残っている場合は、サーバ再起動後に再度確認し、ロードバランサ本来のネットワーク設定へ復旧する。</p>
+<p>再起動しても iptables に設定が残る場合は、以下の補足として移行の取り組みを行う。</p>
+
+<h2 id="s2">iptables / nftables ルールの初期化</h2>
+<p>　Docker や K3s をアンインストールした後でも、iptables や nftables のルールが残存し、通信障害の原因となる場合がある。</p>
+<p>　まずは、現在のルールを確認する。</p>
+<div class="cmd"><pre>iptables -L -n -v</pre></div>
+<div class="cmd"><pre>iptables -t nat -L -n -v</pre></div>
+<div class="cmd"><pre>nft list ruleset</pre></div>
+
+<h4>iptables を初期化する方法</h4>
+<p class="warn">⚠️ リモート接続中（SSH 等）の場合、管理アクセス用ルールまで削除すると接続が切断される可能性があるため、コンソール接続環境での実施を推奨する。</p>
+<p>　Filter テーブルを初期化する。</p>
+<div class="cmd"><pre>iptables -F
+iptables -X</pre></div>
+<p>　NAT テーブルを初期化する。</p>
+<div class="cmd"><pre>iptables -t nat -F
+iptables -t nat -X</pre></div>
+<p>　Mangle テーブルを初期化する。</p>
+<div class="cmd"><pre>iptables -t mangle -F
+iptables -t mangle -X</pre></div>
+<p>　Raw テーブルを初期化する。</p>
+<div class="cmd"><pre>iptables -t raw -F
+iptables -t raw -X</pre></div>
+<p>　ポリシーを ACCEPT に戻す。</p>
+<div class="cmd"><pre>iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT</pre></div>
+<p>　設定が消えたことを確認する。</p>
+<div class="cmd"><pre>iptables-save</pre></div>
+<p>出力例：</p>
+<div class="cmd"><pre>*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+COMMIT</pre></div>
+
+<h4>nftables を初期化する方法</h4>
+<p>　Alpine Linux では nftables が利用されている場合がある。</p>
+<p>　現在の設定を確認する。</p>
+<div class="cmd"><pre>nft list ruleset</pre></div>
+<p>　全ルールを削除する。</p>
+<div class="cmd"><pre>nft flush ruleset</pre></div>
+<p>　削除後の確認。</p>
+<div class="cmd"><pre>nft list ruleset</pre></div>
+<p>　何も表示されなければ初期化完了である。</p>
+
+<h4>iptables サービスの保存設定を削除する方法</h4>
+<p>　iptables の永続化設定が残っていると再起動後にルールが復元される。</p>
+<p>　設定ファイルを確認する。</p>
+<div class="cmd"><pre>ls -l /etc/iptables/</pre></div>
+<p>　設定ファイルを削除する。</p>
+<div class="cmd"><pre>rm -f /etc/iptables/rules-save</pre></div>
+<p>　環境によっては以下も確認する。</p>
+<div class="cmd"><pre>find /etc -name '*iptables*'</pre></div>
+
+<h4>再起動後の確認</h4>
+<p>　サーバを再起動する。</p>
+<div class="cmd"><pre>reboot</pre></div>
+<p>　再起動後に以下を確認する。</p>
+<div class="cmd"><pre>iptables -t nat -L -n</pre></div>
+<div class="cmd"><pre>nft list ruleset</pre></div>
+<p>　Docker 関連チェイン（<code>DOCKER</code>、<code>DOCKER-USER</code> 等）や Kubernetes 関連チェイン（<code>KUBE-*</code>、<code>CNI-*</code> 等）が存在しないことを確認する。</p>
+
+<h4>Docker/K3s 残存ルールの確認例</h4>
+<div class="cmd"><pre>iptables-save | egrep 'DOCKER|KUBE|CNI|FLANNEL'</pre></div>
+<p>　何も出力されなければ、Docker・K3s が作成した主要なネットワークルールは削除されている。</p>
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch7-a1-sql')">← A7.1. SQL リファレンス</a>
+  <a onclick="navigate('books-ta')">TA 推薦図書 →</a>
+</div>`
   },
 
   'books-ta': {
@@ -7628,7 +7785,7 @@ VALUES
 </ul>
 
 <div class="page-nav" style="justify-content:space-between;">
-  <a onclick="navigate('ch7-a1-sql')">← A7.1. SQL リファレンス</a>
+  <a onclick="navigate('ch7-a2-trouble')">← A7.2. トラブル対応</a>
   <a onclick="navigate('ref-linux-cmd')">Linux コマンド（Alpine版） →</a>
 </div>`
   },
