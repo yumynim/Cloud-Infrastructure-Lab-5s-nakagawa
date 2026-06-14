@@ -5978,20 +5978,28 @@ dev#</pre></div>
 dev# cd /root/k3s/chat-app/k3s</pre></div>
 
 <h3 id="s652">6.5.2. デプロイ</h3>
-<p>　本演習では、MinIO を構築するために 表 6.5.1 に示す 5 個の YAML 形式の定義ファイルを利用する。</p>
+<p>　Kubernetes では、コンテナを単体で起動するのではなく、複数の設定ファイル（YAML ファイル）を組み合わせてサービス全体を構築する。 そのため、各ファイルがどの役割を持っているかを理解することが重要である。</p>
+<p>　本演習では、MinIO を構築するために 表 6.5.1 に示す 5 個の YAML 形式の定義ファイルを利用する。 これらは、それぞれ異なる役割を担当しており、連携することで MinIO サービス全体を構成している。</p>
 <p class="fig-caption">【表6.5.1. ハンズオン 3 で作成する定義ファイル（ディレクトリ： /root/k3s/chat-app/k3s）】</p>
 <table>
 <thead><tr><th>No.</th><th>定義ファイル名</th><th>内容</th><th>Dockerとの比較</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>namespace.yaml</td><td>名前空間（管理グループ）の定義</td><td>対応なし</td></tr>
+<tr><td>1</td><td>namespace.yaml</td><td>名前空間（管理グループ）の定義</td><td>対応なし（Docker Compose には該当する設定あり）</td></tr>
 <tr><td>2</td><td>pvc.yaml</td><td>永続ボリューム要求の定義</td><td>永続ボリューム minio-data に相当</td></tr>
 <tr><td>3</td><td>secret.yaml</td><td>シークレットの定義</td><td>.env に相当</td></tr>
 <tr><td>4</td><td>minio-deploy.yaml</td><td>MinIO のデプロイ定義</td><td>docker run コマンドに相当</td></tr>
-<tr><td>5</td><td>service.yaml</td><td>MinIO のサービス定義</td><td>docker run の -p オプションに相当</td></tr>
+<tr><td>5</td><td>service.yaml</td><td>MinIO のサービス定義</td><td>docker run コマンド内の -p オプションに相当</td></tr>
 </tbody>
 </table>
+<p>　なお、各定義ファイルは、互いに連携して動作している。</p>
+<div class="cmd"><pre>Service　→　Deployment（Pod）　→　PVC（保存領域）
+Secret　→　Deployment</pre></div>
+<p>　ここで、Service が外部からのアクセスを受け取って Pod へ通信を転送し、Pod が PVC を利用してデータを保存する。 また、Deployment は Secret を参照して認証情報を取得する。 このように Kubernetes では、役割ごとにリソースを分離して管理することで、大規模システムでも柔軟に運用できる仕組みになっている。</p>
+<p>　以下、各定義ファイルの詳細とデプロイ方法について解説する。</p>
 
 <h4>(1) 名前空間の定義： namespace.yaml</h4>
+<p>　リスト 6.5.1 に示す namespace.yaml は、Kubernetes 上に「Namespace（名前空間）」を作成するための定義ファイルである。 Namespace は、Kubernetes クラスタ内部でリソースを整理するための「管理グループ」の役割を持つ。 例えば、Web アプリ用、監視用、学習用など、用途ごとに Kubernetes のリソースを分離して管理できる。</p>
+<p>　本演習では、chat-app という Namespace を作成し、その中に MinIO 関連の Pod や Service を配置する。 （Docker 単体には Namespace に相当する明確な仕組みは存在しないが、Docker Compose の「プロジェクト単位」に近い役割を持つ。）</p>
 <p class="fig-caption">【リスト 6.5.1. 名前空間の定義： /root/k3s/chat-app/k3s/namespace.yaml】</p>
 <div class="cmd"><pre>apiVersion: v1
 kind: Namespace
@@ -6007,11 +6015,24 @@ metadata:
 <tr><td>metadata.name</td><td>chat-app</td><td>作成される名前空間の名前。この名前空間の中にアプリやPodを配置。</td></tr>
 </tbody>
 </table>
-<div class="cmd"><pre>dev# kubectl apply -f namespace.yaml
-namespace/chat-app created
-dev# kubectl get namespace</pre></div>
+<p>　作成した YAML ファイルのデプロイと確認は次の手順で行う。</p>
+<div class="cmd"><pre>【デプロイ方法】
+dev# kubectl apply -f namespace.yaml　　※ 適用
+namespace/chat-app created　　　　　　　 ※ 成功時の出力（created が出力される）
+
+【デプロイ後の確認方法】
+dev# kubectl get namespace　　※ 確認（名前空間の定義を一覧表示）
+※ 成功時の出力例（chat-app が表示される）
+NAME              STATUS   AGE
+chat-app          Active   2m5s
+default           Active   35d
+kube-node-lease   Active   35d
+kube-public       Active   35d
+kube-system       Active   35d</pre></div>
 
 <h4>(2) 永続ボリューム要求（PVC）の定義： pvc.yaml</h4>
+<p>　リスト 6.5.2 に示す pvc.yaml は、PersistentVolumeClaim（PVC）を定義するファイルである。 PVC は「永続ボリュームを利用したい」という要求を Kubernetes に伝えるための仕組みである。 コンテナは通常、一度削除すると内部データも失われるが、PVC を利用することでデータを永続化できる。</p>
+<p>　本演習では、MinIO のオブジェクトデータ保存先として PVC を利用している。 そのため、Pod が再起動してもアップロードしたデータは保持される。 （Docker 環境では、-v minio-data:/data の記述がボリューム設定に相当する。 つまり、Docker Volume に近い役割を Kubernetes では PV/PVC の組み合わせで実現する。）</p>
 <p class="fig-caption">【リスト 6.5.2. 永続ボリューム要求の定義： /root/k3s/chat-app/k3s/pvc.yaml】</p>
 <div class="cmd"><pre>apiVersion: v1
 kind: PersistentVolumeClaim
