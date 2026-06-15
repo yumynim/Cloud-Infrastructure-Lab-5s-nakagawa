@@ -6744,7 +6744,7 @@ INSERT INTO staff (name) VALUES ('user3');</pre></div>
 <img src="images/ch7-fig4.png" alt="図7.5.1 Kubernetesを利用した検証構成" style="max-width:720px;">
 
 <h3 id="s751">7.5.1. 事前準備</h3>
-<p>　事前準備では、K3s 上で PostgreSQL を構築するための確認と作業ディレクトリの作成を行う。 具体的には、図 7.5.2 に示すように、ディレクトリ /root/k3s/chat-app/k3s 下で 7 つのファイルを用意する。</p>
+<p>　事前準備では、K3s 上で PostgreSQL を構築するための確認と作業ディレクトリの作成を行う。 具体的には、図 7.5.2 に示すように、ディレクトリ /root/k3s/chat-app/k3s 下で 8 つのファイルを用意する。</p>
 <p>　これらの定義ファイルをデプロイした後は、図7.5.1 に示したように、ホストマシンの Web ブラウザから pgAdmin へアクセスすることができる。 なお、Web ブラウザを利用した検証手順は Docker の時と同じである。</p>
 <p>【図 7.5.2. ディレクトリ構成】</p>
 <div class="cmd"><pre>/root/k3s
@@ -6756,6 +6756,7 @@ INSERT INTO staff (name) VALUES ('user3');</pre></div>
                    ├── pgadmin-service.yaml
                    ├── postgresql-pvc.yaml
                    ├── postgresql-deploy.yaml
+                   ├── postgresql-service.yaml
                    └── postgresql-secret.yaml</pre></div>
 
 <h4>(1) K3s ノードの確認</h4>
@@ -6782,7 +6783,7 @@ kube-system       Active   43d</pre></div>
 <p>　通常の K3s 環境では local-path がデフォルトの StorageClass として表示される。 PostgreSQL の PersistentVolumeClaim（PVC）は、この StorageClass を利用して永続ボリュームを自動作成する。</p>
 
 <h3 id="s752">7.5.2. デプロイ</h3>
-<p>　Kubernetes では、コンテナを単体で起動するのではなく、複数の設定ファイル（YAML ファイル）を組み合わせてサービス全体を構築する。 本演習では、PostgreSQL と pgAdmin を構築するために、表 7.5.1 に示す 7 個の YAML 形式の定義ファイルを利用する。</p>
+<p>　Kubernetes では、コンテナを単体で起動するのではなく、複数の設定ファイル（YAML ファイル）を組み合わせてサービス全体を構築する。 本演習では、PostgreSQL と pgAdmin を構築するために、表 7.5.1 に示す 8 個の YAML 形式の定義ファイルを利用する。</p>
 <p>【表 7.5.1. ハンズオン 2 で作成する定義ファイル（ディレクトリ： /root/k3s/chat-app/k3s）】</p>
 <table>
 <thead><tr><th colspan="4">共通</th></tr><tr><th>No.</th><th>定義ファイル名</th><th>内容</th><th>Docker との比較</th></tr></thead>
@@ -6796,14 +6797,15 @@ kube-system       Active   43d</pre></div>
 <tr><td>2</td><td>postgresql-pvc.yaml</td><td>永続ボリューム要求の定義</td><td>永続ボリューム postgresql-data に相当</td></tr>
 <tr><td>3</td><td>postgresql-secret.yaml</td><td>PostgreSQL のシークレット定義</td><td>.env_pgsql に相当</td></tr>
 <tr><td>4</td><td>postgresql-deploy.yaml</td><td>PostgreSQL のデプロイ定義</td><td>docker run コマンドに相当</td></tr>
+<tr><td>5</td><td>postgresql-service.yaml</td><td>PostgreSQL のサービス定義</td><td>ネットワーク公開設定に相当</td></tr>
 </tbody>
 </table>
 <table>
 <thead><tr><th colspan="4">pgAdmin 関連</th></tr><tr><th>No.</th><th>定義ファイル名</th><th>内容</th><th>Docker との比較</th></tr></thead>
 <tbody>
-<tr><td>5</td><td>pgadmin-secret.yaml</td><td>pgAdmin のシークレット定義</td><td>.env_pgadmin に相当</td></tr>
-<tr><td>6</td><td>pgadmin-deploy.yaml</td><td>pgAdmin のデプロイ定義</td><td>Docker Compose の pgadmin サービスに相当</td></tr>
-<tr><td>7</td><td>pgadmin-service.yaml</td><td>pgAdmin のサービス定義</td><td>Docker Compose の ports: "8080:80" に相当</td></tr>
+<tr><td>6</td><td>pgadmin-secret.yaml</td><td>pgAdmin のシークレット定義</td><td>.env_pgadmin に相当</td></tr>
+<tr><td>7</td><td>pgadmin-deploy.yaml</td><td>pgAdmin のデプロイ定義</td><td>Docker Compose の pgadmin サービスに相当</td></tr>
+<tr><td>8</td><td>pgadmin-service.yaml</td><td>pgAdmin のサービス定義</td><td>Docker Compose の ports: "8080:80" に相当</td></tr>
 </tbody>
 </table>
 <p>　なお、各定義ファイルは、互いに連携して動作している。</p>
@@ -7046,9 +7048,41 @@ minio-pvc        Bound    pvc-d5150526-a9f7-43cd-8530-751a04b6c9c9   1Gi        
 postgresql-pvc   Bound    pvc-85b79153-e016-40e4-b8e9-2e1187a14423   1Gi        RWO            local-path     6m14s</pre></div>
 
 <h4>(4) PostgreSQL のサービス定義</h4>
-<p>　リスト 7.5.6 に示す pgadmin-service.yaml は、Pod を Kubernetes クラスタ内部へ公開するための定義ファイルである。 Kubernetes の Pod は、再起動時に IP アドレスが変化する可能性がある。 そのため、Pod を直接利用するのではなく、Service を経由して通信する。</p>
+<p>　リスト 7.5.6 に示す postgresql-service.yaml は、PostgreSQL Pod をクラスタ内部へ固定名で公開するためのサービス定義ファイルである。 Kubernetes の Pod は再起動時に IP アドレスが変化する可能性があるため、Pod を直接利用するのではなく Service を経由して通信する。 本演習では、クラスタ内部からのみアクセス可能な ClusterIP 型で定義し、pgAdmin からホスト名 postgresql-service でアクセスできるようにする。</p>
+<p>【リスト 7.5.6. PostgreSQL のサービス定義： /root/k3s/chat-app/k3s/postgresql-service.yaml】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-service
+  namespace: chat-app
+spec:
+  type: ClusterIP
+  selector:
+    app: postgresql
+  ports:
+    - port: 5432
+      targetPort: 5432</pre></div>
+<p>【表 7.5.7. postgresql-service.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>Service を定義する Kubernetes API バージョン。</td></tr>
+<tr><td>kind</td><td>Service</td><td>PostgreSQL をクラスタ内部へ公開するための Service。</td></tr>
+<tr><td>metadata.name</td><td>postgresql-service</td><td>Service 名。pgAdmin 等から DNS 名として利用する。</td></tr>
+<tr><td>metadata.namespace</td><td>chat-app</td><td>chat-app 名前空間に配置する。</td></tr>
+<tr><td>type</td><td>ClusterIP</td><td>クラスタ内部からのみアクセス可能なタイプ。</td></tr>
+<tr><td>selector.app</td><td>postgresql</td><td>app=postgresql の Pod に通信を転送する。</td></tr>
+<tr><td>port</td><td>5432</td><td>Service が受け付けるポート（PostgreSQL 標準ポート）。</td></tr>
+<tr><td>targetPort</td><td>5432</td><td>Pod 内の PostgreSQL が待ち受けるポート。</td></tr>
+</tbody>
+</table>
+<div class="cmd"><pre>dev# kubectl apply -f /k3s/chat-app/k3s/postgresql-service.yaml
+service/postgresql-service created</pre></div>
+
+<h4>(5) pgAdmin のサービス定義</h4>
+<p>　リスト 7.5.8 に示す pgadmin-service.yaml は、Pod を Kubernetes クラスタ内部へ公開するための定義ファイルである。 Kubernetes の Pod は、再起動時に IP アドレスが変化する可能性がある。 そのため、Pod を直接利用するのではなく、Service を経由して通信する。</p>
 <p>　本演習では、pgAdmin Pod の 80 番ポートを Service として公開している。 （Docker 環境では、-"8080:80" のポート公開オプションに相当する。）</p>
-<p>【リスト 7.5.6. pgAdmin のサービス定義： /root/k3s/chat-app/k3s/pgadmin-service.yaml】</p>
+<p>【リスト 7.5.8. pgAdmin のサービス定義： /root/k3s/chat-app/k3s/pgadmin-service.yaml】</p>
 <div class="cmd"><pre>apiVersion: v1
 kind: Service
 metadata:
@@ -7063,7 +7097,7 @@ spec:
       port: 80
       targetPort: 80
       nodePort: 30088</pre></div>
-<p>【表 7.5.7. pgadmin-service.yaml の解説】</p>
+<p>【表 7.5.9. pgadmin-service.yaml の解説】</p>
 <table>
 <thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
 <tbody>
@@ -7086,9 +7120,9 @@ NAME              TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)               
 minio-service     NodePort   10.43.230.52   &lt;none&gt;        9000:30090/TCP,9001:30091/TCP   108m
 pgadmin-service   NodePort   10.43.70.161   &lt;none&gt;        8080:30088/TCP                  10s</pre></div>
 
-<h4>(5) PostgreSQL へのポートフォワーディング設定</h4>
-<p>　pgAdmin を K3s 上に公開した場合、前章の MinIO や本章のハンズオン 1 のように、VirtualBox 上のポートフォワーディングを設定することで、ホストマシンからWebブラウザでアクセスできるようにする。 具体的には、表 7.4.3 で設定した内容を表 7.5.8 のように変更することで、ホストマシンからアクセスできるようになる。</p>
-<p>【表 7.5.8. pgAdmin へのポートフォワーディング設定】</p>
+<h4>(6) PostgreSQL へのポートフォワーディング設定</h4>
+<p>　pgAdmin を K3s 上に公開した場合、前章の MinIO や本章のハンズオン 1 のように、VirtualBox 上のポートフォワーディングを設定することで、ホストマシンからWebブラウザでアクセスできるようにする。 具体的には、表 7.4.3 で設定した内容を表 7.5.10 のように変更することで、ホストマシンからアクセスできるようになる。</p>
+<p>【表 7.5.10. pgAdmin へのポートフォワーディング設定】</p>
 <table>
 <thead><tr><th>仮想マシン名</th><th>ホスト名</th><th>アダプタ名</th><th>名前</th><th>プロトコル</th><th>ホストポート</th><th>ゲストポート</th></tr></thead>
 <tbody>
@@ -7097,7 +7131,8 @@ pgadmin-service   NodePort   10.43.70.161   &lt;none&gt;        8080:30088/TCP  
 </table>
 
 <h3 id="s753">7.5.3. サービスの利用確認</h3>
-<p>　基本的な確認手順は Docker の時と同じため、ハンズオン1の 7.4.3 の項を参照して取り組むことができる。 ただし、コンテナの実行環境が異なるので、psql コマンドの実行は以下の通り読み替える。</p>
+<p>　基本的な確認手順は Docker の時と同じため、ハンズオン1の 7.4.3 の項を参照して取り組むことができる。 ただし、コンテナの実行環境が異なるので、以下の点に注意して読み替える。</p>
+<p>　pgAdmin から PostgreSQL へ接続する際のホスト名は、Docker 環境では <code>postgresql</code> だが、K3s 環境では Service 名である <code>postgresql-service</code> を指定する。</p>
 <p>　なお、テーブル等の作成は総合演習で行うため、この項では実施しなくて良い。</p>
 <div class="cmd"><pre>【PostgreSQL コンテナのコンソールへ接続（Docker）】
 dev# docker compose exec -it postgresql psql -U postgres -d chatapp
@@ -7111,6 +7146,7 @@ dev# kubectl exec -n chat-app -it コンテナ名 -- psql -U postgres -d chatapp
 <div class="cmd"><pre>dev# kubectl delete -f pgadmin-service.yaml
 dev# kubectl delete -f pgadmin-deploy.yaml
 dev# kubectl delete -f pgadmin-secret.yaml
+dev# kubectl delete -f postgresql-service.yaml
 dev# kubectl delete -f postgresql-deploy.yaml
 dev# kubectl delete -f postgresql-secret.yaml
 dev# kubectl delete -f postgresql-pvc.yaml</pre></div>
