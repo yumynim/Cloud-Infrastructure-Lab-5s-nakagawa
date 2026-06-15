@@ -8362,7 +8362,7 @@ RESOLV_CONF="no"
 
 <h3 id="sa-resolv">④ 名前解決データベース（動的）</h3>
 <p>【リスト A8.1.6. /etc/resolv.conf】</p>
-<div class="cmd"><pre>nameserver 172.2_.___.11
+<div class="cmd"><pre>nameserver 172.2_.___.1
 search s____.enshu.aicit.jp</pre></div>
 <p>【関連情報】</p>
 <ul>
@@ -8377,7 +8377,7 @@ search s____.enshu.aicit.jp</pre></div>
 
 <h3 id="sa-route">① 静的ルート</h3>
 <p>【リスト A8.1.7. /etc/conf.d/staticroute 】</p>
-<div class="cmd"><pre>net 10.42.0.0 netmask 255.255.255.0 gw 172.2_.___.11 dev eth0</pre></div>
+<div class="cmd"><pre>staticroute="net 10.42.0.0 netmask 255.255.255.0 gw 172.2_.___.11 dev eth0"</pre></div>
 <p>【関連情報】</p>
 <ul>
 <li><a onclick="navigate('ch5-lan2-2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2(2) - 5.6.2. lbのゲートウェイ化 - (4) CoreDNSへの対応： コントロールプレーンのルート情報追加</a></li>
@@ -8567,7 +8567,7 @@ iface lo inet loopback
 
 auto eth0
 iface eth0 inet static
-        address 172.2_.__.21
+        address 172.2_.__.11
         netmask 255.255.255.0
         gateway 172.2_.__.1
 
@@ -8599,7 +8599,7 @@ NO_GATEWAY="eth1 wlan1"</pre></div>
 
 <h3 id="sb-hosts">③ 名前解決データベース（静的）</h3>
 <p>【リスト A8.2.5. /etc/hosts】</p>
-<div class="cmd"><pre>172.2_.__.21    sv.s____.enshu.aicit.jp sv
+<div class="cmd"><pre>172.2_.__.11    sv.s____.enshu.aicit.jp sv
 127.0.0.1       localhost.localdomain localhost
 ::1             localhost.localdomain localhost</pre></div>
 <p>　　※ LAN の設計 2(2) で権威 DNS サーバを構築したので、自ホスト以外の情報は割愛して良い。</p>
@@ -8613,7 +8613,7 @@ NO_GATEWAY="eth1 wlan1"</pre></div>
 
 <h3 id="sb-resolv">④ 名前解決データベース（動的）</h3>
 <p>【リスト A8.2.6. /etc/resolv.conf】</p>
-<div class="cmd"><pre>nameserver 172.2_.___.11
+<div class="cmd"><pre>nameserver 172.2_.___.1
 search s____.enshu.aicit.jp</pre></div>
 <p>【関連情報】</p>
 <ul>
@@ -8627,7 +8627,7 @@ search s____.enshu.aicit.jp</pre></div>
 <p>　なお、設定中の下線部は、自分のLANの情報に置き換えること。</p>
 
 <h3 id="sb-compose">① コンテナ</h3>
-<p>【リスト A8.2.7. /root/docker/bind/docker-compose.yml】</p>
+<p>【リスト A8.2.7. /root/docker/bind9/docker-compose.yml】</p>
 <div class="cmd"><pre>services:
   bind9:
     image: internetsystemsconsortium/bind9:9.20　　※ 演習時は「hub.enshu.aicit.jp/internetsystemsconsortium/bind9:9.20」を指定（学内のみアクセス可）
@@ -8644,7 +8644,7 @@ search s____.enshu.aicit.jp</pre></div>
 </ul>
 
 <h3 id="sb-named">② BIND9</h3>
-<p>【リスト A8.2.8. /root/docker/bind/config/named.conf】</p>
+<p>【リスト A8.2.8. /root/docker/bind9/config/named.conf】</p>
 <div class="cmd"><pre>options {
     directory "/var/cache/bind";
     listen-on { any; };
@@ -8693,7 +8693,7 @@ view "external" {
 </ul>
 
 <h3 id="sb-zone-int">③ 正引きゾーン情報（内部向け）</h3>
-<p>【リスト A8.2.9. /root/docker/bind/config/zones/db.s____.enshu.aicit.jp.int】</p>
+<p>【リスト A8.2.9. /root/docker/bind9/config/zones/db.s____.enshu.aicit.jp.int】</p>
 <div class="cmd"><pre>$TTL 1h
 @   IN SOA ns.s____.enshu.aicit.jp. root.ns.s____.enshu.aicit.jp. (
         2026052501 1h 15m 1w 1h )
@@ -8711,7 +8711,7 @@ dev IN A   172.2_.___.51</pre></div>
 </ul>
 
 <h3 id="sb-zone-rev">④ 逆引きゾーン情報（内部向け）</h3>
-<p>【リスト A8.2.10. /root/docker/bind/config/zones/db.__.2_.172.in-addr.arpa.int】</p>
+<p>【リスト A8.2.10. /root/docker/bind9/config/zones/db.__.2_.172.in-addr.arpa.int】</p>
 <div class="cmd"><pre>$TTL 1h
 @   IN SOA ns.s____.enshu.aicit.jp. root.ns.s____.enshu.aicit.jp. (
         2026052501 1h 15m 1w 1h )
@@ -8729,7 +8729,7 @@ dev IN A   172.2_.___.51</pre></div>
 </ul>
 
 <h3 id="sb-zone-ext">⑤ 正引きゾーン情報（外部向け）</h3>
-<p>【リスト A8.2.11. /root/docker/bind/config/zones/db.s____.enshu.aicit.jp.ext】</p>
+<p>【リスト A8.2.11. /root/docker/bind9/config/zones/db.s____.enshu.aicit.jp.ext】</p>
 <div class="cmd"><pre>$TTL 1h
 @   IN SOA ns.s____.enshu.aicit.jp. root.ns.s____.enshu.aicit.jp. (
         2026052501 1h 15m 1w 1h )
@@ -8872,7 +8872,7 @@ NO_GATEWAY="eth1 wlan1"</pre></div>
 
 <h3 id="sc-resolv">④ 名前解決データベース（動的）</h3>
 <p>【リスト A8.3.6. /etc/resolv.conf】</p>
-<div class="cmd"><pre>nameserver 172.2_.___.11
+<div class="cmd"><pre>nameserver 172.2_.___.1
 search s____.enshu.aicit.jp</pre></div>
 <p>【関連情報】</p>
 <ul>
@@ -9013,7 +9013,7 @@ NO_GATEWAY="eth1 wlan1"</pre></div>
 
 <h3 id="sd-resolv">④ 動的名前解決データベース</h3>
 <p>【リスト A8.4.6. /etc/resolv.conf】</p>
-<div class="cmd"><pre>nameserver 172.2_.___.11
+<div class="cmd"><pre>nameserver 172.2_.___.1
 search s____.enshu.aicit.jp</pre></div>
 <p>【関連情報】</p>
 <ul>
@@ -9154,7 +9154,7 @@ NO_GATEWAY="eth1 wlan1"</pre></div>
 
 <h3 id="se-resolv">④ 動的名前解決データベース</h3>
 <p>【リスト A8.5.5. /etc/resolv.conf】</p>
-<div class="cmd"><pre>nameserver 172.2_.___.11
+<div class="cmd"><pre>nameserver 172.2_.___.1
 search s____.enshu.aicit.jp</pre></div>
 <p>【関連情報】</p>
 <ul>
@@ -9303,7 +9303,7 @@ NO_GATEWAY="eth1 wlan1"</pre></div>
 
 <h3 id="sf-resolv">④ 名前解決データベース（動的）</h3>
 <p>【リスト A8.6.5. /etc/resolv.conf】</p>
-<div class="cmd"><pre>nameserver 172.2_.___.11
+<div class="cmd"><pre>nameserver 172.2_.___.1
 search s____.enshu.aicit.jp</pre></div>
 <p>【関連情報】</p>
 <ul>
