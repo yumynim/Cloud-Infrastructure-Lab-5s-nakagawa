@@ -685,6 +685,14 @@
     <a class="nav-item" onclick="navigate('ch7-cloud2')">7. クラウドサービスの利用法2</a>
     <a class="nav-item" onclick="navigate('ch7-a1-sql')">A7.1. SQL リファレンス</a>
     <a class="nav-item" onclick="navigate('ch7-a2-trouble')">A7.2. トラブル対応</a>
+    <span class="nav-chapter-label">第8章</span>
+    <a class="nav-item" onclick="navigate('ch8-cloud3')">8. クラウド環境を利用したシステム構築1</a>
+    <a class="nav-item" onclick="navigate('ch8-a1-lb')">A8.1. lbの設定</a>
+    <a class="nav-item" onclick="navigate('ch8-a2-sv')">A8.2. svの設定</a>
+    <a class="nav-item" onclick="navigate('ch8-a3-wk1')">A8.3. wk1の設定</a>
+    <a class="nav-item" onclick="navigate('ch8-a4-wk2')">A8.4. wk2の設定</a>
+    <a class="nav-item" onclick="navigate('ch8-a5-wk3')">A8.5. wk3の設定</a>
+    <a class="nav-item" onclick="navigate('ch8-a6-dev')">A8.6. devの設定</a>
 
     <span class="nav-chapter-label">関連書籍</span>
     <a class="nav-item" onclick="navigate('books-ta')">TA 推薦図書</a>
@@ -7772,6 +7780,502 @@ COMMIT</pre></div>
 <p>　何も出力されなければ、Docker・K3s が作成した主要なネットワークルールは削除されている。</p>
 <div class="page-nav" style="justify-content:space-between;">
   <a onclick="navigate('ch7-a1-sql')">← A7.1. SQL リファレンス</a>
+  <a onclick="navigate('ch8-cloud3')">8. クラウド環境を利用したシステム構築1 →</a>
+</div>`
+  },
+
+  'ch8-cloud3': {
+    title: '第8章 クラウド環境を利用したシステム構築1',
+    toc: [
+      { level: 1, label: '第8章 クラウド環境を利用したシステム構築1', anchor: 'top' },
+      { level: 2, label: '8.1. はじめに', anchor: 's81' },
+      { level: 3, label: '8.1.1. 概要', anchor: 's811' },
+      { level: 3, label: '8.1.2. 前提となる知識・スキル', anchor: 's812' },
+      { level: 3, label: '8.1.3. 到達目標', anchor: 's813' },
+      { level: 3, label: '8.1.4. 第8章の操作対象', anchor: 's814' },
+      { level: 2, label: '8.2. アプリケーション実行形態の発展', anchor: 's82' },
+      { level: 3, label: '(1) スタンドアロン型アプリケーション', anchor: 's821' },
+      { level: 3, label: '(2) ファイルサーバ型システム', anchor: 's822' },
+      { level: 3, label: '(3) クライアント・サーバ型システム', anchor: 's823' },
+      { level: 3, label: '(4) Webアプリケーション型システム', anchor: 's824' },
+      { level: 3, label: '(5) クラウド型システムへの発展', anchor: 's825' },
+      { level: 3, label: '(6) クラウド構築演習を学ぶ意義', anchor: 's826' },
+      { level: 2, label: '8.3. 論理ネットワーク構成', anchor: 's83' },
+      { level: 3, label: '8.3.1. 管理用 LAN の構成', anchor: 's831' },
+      { level: 3, label: '8.3.2. 仮想化を踏まえた構成', anchor: 's832' },
+      { level: 2, label: '8.4. 仮想マシンの設定内容', anchor: 's84' },
+      { level: 2, label: '8.5. 総合演習', anchor: 's85' },
+      { level: 3, label: '8.5.1. VM の設定確認', anchor: 's851' },
+      { level: 3, label: '8.5.2. 総合演習の振り返り', anchor: 's852' },
+    ],
+    content: `<h1 id="top">第8章　クラウド環境を利用したシステム構築1</h1>
+<p class="meta-sub">クラウド構築演習の位置付けと構築したシステムの点検</p>
+<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）</p>
+
+<h2 id="s81">8.1. はじめに</h2>
+
+<h3 id="s811">8.1.1. 概要</h3>
+<p>　本章では、これまで構築してきたクラウド環境の全体構成を振り返り、クラウド構築演習の位置付けについて理解する。 まず、情報システムの実行形態がスタンドアロン型からクラウド型へ発展してきた流れを学び、その中で本演習が対象とするクラウドネイティブなシステム構築について理解する。 次に、これまで構築した管理用 LAN、Kubernetes クラスタ、DNS サーバ、ロードバランサなどの構成を整理し、各仮想マシンの設定内容を確認する。 また、VirtualBox による仮想化環境と実際のクラウドシステムとの対応関係について理解し、次章以降で取り組む Web アプリケーション開発のための基盤環境が正しく構築されていることを確認する。</p>
+
+<h3 id="s812">8.1.2. 前提となる知識・スキル</h3>
+<ul>
+<li>第7章までの内容を終えていること</li>
+<li>Alpine Linux 仮想マシンへ SSH 接続できること</li>
+<li>Linux の基本操作（ファイル作成、ディレクトリ移動、エディタ操作）ができること</li>
+<li>Docker および Docker Compose の基本的な利用方法を理解していること</li>
+<li>Kubernetes（K3s）の基本概念（Namespace、Pod、Deployment、Service）を理解していること</li>
+<li>kubectl の基本操作ができること</li>
+<li>Web アプリケーションの基本的な構成（フロントエンド・バックエンド・データベース）を理解していること</li>
+</ul>
+
+<h3 id="s813">8.1.3. 到達目標</h3>
+<ul>
+<li>情報システムの実行形態の発展とクラウド型システムの特徴を説明できる。</li>
+<li>クラウドシステムを支える基幹技術（仮想化、コンテナ、分散処理、ロードバランシング等）の役割を説明できる。</li>
+<li>本演習で構築した管理用 LAN の構成を説明できる。</li>
+<li>Kubernetes クラスタを構成する各ノードの役割を説明できる。</li>
+<li>DNS、NAT、VPN、ロードバランサの役割を説明できる。</li>
+<li>VirtualBox による仮想化環境と論理ネットワーク構成との関係を説明できる。</li>
+<li>各仮想マシンの設定内容を確認し、必要に応じて修正できる。</li>
+</ul>
+
+<h3 id="s814">8.1.4. 第8章の操作対象</h3>
+<p>　第8章では、以下の角括弧で囲まれたマシンについて、設定が正しく行われているか確認する。</p>
+<div class="cmd"><pre>【演習環境の構成（Alpine Linux・Docker・K3s）】
+ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            │
+            │　【Web アプリケーション用クラウド環境（開発・テスト用）】
+            ├─ [Alpine Linux（alpine-k3s, core:2, ram:4G, hdd:20G）]　　※ dev.s____.enshu.aicit.jp
+            │    ├─ Docker - PostgreSQL, pgAdmin
+            │    └─ K3s（Kubernetes + containerd）- MinIO
+            │
+            │　【Web アプリケーション用クラウド環境（公開用クラスタ）】
+            ├─ [Alpine Linux（k3s-lb, core:1, ram:1G, hdd:8G）]　　　　 ※ lb.s____.enshu.aicit.jp
+            │    ├─ HAProxy
+            │    ├─ Unbound
+            │    └─ WireGuard Client
+            ├─ [Alpine Linux（k3s-server, core:1, ram:2G, hdd:16G）]　　※ sv.s____.enshu.aicit.jp
+            │    ├─ Docker ── BIND9
+            │    └─ K3s（Kubernetes + containerd）
+            ├─ [Alpine Linux（k3s-worker1, core:1, ram:1G, hdd:8G）]　　※ wk1.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            ├─ [Alpine Linux（k3s-worker2, core:1, ram:1G, hdd:8G）]　　※ wk2.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            └─ [Alpine Linux（k3s-worker3, core:1, ram:1G, hdd:8G）]　　※ wk3.s____.enshu.aicit.jp
+                 └─ Docker, K3s（Kubernetes + containerd）</pre></div>
+
+<h2 id="s82">8.2. アプリケーション実行形態の発展</h2>
+<p>　この節では、アプリケーション実行形態の発展の観点から、クラウド構築演習の位置付けについて説明する。</p>
+<p>　情報システムにおけるアプリケーション実行形態の発展過程と各種演習の位置付けを図 8.2.1 に示す。 この発展は利用者数の増加、ネットワーク技術の発展、システム規模の拡大といった社会的要求に対応して進んできており、現在も変化し続けている。</p>
+<p>　以下、各種演習の位置付けとともに実行形態の概略について説明する。</p>
+<p class="caption">図8.2.1. アプリケーション実行形態の発展と演習で取り組む形態の関係</p>
+<img src="images/app_arch_pattern.png" alt="図8.2.1 アプリケーション実行形態の発展と演習で取り組む形態の関係" style="max-width:560px;">
+
+<h3 id="s821">(1) スタンドアロン型アプリケーション（1970年代～1990年代前半）</h3>
+<p>　図の最上部に示されるシングルユーザ環境は、1台のコンピュータ上でアプリケーションとデータを管理する形態である。 パーソナルコンピュータが普及し始めた 1980 年代から 1990 年代前半にかけては、この形態が主流となっていた。 ワープロソフト、表計算ソフト、CAD ソフトなどの多くは、利用者の PC 上で実行され、データもローカルディスクに保存されていた。</p>
+<p>　一般的なプログラミング演習は、この形態を利用することが多く、学習者は単一のプログラムを作成し、ファイル入出力を利用して処理を実装する。 基本的には、アルゴリズム、データ構造、オブジェクト指向などの基礎技術を学習することが主目的となっているため、なるべく簡素な環境で学習することが多い。 近年ではクラウド上のプログラミング環境を利用することもある。</p>
+
+<h3 id="s822">(2) ファイルサーバ型システム（1990年代前半～後半）</h3>
+<p>　1990 年代に入り、LAN（Local Area Network）が普及すると、複数の利用者が共通のデータを利用したいという要求が高まった。 この頃普及した形態がファイルサーバ型システムである。 この利用形態では、利用者は各自のPC上でアプリケーションを実行し、共有ファイルサーバにデータを保存する。 Windowsネットワークの共有フォルダや NFS などが代表例となる。 この方式によりデータ共有は実現されたが、次のような問題が生じる。</p>
+<ul>
+<li>同時アクセス時の競合</li>
+<li>ファイルロックの複雑化</li>
+<li>ネットワーク転送量の増大</li>
+</ul>
+<p>　特に利用者数が増加すると性能低下が顕著になり、より効率的なシステム構成が求められるようになった。</p>
+
+<h3 id="s823">(3) クライアント・サーバ型システム（1990年代後半～2000年代前半）</h3>
+<p>　このファイル共有の問題を解決するために普及したのがクライアント・サーバ型システムであり、 この時代には Oracle Database、Microsoft SQL Server、IBM DB2 などの商用データベースが企業システムの中心となっていた。 アプリケーションはクライアント側で動作するものの、データ処理は基本的にデータベースサーバに委譲される。</p>
+<p>　この形態は次のような特徴を持っており、銀行システム、販売管理システム、顧客管理システムなど、多くの業務システムで採用された。</p>
+<ul>
+<li>SQLによる効率的なデータ検索</li>
+<li>トランザクション管理</li>
+<li>同時アクセス制御</li>
+<li>データ整合性の保証</li>
+</ul>
+<p>　現在でも、企業内システムではこの形態が広く利用されている。</p>
+
+<h3 id="s824">(4) Webアプリケーション型システム（2000年代～現在）</h3>
+<p>　1990 年代後半からインターネットが急速に普及し、専用ソフトウェアを各PCへインストールする運用が大きな負担となった。 また、高速回線の普及が後押しして、Web アプリケーションによる実行形態が普及する。 この形態では、利用者はWebブラウザのみを利用してシステムへアクセスすることができる。 そして、様々な Web アプリケーションが作成されていく中で、以下の層に分離した三層構造（Three-Tier Architecture）が標準的な設計となっていく。</p>
+<ul>
+<li>プレゼンテーション層</li>
+<li>アプリケーション層</li>
+<li>データ層</li>
+</ul>
+<p>　一般的な Web プログラミング系の演習は、この三層構造を学習対象としているケースが多い。 その場合、学習者は次のようなトピックスについて学習し、実用的な Web システムの開発方法を理解する（科目の内容と密度によって扱う内容は異なる）。</p>
+<ul>
+<li>HTTP/HTTPS</li>
+<li>Webサーバ</li>
+<li>サーバサイドプログラミング</li>
+<li>クライアントサイドプログラミング</li>
+<li>SQL（Structured Query Language）</li>
+<li>データベース設計</li>
+<li>MVCアーキテクチャ</li>
+</ul>
+<p>　なお、クラウドとは関係なく、現在の多くの業務システムや Web サービスは、この三層構造を基本としていることが多い。</p>
+
+<h3 id="s825">(5) クラウド型システムへの発展（2010年代～現在）</h3>
+<p>　2006 年にAmazon Web Services (AWS) が本格的にサービスを開始し、クラウドコンピューティング時代が始まった。 その後、3大クラウド事業者として、2010 年に Microsoft Azure、2011 年頃から Google Cloud が本格的な展開を始めて、企業システムのクラウド移行が急速に進んだ。 この移行に合わせて、クラウドコンピューティング環境では、アプリケーションを確実に動作させるだけではなく、次のような要件の実現が求められた。</p>
+<ul>
+<li>大量アクセスへの対応</li>
+<li>障害発生時の継続運用</li>
+<li>自動復旧</li>
+<li>運用自動化</li>
+<li>システム拡張性</li>
+</ul>
+<p>　クラウドコンピューティング環境では、これらの要件を満たす基幹技術として、表 8.2.1 のようなものが利用されている。</p>
+<p>【表 8.2.1. クラウドコンピューティング環境の基幹技術】</p>
+<table>
+<thead><tr><th>技術</th><th>概要</th><th>主な役割</th></tr></thead>
+<tbody>
+<tr><td>仮想化（Virtualization）</td><td>1台の物理サーバ上で複数の仮想マシンを動作させる技術</td><td>サーバ資源の効率利用</td></tr>
+<tr><td>コンテナ技術（Container）</td><td>アプリケーションと実行環境をまとめて実行する技術</td><td>軽量な実行環境の提供</td></tr>
+<tr><td>分散処理（Distributed Processing）</td><td>複数サーバで処理を分散する技術</td><td>性能向上・負荷分散</td></tr>
+<tr><td>ロードバランシング（Load Balancing）</td><td>通信を複数サーバへ振り分ける技術</td><td>アクセス集中への対応</td></tr>
+<tr><td>データベースレプリケーション</td><td>DBデータを複数サーバへ複製する技術</td><td>可用性向上・障害対策</td></tr>
+<tr><td>オーケストレーション</td><td>サーバやコンテナ群を自動管理する技術</td><td>自動復旧・自動運用</td></tr>
+<tr><td>オートスケーリング</td><td>負荷に応じてサーバ数を自動増減する技術</td><td>拡張性確保・コスト最適化</td></tr>
+<tr><td>Infrastructure as Code（IaC）</td><td>インフラ構成をコードで管理する技術</td><td>構築・運用の自動化</td></tr>
+<tr><td>監視（Monitoring）</td><td>システム状態を継続的に監視する技術</td><td>障害検知・運用品質向上</td></tr>
+</tbody>
+</table>
+
+<h3 id="s826">(6) クラウド構築演習を学ぶ意義</h3>
+<p>　現代の情報システムは、閉域網の小さな案件を除いて、単一サーバ上で動作することはほとんどなくなってきている。 Google、Amazon、Microsoft、LINE、楽天などの大規模サービスはもちろん、中小企業の業務システムであってもクラウド基盤上で運用されることが一般的になっている。 そのため、単にアプリケーションを開発できるだけでは不十分であると考えられる。 実際の運用では、開発したシステムを多数の利用者が利用できるように配置し、障害時にも継続運用できるよう設計し、自動的に拡張できる仕組みを構築する能力が求められる。</p>
+<p>　そこで、クラウド構築演習では、プログラム開発者としての視点に加え、システムアーキテクトやクラウドエンジニアとしての視点を身に付けることを目的としている。 そのため、「プログラムを作る」観点は軽くして、「サービスを支えるシステムを構築・運用する」観点から学習を行っている。</p>
+<p>　本演習が対象とするアプリケーションの実行形態は、最下部の赤色領域であるクラウド環境におけるシステム構築を対象としている。 ここで、クラウドシステムを構成する技術と本演習の学習対象の関係は、表 8.2.1 で示した技術も含めて、表 8.2.2 のように表すことができる。</p>
+<p>【表 8.2.2. クラウドシステムを構成する技術と本演習の学習対象の関係】</p>
+<table>
+<thead><tr><th>技術分野</th><th>本演習で扱うトピックス</th><th>概要</th></tr></thead>
+<tbody>
+<tr><td>仮想化</td><td>VirtualBox</td><td>仮想マシンを利用して複数の実行環境を構築する技術</td></tr>
+<tr><td>サーバ構築</td><td>Alpine Linux</td><td>クラウド基盤上で動作する軽量なLinuxサーバを構築する技術</td></tr>
+<tr><td>コンテナ技術</td><td>Docker, Kubernetes（K3s環境）</td><td>アプリケーションと実行環境をコンテナとしてパッケージ化し、開発・実行環境の統一を実現する技術</td></tr>
+<tr><td>ネットワーク設計</td><td>LANの設計</td><td>サーバ間通信やサービス公開のためのネットワークを設計する技術</td></tr>
+<tr><td>分散処理</td><td>複数VMによるマルチノード環境</td><td>複数サーバで処理を分散し性能と可用性を向上させる技術</td></tr>
+<tr><td>ロードバランシング</td><td>HAProxy</td><td>クライアントからのアクセスを複数サーバへ振り分ける技術</td></tr>
+<tr><td>オーケストレーション</td><td>Kubernetes（K3s環境）</td><td>コンテナやサーバ群のデプロイ・管理・自動復旧を行う技術</td></tr>
+<tr><td>Infrastructure as Code（IaC）</td><td>Kubernetes YAML定義</td><td>システム構成をコードとして管理し、自動構築を可能にする技術</td></tr>
+<tr><td>負荷分散・高可用性</td><td>Deployment, ReplicaSet、Pod</td><td>Kubernetesによるアプリケーションの冗長化と自動スケーリングを実現する技術</td></tr>
+</tbody>
+</table>
+<p>　また、前述のクラウドシステムの要件との関係は表 8.2.3 のように表すことができる。</p>
+<p>【表 8.2.3. クラウドシステムへの要件と演習で扱う技術との対応関係】</p>
+<table>
+<thead><tr><th>クラウドの要件</th><th>本演習で扱うトピックス</th></tr></thead>
+<tbody>
+<tr><td>大量アクセスへの対応</td><td>HAProxy、分散処理、Deployment、ReplicaSet</td></tr>
+<tr><td>障害発生時の継続運用</td><td>Kubernetes、ReplicaSet、マルチノード構成</td></tr>
+<tr><td>自動復旧</td><td>Kubernetes、Deployment</td></tr>
+<tr><td>運用自動化</td><td>Kubernetes、YAMLによるIaC</td></tr>
+<tr><td>システム拡張性</td><td>仮想化、コンテナ、Kubernetes、分散処理</td></tr>
+</tbody>
+</table>
+<p>　本演習では、コンテナの実行環境として、Docker と Kubernetes (containerd) を利用している。 これらの一般的な役割分担を表 8.2.4 に示す。 本演習でも、これらの役割分担に従った取り組みをすると共に、検証用に中間の立ち位置で 検証用 Kubernetes 環境も利用している。</p>
+<p>【表 8.2.4. Docker と Kubernetes の役割分担】</p>
+<table>
+<thead><tr><th>技術</th><th>主な用途</th></tr></thead>
+<tbody>
+<tr><td>Docker</td><td>開発環境・テスト環境の構築、コンテナイメージ作成</td></tr>
+<tr><td>Kubernetes（K3s）</td><td>本番環境を想定したコンテナの実行・管理</td></tr>
+<tr><td>Docker + Kubernetes</td><td>「作る（Build）」と「動かす（Run）」を分離したクラウドネイティブな開発・運用基盤</td></tr>
+</tbody>
+</table>
+<p>　これらの実行環境をベースに、「プログラムを作る」観点から、本演習では「チャットアプリ」を作成する。 このチャットアプリで利用する技術を3層構造と基盤技術の観点から階層的に分類すると表 8.2.5 のようになる。</p>
+<p>【表 8.2.5. チャットアプリで利用する技術と階層】</p>
+<table>
+<thead><tr><th>3層構造，基盤技術</th><th>本演習で扱うトピックス</th></tr></thead>
+<tbody>
+<tr><td>プレゼンテーション層（Presentation Layer）</td><td>HTML, CSS, Webブラウザ</td></tr>
+<tr><td>アプリケーション層（Application Layer）</td><td>Node.js, REST API</td></tr>
+<tr><td>データ層（Data Layer）</td><td>PostgreSQL, MinIO</td></tr>
+<tr><td>ネットワーク基盤</td><td>Nginx, NAT, ポートフォワーディング, HAProxy</td></tr>
+<tr><td>名前解決基盤</td><td>BIND, Unbound</td></tr>
+<tr><td>実行基盤</td><td>Alpine Linux, Docker, Kubernetes（K3s）</td></tr>
+</tbody>
+</table>
+
+<h2 id="s83">8.3. 論理ネットワーク構成</h2>
+<p>　この節では、これまでに構築した管理用 LAN の論理ネットワーク構成について説明する。</p>
+
+<h3 id="s831">8.3.1. 管理用 LAN の構成</h3>
+<p>　図 8.3.1 は、本演習で利用する管理用 LAN の論理ネットワーク構成を示している。管理用 LAN は、Kubernetes クラスタを中心とした本番環境と、Docker および Kubernetes（K3s）による開発環境で構成されている。また、インターネット接続や仮想インターネット接続を提供するゲートウェイサーバを配置し、DNS、ロードバランサ、コンテナ実行基盤などの各種クラウド技術を統合した構成となっている。</p>
+<p class="caption">図8.3.1. 管理用 LAN の論理ネットワーク構成</p>
+<img src="images/network1.png" alt="図8.3.1 管理用LANの論理ネットワーク構成" style="max-width:680px;">
+
+<h4>（1）ネットワーク構成</h4>
+<p>　管理用LANでは、ドメイン名 s____.enshu.aicit.jp が割り当てられ、ネットワークアドレスとして 172.2_.___.0/24 を利用する。 ネットワーク内のホストはプライベートアドレスで通信し、ゲートウェイサーバ lb を経由して外部ネットワークへ接続する。</p>
+<p>　ここで、設計のベースとなる、ネットワーク設計情報を表 8.3.1 に示す。</p>
+<p>【表 8.3.1. 管理用 LAN のネットワーク設計情報】</p>
+<table>
+<thead><tr><th>項目</th><th>設定値</th></tr></thead>
+<tbody>
+<tr><td>ドメイン名</td><td>s____.enshu.aicit.jp</td></tr>
+<tr><td>ネットワークアドレス</td><td>172.2_.___.0/24</td></tr>
+<tr><td>サブネットマスク</td><td>255.255.255.0</td></tr>
+<tr><td>ブロードキャストアドレス</td><td>172.2_.___.255</td></tr>
+<tr><td>デフォルトゲートウェイ</td><td>172.2_.___.1</td></tr>
+</tbody>
+</table>
+
+<h4>（2）ゲートウェイサーバ（lb）</h4>
+<p>　管理用LANの入口には lb（Load Balancer）サーバ を配置しており、以下の役割を担う。</p>
+<ul>
+<li>ルータ機能</li>
+<li>NAT（Network Address Translation）</li>
+<li>ロードバランサ（HAProxy）</li>
+<li>フルリゾルバDNSサーバ（Unbound）</li>
+<li>VPN接続の終端</li>
+</ul>
+<p>　ここで、lb は ローカルループバックインタフェースも含めると、表 8.3.2 に示す 4 つのネットワークインタフェースを持つ。</p>
+<p>【表 8.3.2. lb の持つネットワークインタフェース】</p>
+<table>
+<thead><tr><th>インタフェース</th><th>接続先</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td>lo</td><td>ローカルホスト</td><td>ローカルホスト内の通信</td></tr>
+<tr><td>eth0</td><td>管理用LAN側</td><td>内部ネットワーク接続</td></tr>
+<tr><td>eth1</td><td>インターネット側（DHCP）</td><td>外部ネットワーク接続</td></tr>
+<tr><td>wg0</td><td>VPN回線</td><td>仮想インターネット接続</td></tr>
+</tbody>
+</table>
+<p>　外部からの通信は HAProxy によって各アプリケーションサーバへ振り分けられ、LAN 内からの DNS 問い合わせは Unbound によって名前解決される。</p>
+
+<h4>（3）本番環境</h4>
+<p>　本番環境は 2～4 台のサーバで構成される Kubernetes クラスタである。</p>
+<p><strong>サーバノード（sv）：</strong></p>
+<p>　サーバノード（sv）は以下の機能を提供する。 権威DNSサーバは、Docker Compose 環境で動作し、管理用LAN内のドメイン情報を管理し、各サーバの名前解決を担当する。 また、LAN 外から問い合わせがあった場合の問い合わせも行い、内部向けと外部向けでゾーンを分けて管理する。</p>
+<ul>
+<li>Kubernetes クラスタ全体を管理するコントロールプレーン</li>
+<li>Docker コンテナ実行環境</li>
+<li>権威 DNS サーバ（BIND9）</li>
+</ul>
+<p><strong>ワーカノード（wk1～wk3）：</strong></p>
+<p>　ワーカノード（wk1～wk3）では Kubernetes が管理するコンテナアプリケーションが実行される。 複数のワーカノードを利用することで次の機能を実現する。</p>
+<ul>
+<li>分散処理</li>
+<li>負荷分散</li>
+<li>障害耐性</li>
+<li>スケーラビリティ</li>
+</ul>
+<p>　本演習では、リソースの少ない学習者マシンにおいて、少ないノードでも学習が行えるよう、sv, wk1 の2台で動作するようにしている。 そのため、sv でもワーカノードを動かしている。 （用途にもよるが、本来は分離した方がパフォーマンスが良い）</p>
+
+<h4>（4）開発環境</h4>
+<p>　開発用サーバ devには、Docker, Kubernetes（K3s）の二つのコンテナ実行環境が構築されている。 学習者は、このサーバ上でコンテナイメージの作成やアプリケーションのテストを行い、その後、本番環境のKubernetesクラスタへデプロイすることができる。</p>
+<p>この構成により、以下の手順でクラウドネイティブな開発サイクルを学習できる。</p>
+<ol>
+<li>Docker で開発</li>
+<li>Kubernetes（K3s）で動作確認</li>
+<li>本番 Kubernetes クラスタへ展開</li>
+</ol>
+
+<h4>（5）本構成で学習できる技術</h4>
+<p>　表8.3.3 に示すように、このネットワーク構成は、小規模ながらも実際のクラウドサービス基盤で利用される技術要素を一通り備えており、クラウドネイティブなシステム構築の学習環境として利用できる。</p>
+<p>【表 8.3.3. クラウド型システムで利用される代表的な基幹技術】</p>
+<table>
+<thead><tr><th>技術分野</th><th>利用技術</th></tr></thead>
+<tbody>
+<tr><td>仮想化</td><td>VirtualBox</td></tr>
+<tr><td>コンテナ技術</td><td>Docker</td></tr>
+<tr><td>オーケストレーション</td><td>Kubernetes（K3s）</td></tr>
+<tr><td>分散処理</td><td>Kubernetesマルチノード構成</td></tr>
+<tr><td>ロードバランシング</td><td>HAProxy</td></tr>
+<tr><td>DNS</td><td>BIND9、Unbound</td></tr>
+<tr><td>ネットワーク設計</td><td>サブネット、ルーティング、NAT</td></tr>
+<tr><td>Webシステム構築</td><td>3層構造Webアプリケーション</td></tr>
+<tr><td>データベース</td><td>PostgreSQL、MinIO</td></tr>
+<tr><td>IaC</td><td>Kubernetes YAML</td></tr>
+</tbody>
+</table>
+
+<h3 id="s832">8.3.2. 仮想化を踏まえた構成</h3>
+<p>　これまでは、純粋な論理構成を説明するため、ベアメタルマシンを用いた構成として解説してきた。 本演習では、OS インストール可能なベアメタルマシンを一人で複数台用意することができないため、仮想化基盤を提供する VirtualBox を利用して、各ノード（ホスト）を仮想マシン (VM) に置き換えている。</p>
+<p>　図 8.3.2 は、図 8.3.1 で示した管理用LANの構成を、VirtualBox による仮想化環境の観点から示したものである。 本演習では、すべてのサーバを VirtualBox 上の仮想マシンとして構築し、管理用LAN、本番環境、開発環境を仮想的に実現している。 また、学習者 PC から各仮想マシンへ直接接続できるよう、VirtualBox の NAT 機能とポートフォワーディング機能を利用している。</p>
+<p class="caption">図8.3.2. 仮想化を踏まえた管理用 LAN の論理ネットワーク構成</p>
+<img src="images/network2.png" alt="図8.3.2 仮想化を踏まえた管理用LANの論理ネットワーク構成" style="max-width:680px;">
+
+<h4>（1）仮想化環境の構成</h4>
+<p>　図 8.3.2 の紫色の領域はVirtualBox上の仮想化環境を表しており、 本演習では、表 8.3.4 に示す仮想マシンを配置している。 これらの仮想マシンは、管理用LAN（172.2_.___.0/24）に接続され、仮想スイッチを介して相互に通信できる。</p>
+<p>【表 8.3.4. 仮想化環境上に配置された仮想マシン】</p>
+<table>
+<thead><tr><th>サーバ</th><th>主な役割</th></tr></thead>
+<tbody>
+<tr><td>lb</td><td>ルータ、ロードバランサ（HAProxy）、フルリゾルバDNSサーバ（Unbound）</td></tr>
+<tr><td>sv</td><td>Kubernetesサーバノード、権威DNSサーバ（BIND9）</td></tr>
+<tr><td>wk1</td><td>Kubernetesワーカノード1</td></tr>
+<tr><td>wk2</td><td>Kubernetesワーカノード2</td></tr>
+<tr><td>wk3</td><td>Kubernetesワーカノード3（任意）</td></tr>
+<tr><td>dev</td><td>Docker・Kubernetes（K3s）による開発環境</td></tr>
+</tbody>
+</table>
+
+<h4>（2）二重ネットワーク構成</h4>
+<p>　本演習で利用するすべての仮想マシンは、表 8.3.5 に示す 2 つのネットワークインタフェースを持つ。 ここで、eth0 は演習で構築する管理用 LAN に接続されている。 一方、eth1 は VirtualBox が提供する NAT ネットワークに接続され、DHCP によって IP アドレスが自動割り当てされる。 この構成により、次の 3 つの通信を同時に実現している。</p>
+<ul>
+<li>管理用 LAN 内でのサーバ間通信</li>
+<li>学習者 PC からのサーバ管理</li>
+<li>インターネット接続</li>
+</ul>
+<p>【表 8.3.5. 仮想マシンの持つネットワークインタフェース】</p>
+<table>
+<thead><tr><th>インタフェース</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td>eth0</td><td>管理用LAN接続</td></tr>
+<tr><td>eth1</td><td>VirtualBox NATネットワーク接続</td></tr>
+</tbody>
+</table>
+
+<h4>（3）VirtualBox NATルータ</h4>
+<p>　図 8.3.2 のオレンジ色のアイコンは lb本体に記載されたものを除いて、VirtualBox が提供する NAT ルータ機能を示している。 ここで、VirtualBox NATルータは、以下の 2 つの通信を仲介する。</p>
+<ul>
+<li>仮想マシンからインターネットへの通信</li>
+<li>学習者PCから仮想マシンへの接続</li>
+</ul>
+<p>　ただし、NAT環境では外部から内部への通信が自動的には許可されないため、必要なサービスについてはポートフォワーディング設定を行う必要がある。</p>
+
+<h4>（4）ポートフォワーディング</h4>
+<p>　ポートフォワーディングは、VirtualBox ホスト側のポートへのアクセスを仮想マシン内部のポートへ転送する機能である。 例えば、開発用サーバ（dev）へ SSH 接続したり、検証用 Docker や検証用 Kubernetes 環境上で立ち上げたサービスに接続したりするときに利用する。 この仕組みにより、学習者PCから次のようなオペレーションが可能となる。</p>
+<ul>
+<li>SSH によるサーバ管理</li>
+<li>Web ブラウザによる動作確認</li>
+<li>DNS 動作確認</li>
+</ul>
+
+<h4>（5）管理用LANへの接続</h4>
+<p>　学習者 PC から管理用 LAN 内のサーバへアクセスする際は、直接 172.2_.___.0/24 へ接続するのではなく、VirtualBox の NAT ルータを経由してアクセスする。 そのため、次の経路で通信が行われる。この構成により、学習者PCのネットワーク設定を変更することなく、仮想環境内のサーバへ安全に接続できる。</p>
+<div class="cmd"><pre>学習者PC
+   ↓
+VirtualBox NATルータ
+   ↓
+仮想マシン</pre></div>
+
+<h4>（6）VPN接続と仮想インターネット</h4>
+<p>　lb サーバには WireGuard による VPN 接続（wg0）が構成されており、仮想インターネット環境（enshu.aicit.jp）へ接続される。 このVPN接続によって、次のオペレーションが可能となる。</p>
+<ul>
+<li>他の学習者環境との通信</li>
+<li>仮想インターネット上でのDNS運用</li>
+<li>公開サービスの検証</li>
+</ul>
+<p>　また、lb サーバは管理用 LAN のデフォルトゲートウェイとして動作し、内部ネットワークから外部ネットワークへの通信を中継する。</p>
+
+<h4>（7）8.3.1 との違い</h4>
+<p>　表 8.3.6 に示すように、図 8.3.1 が管理用 LAN 内部の論理構成を示しているのに対し、図 8.3.2 ではその構成を VirtualBox 上でどのように実現しているかを示している。 したがって、図 8.3.2 は図 8.3.1 を実現するための仮想化基盤を示したものであり、本演習ではこの構成を利用して、仮想化、ネットワーク、DNS、Docker、Kubernetesなどのクラウド基盤技術を学習する。</p>
+<p>【表 8.3.6. 図 8.3.1 と 図 8.3.2 の違い】</p>
+<table>
+<thead><tr><th>図</th><th>主な内容</th></tr></thead>
+<tbody>
+<tr><td>図8.3.1</td><td>管理用 LAN と Kubernetes クラスタの論理構成</td></tr>
+<tr><td>図8.3.2</td><td>VirtualBox による仮想化構成と NAT 接続方式</td></tr>
+</tbody>
+</table>
+
+<h2 id="s84">8.4. 仮想マシンの設定内容</h2>
+<p>　これまでの説明を踏まえて、前章までに取り組んだ仮想マシンのネットワーク設定について整理する。 前章の終了時点の仮想マシンの設計情報を表 8.4.1 に、仮想マシンの間で共通となる管理用 LAN の設計情報を 表 8.4.2 に示す。</p>
+<p>　第8章以降では、これらの設定が正しく行えていることが前提となるため、いったん全ての設定について確認する必要がある。</p>
+<p>【表8.4.1. これまで構築した VM の設計情報】</p>
+<table>
+<thead><tr><th>VM 名</th><th>ホスト名</th><th>FQDN</th><th>IP アドレス</th><th>eth0</th><th>eth1</th><th>役割</th></tr></thead>
+<tbody>
+<tr><td>k3s-lb</td><td>lb</td><td>lb.s____.enshu.aicit.jp</td><td>172.2_ .___.1</td><td>管理用LAN</td><td>外部接続用</td><td>ロードバランサ, NAT ルータ, DNS フルリゾルバ</td></tr>
+<tr><td>k3s-server</td><td>sv</td><td>sv.s____.enshu.aicit.jp</td><td>172.2_ .___.11</td><td>管理用LAN</td><td>確認用：TeraTerm</td><td>DNS 権威サーバ, K3s サーバ</td></tr>
+<tr><td>k3s-worker1</td><td>wk1</td><td>wk1.s____.enshu.aicit.jp</td><td>172.2_ .___.21</td><td>管理用LAN</td><td>確認用：TeraTerm</td><td>K3s ワーカ1</td></tr>
+<tr><td>k3s-worker2</td><td>wk2</td><td>wk2.s____.enshu.aicit.jp</td><td>172.2_ .___.22</td><td>管理用LAN</td><td>確認用：TeraTerm</td><td>K3s ワーカ2</td></tr>
+<tr><td>k3s-worker3</td><td>wk3</td><td>wk3.s____.enshu.aicit.jp</td><td>172.2_ .___.23</td><td>管理用LAN</td><td>確認用：TeraTerm</td><td>K3s ワーカ3</td></tr>
+<tr><td>alpine-k3s</td><td>dev</td><td>dev.s____.enshu.aicit.jp</td><td>172.2_ .___.51</td><td>管理用LAN</td><td>確認用：TeraTerm, Webブラウザ</td><td>開発環境：K3s, Docker</td></tr>
+</tbody>
+</table>
+<p>【表8.4.2. 管理用 LAN の設計情報】</p>
+<table>
+<thead><tr><th>内容</th><th>値</th></tr></thead>
+<tbody>
+<tr><td>ネットワークアドレス（CIDR表記）</td><td>172.2_ .___.0/24</td></tr>
+<tr><td>ネットワークアドレス</td><td>172.2_ .___.0</td></tr>
+<tr><td>ネットマスク</td><td>255.255.255.0</td></tr>
+<tr><td>ブロードキャストアドレス</td><td>172.2_ .___.255</td></tr>
+<tr><td>デフォルトゲートウェイ</td><td>172.2_ .___.1</td></tr>
+</tbody>
+</table>
+<p>　※ 古い設定では「ネットワークアドレス」＋「ネットマスク」を利用し、比較的新しい設定では「ネットワークアドレス（CIDR表記）」を利用することが多い。</p>
+
+<h2 id="s85">8.5. 総合演習</h2>
+<p>　前述の通り、次章より始めるプライベートクラウド上のシステム開発では、これまでの設定が正しく動作していることが前提となる。 そのため、総合演習では、全てのホストが正しく動いているか点検し、不具合がある場合は正しく修正することで、次回以降の開発に備える。</p>
+
+<h3 id="s851">8.5.1. VM の設定確認</h3>
+<p>　8.4 で整理した情報と以下の資料をもとに、これまでのネットワークの設定を VM 単位で振り、各自の設定に誤りがないか確認せよ。 もし、修正した場合は、関連情報にあるリンクを頼りに、必要に応じてサービスの有効化・再起動やOSの再起動等を行うこと。</p>
+<ul>
+<li><a onclick="navigate('ch8-a1-lb')" style="cursor:pointer;color:var(--link);">A8.1. lb（k3s-lb）の設定例</a></li>
+<li><a onclick="navigate('ch8-a2-sv')" style="cursor:pointer;color:var(--link);">A8.2. sv（k3s-server）の設定例</a></li>
+<li><a onclick="navigate('ch8-a3-wk1')" style="cursor:pointer;color:var(--link);">A8.3. wk1（k3s-worker1）の設定例</a></li>
+<li><a onclick="navigate('ch8-a4-wk2')" style="cursor:pointer;color:var(--link);">A8.4. wk2（k3s-worker2）の設定例</a></li>
+<li><a onclick="navigate('ch8-a5-wk3')" style="cursor:pointer;color:var(--link);">A8.5. wk3（k3s-worker3）の設定例</a></li>
+<li><a onclick="navigate('ch8-a6-dev')" style="cursor:pointer;color:var(--link);">A8.6. dev（alpine-k3s）の設定例</a></li>
+</ul>
+
+<h3 id="s852">8.5.2. 総合演習の振り返り</h3>
+<p>　これまでにやり残した総合演習がある場合は、それらの課題に取り組むこと。 ただし、仮想マシン自体の動作に関わる設定変更（ネットワーク情報の変更等）は実施しないこと。</p>
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch7-a2-trouble')">← A7.2. トラブル対応</a>
+  <a onclick="navigate('ch8-a1-lb')">A8.1. lbの設定 →</a>
+</div>`
+  },
+
+  'ch8-a1-lb': {
+    title: 'A8.1. lbの設定',
+    toc: [{ level: 1, label: 'A8.1. lbの設定', anchor: 'top' }],
+    content: `<h1 id="top">A8.1. lbの設定</h1><p class="meta">（コンテンツを貼り付けてください）</p>
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch8-cloud3')">← 8. クラウド環境を利用したシステム構築1</a>
+  <a onclick="navigate('ch8-a2-sv')">A8.2. svの設定 →</a>
+</div>`
+  },
+
+  'ch8-a2-sv': {
+    title: 'A8.2. svの設定',
+    toc: [{ level: 1, label: 'A8.2. svの設定', anchor: 'top' }],
+    content: `<h1 id="top">A8.2. svの設定</h1><p class="meta">（コンテンツを貼り付けてください）</p>
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch8-a1-lb')">← A8.1. lbの設定</a>
+  <a onclick="navigate('ch8-a3-wk1')">A8.3. wk1の設定 →</a>
+</div>`
+  },
+
+  'ch8-a3-wk1': {
+    title: 'A8.3. wk1の設定',
+    toc: [{ level: 1, label: 'A8.3. wk1の設定', anchor: 'top' }],
+    content: `<h1 id="top">A8.3. wk1の設定</h1><p class="meta">（コンテンツを貼り付けてください）</p>
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch8-a2-sv')">← A8.2. svの設定</a>
+  <a onclick="navigate('ch8-a4-wk2')">A8.4. wk2の設定 →</a>
+</div>`
+  },
+
+  'ch8-a4-wk2': {
+    title: 'A8.4. wk2の設定',
+    toc: [{ level: 1, label: 'A8.4. wk2の設定', anchor: 'top' }],
+    content: `<h1 id="top">A8.4. wk2の設定</h1><p class="meta">（コンテンツを貼り付けてください）</p>
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch8-a3-wk1')">← A8.3. wk1の設定</a>
+  <a onclick="navigate('ch8-a5-wk3')">A8.5. wk3の設定 →</a>
+</div>`
+  },
+
+  'ch8-a5-wk3': {
+    title: 'A8.5. wk3の設定',
+    toc: [{ level: 1, label: 'A8.5. wk3の設定', anchor: 'top' }],
+    content: `<h1 id="top">A8.5. wk3の設定</h1><p class="meta">（コンテンツを貼り付けてください）</p>
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch8-a4-wk2')">← A8.4. wk2の設定</a>
+  <a onclick="navigate('ch8-a6-dev')">A8.6. devの設定 →</a>
+</div>`
+  },
+
+  'ch8-a6-dev': {
+    title: 'A8.6. devの設定',
+    toc: [{ level: 1, label: 'A8.6. devの設定', anchor: 'top' }],
+    content: `<h1 id="top">A8.6. devの設定</h1><p class="meta">（コンテンツを貼り付けてください）</p>
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch8-a5-wk3')">← A8.5. wk3の設定</a>
   <a onclick="navigate('books-ta')">TA 推薦図書 →</a>
 </div>`
   },
