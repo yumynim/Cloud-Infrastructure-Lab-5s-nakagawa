@@ -8473,9 +8473,274 @@ forward-zone:
   },
 
   'ch8-a2-sv': {
-    title: 'A8.2. svの設定',
-    toc: [{ level: 1, label: 'A8.2. svの設定', anchor: 'top' }],
-    content: `<h1 id="top">A8.2. svの設定</h1><p class="meta">（コンテンツを貼り付けてください）</p>
+    title: 'A8.2. sv（k3s-server）の設定例',
+    toc: [
+      { level: 1, label: 'A8.2. sv（k3s-server）の設定例', anchor: 'top' },
+      { level: 2, label: '(a) VirtualBox の設定', anchor: 'sb-vbox' },
+      { level: 2, label: '(0) ディレクトリツリー', anchor: 'sb-dir' },
+      { level: 2, label: '(1) ホストの設定', anchor: 'sb-host' },
+      { level: 3, label: '① ホスト名', anchor: 'sb-hostname' },
+      { level: 3, label: '② 権限昇格', anchor: 'sb-doas' },
+      { level: 2, label: '(2) ネットワークの設定', anchor: 'sb-net' },
+      { level: 3, label: '① ネットワーク情報（静的）', anchor: 'sb-net-static' },
+      { level: 3, label: '② ネットワーク情報（動的）', anchor: 'sb-net-dhcp' },
+      { level: 3, label: '③ 名前解決データベース（静的）', anchor: 'sb-hosts' },
+      { level: 3, label: '④ 名前解決データベース（動的）', anchor: 'sb-resolv' },
+      { level: 2, label: '(3) 権威DNSの設定（BIND9）', anchor: 'sb-dns' },
+      { level: 3, label: '① コンテナ', anchor: 'sb-compose' },
+      { level: 3, label: '② BIND9', anchor: 'sb-named' },
+      { level: 3, label: '③ 正引きゾーン情報（内部向け）', anchor: 'sb-zone-int' },
+      { level: 3, label: '④ 逆引きゾーン情報（内部向け）', anchor: 'sb-zone-rev' },
+      { level: 3, label: '⑤ 正引きゾーン情報（外部向け）', anchor: 'sb-zone-ext' },
+    ],
+    content: `<h1 id="top">A8.2. sv（k3s-server）の設定例</h1>
+<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）</p>
+
+<h2 id="sb-vbox">(a) VirtualBox の設定</h2>
+<p>　VirtualBox のポートフォワーディングの設定は表 A8.2.1 のようになる。</p>
+<p>【表A8.2.1. VirtualBox のポートフォワーディング設定】</p>
+<table>
+<thead><tr><th>アダプタ名</th><th>名前</th><th>プロトコル</th><th>ホストIP</th><th>ホストポート</th><th>ゲストIP</th><th>ゲストポート</th></tr></thead>
+<tbody>
+<tr><td>アダプター2</td><td>SSH</td><td>TCP</td><td>※空欄</td><td>10022</td><td>※空欄</td><td>22</td></tr>
+</tbody>
+</table>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch2-linux1')" style="cursor:pointer;color:var(--link);">第2章 Linuxのシステム管理1 プロセス管理とユーザ管理 - 2.3.6 SSHによる遠隔ログイン</a></li>
+<li><a onclick="navigate('ch2-a2-vbox-pf')" style="cursor:pointer;color:var(--link);">A2.2. VirtualBoxのポートフォワーディング設定方法</a></li>
+</ul>
+
+<h2 id="sb-dir">(0) ディレクトリツリー</h2>
+<p>　これまでの設定で作成・更新したファイルは次の通りとなる。 この資料では、第7章終了段階のこれらのファイルの設定例について紹介する。 なお、関連情報のリンクはシステムの仕組みで参照位置がずれることがあるので、必要に応じてページを前にスクロールして参照すること。</p>
+<p>【図A8.1. 設定ファイルのディレクトリツリー（sv）】</p>
+<div class="cmd"><pre>/
+├── etc
+│   │  (1) ホストの設定
+│   ├── hostname                 ※ ホスト名の設定
+│   ├── doas.d ── 20-wheel.conf  ※ 権限昇格の設定
+│   │
+│   │  (2) ネットワークの設定
+│   ├── network ── interfaces    ※ 静的ネットワーク情報の設定（lo, eth0, eth1 情報）
+│   ├── udhcpc ── udhcpc.conf    ※ 動的ネットワーク情報の設定（DHCP クライアント設定情報）
+│   ├── hosts                    ※ 静的名前解決データベースの設定（LAN内の名前解決データベース）
+│   └── resolv.conf              ※ 動的名前解決データベースの設定（スタブリゾルバの設定, フルリゾルバ情報）
+│
+│      (3) 権威DNSの設定（BIND9）
+└── root ── docker ── bind
+                      ├── docker-compose.yml  ※ bind コンテナの定義
+                      └── config
+                          ├── named.conf      ※ BIND9 の設定ファイル
+                          └── zones
+                              ├── db.s____.enshu.aicit.jp.int  ※ 正引きゾーン情報（内部向け）
+                              ├── db._.2.172.in-addr.arpa.int  ※ 逆引きゾーン情報（内部向け）
+                              └── db.s____.enshu.aicit.jp.ext  ※ 正引きゾーン情報（外部向け）</pre></div>
+
+<h2 id="sb-host">(1) ホストの設定</h2>
+<p>　なお、設定中の下線部は、自分のLANの情報に置き換えること。</p>
+
+<h3 id="sb-hostname">① ホスト名</h3>
+<p>【リスト A8.2.1. /etc/hostname 】</p>
+<div class="cmd"><pre>sv.s____.enshu.aicit.jp</pre></div>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch5-lan2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2 - 5.4. 総合演習 - 5.4.2. ホストdevの設定</a></li>
+<li><a onclick="navigate('ch6-cloud1')" style="cursor:pointer;color:var(--link);">第6章 クラウドサービスの利用法1 - 6.3. ハンズオン1： 環境の確認（dev）- (4) 設定ファイルの確認</a></li>
+</ul>
+<p>　　※ hostname はインストール時に設定。上記関連情報は /etc/hostname に関連した情報。</p>
+
+<h3 id="sb-doas">② 権限昇格</h3>
+<p>【リスト A8.2.2. /etc/doas.d/20-wheel.conf 】</p>
+<div class="cmd"><pre>permit persist :wheel</pre></div>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch2-linux1')" style="cursor:pointer;color:var(--link);">第2章 Linuxのシステム管理1 プロセス管理とユーザ管理 - 2.3.5 管理者代行の設定とdoasコマンドの利用</a></li>
+</ul>
+
+<h2 id="sb-net">(2) ネットワークの設定</h2>
+<p>　なお、設定中の下線部は、自分のLANの情報に置き換えること。</p>
+
+<h3 id="sb-net-static">① ネットワーク情報（静的）</h3>
+<p>【リスト A8.2.3. /etc/network/interfaces】</p>
+<div class="cmd"><pre>auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+        address 172.2_.__.21
+        netmask 255.255.255.0
+        gateway 172.2_.__.1
+
+auto eth1
+iface eth1 inet dhcp</pre></div>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch3-linux2')" style="cursor:pointer;color:var(--link);">第3章 Linuxのシステム管理2 ネットワーク設定 - 3.3.3 DHCP（Dynamic Host Configuration Protocol）の設定</a></li>
+<li><a onclick="navigate('ch3-linux2')" style="cursor:pointer;color:var(--link);">第3章 Linuxのシステム管理2 ネットワーク設定 - 3.3.5 設定ファイルの編集による静的IP設定の永続化（宣言型）</a></li>
+<li><a onclick="navigate('ch3-linux2')" style="cursor:pointer;color:var(--link);">第3章 Linuxのシステム管理2 ネットワーク設定 - 3.3.6 DHCP の再設定（宣言型）</a></li>
+<li><a onclick="navigate('ch5-lan2-2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2(2) - 5.6.5. lb以外のゲートウェイ設定</a></li>
+<li><a onclick="navigate('ch6-cloud1')" style="cursor:pointer;color:var(--link);">第6章 クラウドサービスの利用法1 - 6.3. ハンズオン1： 環境の確認（dev）- (4) 設定ファイルの確認</a></li>
+</ul>
+
+<h3 id="sb-net-dhcp">② ネットワーク情報（動的）</h3>
+<p>【リスト A8.2.4. /etc/udhcpc/udhcpc.conf 】</p>
+<div class="cmd"><pre># Do not overwrite /etc/resolv.conf
+RESOLV_CONF="no"
+
+※ 途中は省略
+
+# List of interfaces where DHCP routes are ignored
+NO_GATEWAY="eth1 wlan1"</pre></div>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch5-lan2-2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2(2) - 5.6.4. lb以外のスタブリゾルバ設定</a></li>
+<li><a onclick="navigate('ch6-cloud1')" style="cursor:pointer;color:var(--link);">第6章 クラウドサービスの利用法1 - 6.3. ハンズオン1： 環境の確認（dev）- (4) 設定ファイルの確認</a></li>
+</ul>
+
+<h3 id="sb-hosts">③ 名前解決データベース（静的）</h3>
+<p>【リスト A8.2.5. /etc/hosts】</p>
+<div class="cmd"><pre>172.2_.__.21    sv.s____.enshu.aicit.jp sv
+127.0.0.1       localhost.localdomain localhost
+::1             localhost.localdomain localhost</pre></div>
+<p>　　※ LAN の設計 2(2) で権威 DNS サーバを構築したので、自ホスト以外の情報は割愛して良い。</p>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch5-lan2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2 - 5.2.2 名前解決の仕組み</a></li>
+<li><a onclick="navigate('ch5-lan2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2 - 5.3. ハンズオン1：hostsの設定</a></li>
+<li><a onclick="navigate('ch6-cloud1')" style="cursor:pointer;color:var(--link);">第6章 クラウドサービスの利用法1 - 6.3. ハンズオン1： 環境の確認（dev）- (4) 設定ファイルの確認</a></li>
+<li><a onclick="navigate('ch5-a1-dns')" style="cursor:pointer;color:var(--link);">A5.1. ホスト上の名前解決の詳細</a></li>
+</ul>
+
+<h3 id="sb-resolv">④ 名前解決データベース（動的）</h3>
+<p>【リスト A8.2.6. /etc/resolv.conf】</p>
+<div class="cmd"><pre>nameserver 172.2_.___.11
+search s____.enshu.aicit.jp</pre></div>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch5-lan2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2 - 5.2.2 名前解決の仕組み</a></li>
+<li><a onclick="navigate('ch5-lan2-2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2(2) - 5.6.4. lb以外のスタブリゾルバ設定</a></li>
+<li><a onclick="navigate('ch6-cloud1')" style="cursor:pointer;color:var(--link);">第6章 クラウドサービスの利用法1 - 6.3. ハンズオン1： 環境の確認（dev）- (4) 設定ファイルの確認</a></li>
+<li><a onclick="navigate('ch5-a1-dns')" style="cursor:pointer;color:var(--link);">A5.1. ホスト上の名前解決の詳細</a></li>
+</ul>
+
+<h2 id="sb-dns">(3) 権威DNSの設定（BIND9）</h2>
+<p>　なお、設定中の下線部は、自分のLANの情報に置き換えること。</p>
+
+<h3 id="sb-compose">① コンテナ</h3>
+<p>【リスト A8.2.7. /root/docker/bind/docker-compose.yml】</p>
+<div class="cmd"><pre>services:
+  bind9:
+    image: internetsystemsconsortium/bind9:9.20　　※ 演習時は「hub.enshu.aicit.jp/internetsystemsconsortium/bind9:9.20」を指定（学内のみアクセス可）
+    container_name: bind9
+    restart: unless-stopped
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - ./config:/etc/bind</pre></div>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch5-lan2-2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2(2)</a></li>
+</ul>
+
+<h3 id="sb-named">② BIND9</h3>
+<p>【リスト A8.2.8. /root/docker/bind/config/named.conf】</p>
+<div class="cmd"><pre>options {
+    directory "/var/cache/bind";
+    listen-on { any; };
+    listen-on-v6 { none; };
+    allow-recursion { none; };
+    allow-transfer { none; };
+    allow-update { none; };
+};
+
+logging {
+    channel docker_stderr {
+        stderr;
+    };
+    category default { docker_stderr; };
+};
+
+acl internal-nets {
+    10.0.0.0/8;
+    172.2_.___.0/24;
+};
+
+view "internal" {
+    match-clients { internal-nets; localhost; };
+    recursion no;
+    zone "s____.enshu.aicit.jp" IN {
+        type master;
+        file "/etc/bind/zones/db.s____.enshu.aicit.jp.int";
+    };
+    zone "__.2_.172.in-addr.arpa" IN {
+        type master;
+        file "/etc/bind/zones/db.__.2_.172.in-addr.arpa.int";
+    };
+};
+
+view "external" {
+    match-clients { any; };
+    recursion no;
+    zone "s____.enshu.aicit.jp" IN {
+        type master;
+        file "/etc/bind/zones/db.s____.enshu.aicit.jp.ext";
+    };
+};</pre></div>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch5-lan2-2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2(2) - 5.8.1. BIND の設定</a></li>
+</ul>
+
+<h3 id="sb-zone-int">③ 正引きゾーン情報（内部向け）</h3>
+<p>【リスト A8.2.9. /root/docker/bind/config/zones/db.s____.enshu.aicit.jp.int】</p>
+<div class="cmd"><pre>$TTL 1h
+@   IN SOA ns.s____.enshu.aicit.jp. root.ns.s____.enshu.aicit.jp. (
+        2026052501 1h 15m 1w 1h )
+    IN NS  ns.s____.enshu.aicit.jp.
+lb  IN A   172.2_.___.1
+ns  IN A   172.2_.___.11
+sv  IN A   172.2_.___.11
+wk1 IN A   172.2_.___.21
+wk2 IN A   172.2_.___.22
+wk3 IN A   172.2_.___.23
+dev IN A   172.2_.___.51</pre></div>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch5-lan2-2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2(2) - 5.8.2. 正引きゾーンの設定</a></li>
+</ul>
+
+<h3 id="sb-zone-rev">④ 逆引きゾーン情報（内部向け）</h3>
+<p>【リスト A8.2.10. /root/docker/bind/config/zones/db.__.2_.172.in-addr.arpa.int】</p>
+<div class="cmd"><pre>$TTL 1h
+@   IN SOA ns.s____.enshu.aicit.jp. root.ns.s____.enshu.aicit.jp. (
+        2026052501 1h 15m 1w 1h )
+    IN NS  ns.s____.enshu.aicit.jp.
+1   IN PTR lb.s____.enshu.aicit.jp.
+11  IN PTR ns.s____.enshu.aicit.jp.
+11  IN PTR sv.s____.enshu.aicit.jp.
+21  IN PTR wk1.s____.enshu.aicit.jp.
+22  IN PTR wk2.s____.enshu.aicit.jp.
+23  IN PTR wk3.s____.enshu.aicit.jp.
+51  IN PTR dev.s____.enshu.aicit.jp.</pre></div>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch5-lan2-2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2(2) - 5.9.3. 逆引きゾーンの設定</a></li>
+</ul>
+
+<h3 id="sb-zone-ext">⑤ 正引きゾーン情報（外部向け）</h3>
+<p>【リスト A8.2.11. /root/docker/bind/config/zones/db.s____.enshu.aicit.jp.ext】</p>
+<div class="cmd"><pre>$TTL 1h
+@   IN SOA ns.s____.enshu.aicit.jp. root.ns.s____.enshu.aicit.jp. (
+        2026052501 1h 15m 1w 1h )
+    IN NS  ns.s____.enshu.aicit.jp.
+ns  IN A   172.31.2_.___
+www IN A   172.31.2_.___</pre></div>
+<p>【関連情報】</p>
+<ul>
+<li><a onclick="navigate('ch5-lan2-2')" style="cursor:pointer;color:var(--link);">第5章 LANの設計2(2) - 5.8.2. 正引きゾーンの設定</a></li>
+</ul>
+
 <div class="page-nav" style="justify-content:space-between;">
   <a onclick="navigate('ch8-a1-lb')">← A8.1. lbの設定</a>
   <a onclick="navigate('ch8-a3-wk1')">A8.3. wk1の設定 →</a>
