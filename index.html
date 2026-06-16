@@ -7848,7 +7848,7 @@ COMMIT</pre></div>
     ],
     content: `<h1 id="top">第8章　クラウド環境を利用したシステム構築1</h1>
 <p class="meta-sub">クラウド構築演習の位置付けと構築したシステムの点検</p>
-<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）</p>
+<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）<br>更新日： 2026年6月15日（月）18:00</p>
 
 <h2 id="s81">8.1. はじめに</h2>
 
@@ -8282,7 +8282,7 @@ VirtualBox NATルータ
       { level: 3, label: '① 動的ネットワーク', anchor: 'sa-unbound-conf' },
     ],
     content: `<h1 id="top">A8.1. lb（k3s-lb）の設定例</h1>
-<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）</p>
+<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）<br>更新日： 2026年6月15日（月）18:00</p>
 
 <h2 id="sa-vbox">(a) VirtualBox の設定</h2>
 <p>　VirtualBox のポートフォワーディングの設定は表 A8.1.1 のようになる。</p>
@@ -8435,6 +8435,13 @@ search s____.enshu.aicit.jp</pre></div>
 [0:0] -A POSTROUTING -o wg0 -j MASQUERADE
 COMMIT
 # Completed on Mon Jun  8 13:09:56 2026</pre></div>
+<p>　　※ 「-A」オプションのついた行のみ確認する（この時、行頭の「[0:0]」の中の数字はそのままで良い）</p>
+<p>　上記の中で不足する内容があったら、以下の中から対応するコマンドを実行し、最後に「iptables save」コマンドで保存する。</p>
+<div class="cmd"><pre>lb# iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+lb# iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE
+lb# iptables -t nat -A PREROUTING  -i wg0  -p udp --dport 53 -j DNAT --to-destination 172.2_.___.11:53
+lb# iptables -t nat -A PREROUTING  -i wg0  -p tcp --dport 53 -j DNAT --to-destination 172.2_.___.11:53
+lb# /etc/init.d/iptables save</pre></div>
 <p>【関連情報】</p>
 <ul>
 <li><a onclick="navigate('ch5-lan2-2')" style="cursor:pointer;color:var(--link);">NATの設定： 第5章 LANの設計2(2) - 5.6.2. ホストlbのゲートウェイ化 - (3) NATルータの設定2： NATの有効化（要管理者権限）</a></li>
@@ -8540,7 +8547,7 @@ forward-zone:
       { level: 3, label: '⑤ 正引きゾーン情報（外部向け）', anchor: 'sb-zone-ext' },
     ],
     content: `<h1 id="top">A8.2. sv（k3s-server）の設定例</h1>
-<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）</p>
+<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）<br>更新日： 2026年6月15日（月）18:00</p>
 
 <h2 id="sb-vbox">(a) VirtualBox の設定</h2>
 <p>　VirtualBox のポートフォワーディングの設定は表 A8.2.1 のようになる。</p>
@@ -8809,7 +8816,7 @@ www IN A   172.31.2_.___</pre></div>
       { level: 3, label: '④ 名前解決データベース（動的）', anchor: 'sc-resolv' },
     ],
     content: `<h1 id="top">A8.3. wk1（k3s-worker1）の設定例</h1>
-<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）</p>
+<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）<br>更新日： 2026年6月15日（月）18:00</p>
 
 <h2 id="sc-vbox">(a) VirtualBox の設定</h2>
 <p>　VirtualBox のポートフォワーディングの設定は表 A8.3.1 のようになる。</p>
@@ -8950,7 +8957,7 @@ search s____.enshu.aicit.jp</pre></div>
       { level: 3, label: '④ 動的名前解決データベース', anchor: 'sd-resolv' },
     ],
     content: `<h1 id="top">A8.4. wk2（k3s-worker2）の設定例</h1>
-<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）</p>
+<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）<br>更新日： 2026年6月15日（月）18:00</p>
 
 <h2 id="sd-vbox">(a) VirtualBox の設定</h2>
 <p>　VirtualBox のポートフォワーディングの設定は表 A8.4.1 のようになる。</p>
@@ -9091,7 +9098,7 @@ search s____.enshu.aicit.jp</pre></div>
       { level: 3, label: '④ 動的名前解決データベース', anchor: 'se-resolv' },
     ],
     content: `<h1 id="top">A8.5. wk3（k3s-worker3）の設定例</h1>
-<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）</p>
+<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）<br>更新日： 2026年6月15日（月）18:00</p>
 
 <h2 id="se-vbox">(a) VirtualBox の設定</h2>
 <p>　VirtualBox のポートフォワーディングの設定は表 A8.5.1 のようになる。</p>
@@ -9232,7 +9239,7 @@ search s____.enshu.aicit.jp</pre></div>
       { level: 3, label: '④ 名前解決データベース（動的）', anchor: 'sf-resolv' },
     ],
     content: `<h1 id="top">A8.6. dev（alpine-k3s）の設定例</h1>
-<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）</p>
+<p class="meta">公開日： 2026年6月13日（土）<br>開講日： 2026年6月15日（月）<br>更新日： 2026年6月15日（月）18:00</p>
 
 <h2 id="sf-vbox">(a) VirtualBox の設定</h2>
 <p>　VirtualBox のポートフォワーディングの設定は表 A8.6.1 のようになる。</p>
