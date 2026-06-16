@@ -6797,7 +6797,7 @@ kube-system       Active   43d</pre></div>
 <tr><td>2</td><td>postgresql-pvc.yaml</td><td>永続ボリューム要求の定義</td><td>永続ボリューム postgresql-data に相当</td></tr>
 <tr><td>3</td><td>postgresql-secret.yaml</td><td>PostgreSQL のシークレット定義</td><td>.env_pgsql に相当</td></tr>
 <tr><td>4</td><td>postgresql-deploy.yaml</td><td>PostgreSQL のデプロイ定義</td><td>docker run コマンドに相当</td></tr>
-<tr><td>5</td><td>postgresql-service.yaml</td><td>PostgreSQL のサービス定義</td><td>ネットワーク公開設定に相当</td></tr>
+<tr><td>5</td><td>postgresql-service.yaml</td><td>PostgreSQL のサービス定義</td><td>内部アクセス用に新規で設定</td></tr>
 </tbody>
 </table>
 <table>
@@ -6815,6 +6815,7 @@ kube-system       Active   43d</pre></div>
 <li>pgAdmin → PostgreSQL Service</li>
 </ul>
 <p>　ここで、PostgreSQL は postgresql-service 経由でアクセスし、pgAdmin は Web ブラウザから利用する。 このように Kubernetes では、役割ごとにリソースを分離して管理することで、大規模システムでも柔軟に運用できる。</p>
+<p>　以下、各定義ファイルの詳細とデプロイ方法について解説する。</p>
 
 <h4>(1) シークレットの作成</h4>
 <p>　リスト 7.5.1, 7.5.2 に示すシークレットファイルは、認証情報などの機密情報を保存するための定義ファイルである。 例えば、ユーザ名やパスワードを YAML ファイルへ直接書くと、第三者に閲覧される危険がある。 そこで Kubernetes では、Secret リソースを利用して機密情報を分離管理する。</p>
@@ -7037,18 +7038,19 @@ dev# kubectl apply -f pgadmin-deploy.yaml
 deployment.apps/pgadmin created</pre></div>
 <div class="cmd"><pre>dev# kubectl get pods -n chat-app -o wide
 ※ 成功時の出力例（STATUS が Running になっていることを確認）
-NAME                          READY   STATUS    RESTARTS   AGE    IP           NODE
-minio-7448f458-wsjcc          1/1     Running   0          7d    10.42.1.37   dev.s24g3199.enshu.aicit.jp
-pgadmin-67f9984468-bdl48      1/1     Running   0          45s    10.42.1.46   dev.s24g3199.enshu.aicit.jp
-postgresql-85678fc4b8-wvs4t   1/1     Running   0          45m    10.42.1.39   dev.s24g3199.enshu.aicit.jp</pre></div>
+NAME                          READY   STATUS    RESTARTS   AGE    IP           NODE                          NOMINATED NODE   READINESS GATES
+minio-7448f458-wsjcc          1/1     Running   0          7d    10.42.1.37   dev.s24g3199.enshu.aicit.jp   &lt;none&gt;           &lt;none&gt;
+pgadmin-67f9984468-bdl48      1/1     Running   0          45s    10.42.1.46   dev.s24g3199.enshu.aicit.jp   &lt;none&gt;           &lt;none&gt;
+postgresql-85678fc4b8-wvs4t   1/1     Running   0          45m    10.42.1.39   dev.s24g3199.enshu.aicit.jp   &lt;none&gt;           &lt;none&gt;</pre></div>
 <div class="cmd"><pre>dev# kubectl get pvc -n chat-app
 ※ 成功時の出力例（STATUS が Pending から Bound に変化する）
-NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-minio-pvc        Bound    pvc-d5150526-a9f7-43cd-8530-751a04b6c9c9   1Gi        RWO            local-path     57m
-postgresql-pvc   Bound    pvc-85b79153-e016-40e4-b8e9-2e1187a14423   1Gi        RWO            local-path     6m14s</pre></div>
+NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+minio-pvc        Bound    pvc-d5150526-a9f7-43cd-8530-751a04b6c9c9   1Gi        RWO            local-path     &lt;unset&gt;                 57m
+postgresql-pvc   Bound    pvc-85b79153-e016-40e4-b8e9-2e1187a14423   1Gi        RWO            local-path     &lt;unset&gt;                 6m14s</pre></div>
 
 <h4>(4) PostgreSQL のサービス定義</h4>
-<p>　リスト 7.5.6 に示す postgresql-service.yaml は、PostgreSQL Pod をクラスタ内部へ固定名で公開するためのサービス定義ファイルである。 Kubernetes の Pod は再起動時に IP アドレスが変化する可能性があるため、Pod を直接利用するのではなく Service を経由して通信する。 本演習では、クラスタ内部からのみアクセス可能な ClusterIP 型で定義し、pgAdmin からホスト名 postgresql-service でアクセスできるようにする。</p>
+<p>　リスト 7.5.6 の postgresql-service.yaml は、PostgreSQL Pod を Kubernetes クラスタ内部から利用するための Service 定義ファイルである。 Kubernetes の Pod は再起動や再配置によって IP アドレスが変化するため、接続先を Pod の IP で直接指定すると通信が不安定になる。そこで Service を用いて、安定した名前 postgresql-service 経由でアクセスできるようにしている。</p>
+<p>　本定義では、type: ClusterIP を指定しているため、PostgreSQL はクラスタ内部専用のサービスとして公開される。 また、selector により app: postgresql のラベルを持つ Pod に通信を振り分ける。ポートは PostgreSQL 標準の 5432 番を使用し、Service の port と Pod 側の targetPort を同じ 5432 に設定している。これにより、クラスタ内の他の Pod から postgresql-service:5432 で PostgreSQL に接続できる。 そのため、Docker Compose 環境で pgAdmin から指定したホスト名「postgresql」は Kubernetes 環境では、「postgresql-service」と置き換える。</p>
 <p>【リスト 7.5.6. PostgreSQL のサービス定義： /root/k3s/chat-app/k3s/postgresql-service.yaml】</p>
 <div class="cmd"><pre>apiVersion: v1
 kind: Service
@@ -7067,22 +7069,18 @@ spec:
 <thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
 <tbody>
 <tr><td>apiVersion</td><td>v1</td><td>Service を定義する Kubernetes API バージョン。</td></tr>
-<tr><td>kind</td><td>Service</td><td>PostgreSQL をクラスタ内部へ公開するための Service。</td></tr>
-<tr><td>metadata.name</td><td>postgresql-service</td><td>Service 名。pgAdmin 等から DNS 名として利用する。</td></tr>
+<tr><td>kind</td><td>Service</td><td>PostgreSQL Pod へ安定してアクセスするための Service。</td></tr>
+<tr><td>metadata.name</td><td>postgresql-service</td><td>Service 名。クラスタ内からこの名前で参照できる。</td></tr>
 <tr><td>metadata.namespace</td><td>chat-app</td><td>chat-app 名前空間に配置する。</td></tr>
-<tr><td>type</td><td>ClusterIP</td><td>クラスタ内部からのみアクセス可能なタイプ。</td></tr>
+<tr><td>type</td><td>ClusterIP</td><td>クラスタ内部専用の Service として公開する。</td></tr>
 <tr><td>selector.app</td><td>postgresql</td><td>app=postgresql の Pod に通信を転送する。</td></tr>
-<tr><td>port</td><td>5432</td><td>Service が受け付けるポート（PostgreSQL 標準ポート）。</td></tr>
+<tr><td>port</td><td>5432</td><td>Service が受け付けるポート。</td></tr>
 <tr><td>targetPort</td><td>5432</td><td>Pod 内の PostgreSQL が待ち受けるポート。</td></tr>
 </tbody>
 </table>
-<div class="cmd"><pre>dev# kubectl apply -f /k3s/chat-app/k3s/postgresql-service.yaml
-service/postgresql-service created</pre></div>
-
-<h4>(5) pgAdmin のサービス定義</h4>
-<p>　リスト 7.5.8 に示す pgadmin-service.yaml は、Pod を Kubernetes クラスタ内部へ公開するための定義ファイルである。 Kubernetes の Pod は、再起動時に IP アドレスが変化する可能性がある。 そのため、Pod を直接利用するのではなく、Service を経由して通信する。</p>
-<p>　本演習では、pgAdmin Pod の 80 番ポートを Service として公開している。 （Docker 環境では、-"8080:80" のポート公開オプションに相当する。）</p>
-<p>【リスト 7.5.8. pgAdmin のサービス定義： /root/k3s/chat-app/k3s/pgadmin-service.yaml】</p>
+<p>　リスト 7.5.7 に示す pgadmin-service.yaml は、Pod を Kubernetes クラスタ内部へ公開するための定義ファイルである。 Kubernetes の Pod は、再起動時に IP アドレスが変化する可能性がある。 そのため、Pod を直接利用するのではなく、Service を経由して通信する。</p>
+<p>　本演習では、pgAdmin Pod の 80 番ポートを Service として公開している。 （Docker 環境では、-"8080:80" のポート公開オプションに相当する。つまり、Docker のポート転送機能を Kubernetes では Service によって実現している。）</p>
+<p>【リスト 7.5.7. pgAdmin のサービス定義： /root/k3s/chat-app/k3s/pgadmin-service.yaml】</p>
 <div class="cmd"><pre>apiVersion: v1
 kind: Service
 metadata:
@@ -7097,7 +7095,7 @@ spec:
       port: 80
       targetPort: 80
       nodePort: 30088</pre></div>
-<p>【表 7.5.9. pgadmin-service.yaml の解説】</p>
+<p>【表 7.5.8. pgadmin-service.yaml の解説】</p>
 <table>
 <thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
 <tbody>
@@ -7107,22 +7105,28 @@ spec:
 <tr><td>metadata.namespace</td><td>chat-app</td><td>chat-app 名前空間に配置する。</td></tr>
 <tr><td>type</td><td>NodePort</td><td>クラスタ外からアクセスできるようにする。</td></tr>
 <tr><td>selector.app</td><td>pgadmin</td><td>app=pgadmin の Pod に通信を転送する。</td></tr>
-<tr><td>port</td><td>80</td><td>Service が受け付けるポート。</td></tr>
+<tr><td>port</td><td>8080</td><td>Service が受け付けるポート。</td></tr>
 <tr><td>targetPort</td><td>80</td><td>Pod 内の pgAdmin が待ち受けるポート。</td></tr>
 <tr><td>nodePort</td><td>30088</td><td>ノード外部へ公開するポート。</td></tr>
 </tbody>
 </table>
-<div class="cmd"><pre>dev# kubectl apply -f pgadmin-service.yaml
-service/pgadmin-service created
+<p>　作成した YAML ファイルのデプロイと確認は次の手順で行う。</p>
+<div class="cmd"><pre>dev# kubectl apply -f postgresql-service.yaml　　※ 適用
+※ 成功時の出力（created が出力される）
+service/postgresql-service created
+dev# kubectl apply -f pgadmin-service.yaml　　　 ※ 適用
+※ 成功時の出力（created が出力される）
+service/pgadmin-service created</pre></div>
+<div class="cmd"><pre>dev# kubectl get service -n chat-app　　※ 確認（名前空間 chat-app を指定）
+※ 出力例
+NAME                 TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)                         AGE
+minio-service        NodePort    10.43.230.52   &lt;none&gt;        9000:30090/TCP,9001:30091/TCP   9d
+pgadmin-service      NodePort    10.43.70.161   &lt;none&gt;        8080:30088/TCP                  6h15m
+postgresql-service   ClusterIP   10.43.56.174   &lt;none&gt;        5432/TCP                        6h15m</pre></div>
 
-dev# kubectl get service -n chat-app
-NAME              TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)                         AGE
-minio-service     NodePort   10.43.230.52   &lt;none&gt;        9000:30090/TCP,9001:30091/TCP   108m
-pgadmin-service   NodePort   10.43.70.161   &lt;none&gt;        8080:30088/TCP                  10s</pre></div>
-
-<h4>(6) PostgreSQL へのポートフォワーディング設定</h4>
-<p>　pgAdmin を K3s 上に公開した場合、前章の MinIO や本章のハンズオン 1 のように、VirtualBox 上のポートフォワーディングを設定することで、ホストマシンからWebブラウザでアクセスできるようにする。 具体的には、表 7.4.3 で設定した内容を表 7.5.10 のように変更することで、ホストマシンからアクセスできるようになる。</p>
-<p>【表 7.5.10. pgAdmin へのポートフォワーディング設定】</p>
+<h4>(5) pgAdmin へのポートフォワーディング設定</h4>
+<p>　pgAdmin を K3s 上に公開した場合、前章の MinIO や本章のハンズオン 1 のように、VirtualBox 上のポートフォワーディングを設定することで、ホストマシンからWebブラウザでアクセスできるようにする。 具体的には、表 7.4.3 で設定した内容を表 7.5.9 のように変更することで、ホストマシンからアクセスできるようになる。</p>
+<p>【表 7.5.9. pgAdmin へのポートフォワーディング設定】</p>
 <table>
 <thead><tr><th>仮想マシン名</th><th>ホスト名</th><th>アダプタ名</th><th>名前</th><th>プロトコル</th><th>ホストポート</th><th>ゲストポート</th></tr></thead>
 <tbody>
@@ -7131,8 +7135,7 @@ pgadmin-service   NodePort   10.43.70.161   &lt;none&gt;        8080:30088/TCP  
 </table>
 
 <h3 id="s753">7.5.3. サービスの利用確認</h3>
-<p>　基本的な確認手順は Docker の時と同じため、ハンズオン1の 7.4.3 の項を参照して取り組むことができる。 ただし、コンテナの実行環境が異なるので、以下の点に注意して読み替える。</p>
-<p>　pgAdmin から PostgreSQL へ接続する際のホスト名は、Docker 環境では <code>postgresql</code> だが、K3s 環境では Service 名である <code>postgresql-service</code> を指定する。</p>
+<p>　基本的な確認手順は Docker の時と同じため、ハンズオン1の 7.4.3 の項を参照して取り組むことができる。ただし、pgAdmin から PostgreSQL に接続するためのホスト名は「postgresql」から「postgresql-service」に変わる。 また、コンテナの実行環境が異なるので、psql コマンドの実行は以下の通り読み替える。</p>
 <p>　なお、テーブル等の作成は総合演習で行うため、この項では実施しなくて良い。</p>
 <div class="cmd"><pre>【PostgreSQL コンテナのコンソールへ接続（Docker）】
 dev# docker compose exec -it postgresql psql -U postgres -d chatapp
@@ -7146,7 +7149,6 @@ dev# kubectl exec -n chat-app -it コンテナ名 -- psql -U postgres -d chatapp
 <div class="cmd"><pre>dev# kubectl delete -f pgadmin-service.yaml
 dev# kubectl delete -f pgadmin-deploy.yaml
 dev# kubectl delete -f pgadmin-secret.yaml
-dev# kubectl delete -f postgresql-service.yaml
 dev# kubectl delete -f postgresql-deploy.yaml
 dev# kubectl delete -f postgresql-secret.yaml
 dev# kubectl delete -f postgresql-pvc.yaml</pre></div>
