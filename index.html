@@ -6316,7 +6316,7 @@ dev# kubectl delete -f namespace.yaml</pre></div>
       { level: 3, label: '7.6.3. messages テーブルの作成', anchor: 's763' },
     ],
     content: `<h1 id="top">第7章　クラウドサービスの利用法2 クラウドデータベース</h1>
-<p class="meta">公開日： 2026年6月6日（土）<br>開講日： 2026年6月8日（月）</p>
+<p class="meta">公開日： 2026年6月6日（土）<br>開講日： 2026年6月8日（月）<br>更新日： 2026年6月15日（月）</p>
 
 <h2 id="s71">7.1. はじめに</h2>
 
@@ -6744,7 +6744,7 @@ INSERT INTO staff (name) VALUES ('user3');</pre></div>
 <img src="images/ch7-fig4.png" alt="図7.5.1 Kubernetesを利用した検証構成" style="max-width:720px;">
 
 <h3 id="s751">7.5.1. 事前準備</h3>
-<p>　事前準備では、K3s 上で PostgreSQL を構築するための確認と作業ディレクトリの作成を行う。 具体的には、図 7.5.2 に示すように、ディレクトリ /root/k3s/chat-app/k3s 下で 8 つのファイルを用意する。</p>
+<p>　事前準備では、K3s 上で PostgreSQL を構築するための確認と作業ディレクトリの作成を行う。 具体的には、図 7.5.2 に示すように、ディレクトリ /root/k3s/chat-app/k3s 下で 7 つのファイルを用意する。</p>
 <p>　これらの定義ファイルをデプロイした後は、図7.5.1 に示したように、ホストマシンの Web ブラウザから pgAdmin へアクセスすることができる。 なお、Web ブラウザを利用した検証手順は Docker の時と同じである。</p>
 <p>【図 7.5.2. ディレクトリ構成】</p>
 <div class="cmd"><pre>/root/k3s
@@ -6783,7 +6783,7 @@ kube-system       Active   43d</pre></div>
 <p>　通常の K3s 環境では local-path がデフォルトの StorageClass として表示される。 PostgreSQL の PersistentVolumeClaim（PVC）は、この StorageClass を利用して永続ボリュームを自動作成する。</p>
 
 <h3 id="s752">7.5.2. デプロイ</h3>
-<p>　Kubernetes では、コンテナを単体で起動するのではなく、複数の設定ファイル（YAML ファイル）を組み合わせてサービス全体を構築する。 本演習では、PostgreSQL と pgAdmin を構築するために、表 7.5.1 に示す 8 個の YAML 形式の定義ファイルを利用する。</p>
+<p>　Kubernetes では、コンテナを単体で起動するのではなく、複数の設定ファイル（YAML ファイル）を組み合わせてサービス全体を構築する。 本演習では、PostgreSQL と pgAdmin を構築するために、表 7.5.1 に示す 7 個の YAML 形式の定義ファイルを利用する。</p>
 <p>【表 7.5.1. ハンズオン 2 で作成する定義ファイル（ディレクトリ： /root/k3s/chat-app/k3s）】</p>
 <table>
 <thead><tr><th colspan="4">共通</th></tr><tr><th>No.</th><th>定義ファイル名</th><th>内容</th><th>Docker との比較</th></tr></thead>
