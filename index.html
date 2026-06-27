@@ -693,6 +693,9 @@
     <a class="nav-item" onclick="navigate('ch8-a4-wk2')">A8.4. wk2の設定</a>
     <a class="nav-item" onclick="navigate('ch8-a5-wk3')">A8.5. wk3の設定</a>
     <a class="nav-item" onclick="navigate('ch8-a6-dev')">A8.6. devの設定</a>
+    <span class="nav-chapter-label">第9章</span>
+    <a class="nav-item" onclick="navigate('ch9-cloud4')">9. クラウド環境を利用したシステム構築2</a>
+    <a class="nav-item" onclick="navigate('ch9-a1-backend')">A9.1. バックエンドサーバの解説</a>
 
     <span class="nav-chapter-label">関連書籍</span>
     <a class="nav-item" onclick="navigate('books-ta')">TA 推薦図書</a>
@@ -9368,6 +9371,1752 @@ search s____.enshu.aicit.jp</pre></div>
 
 <div class="page-nav" style="justify-content:space-between;">
   <a onclick="navigate('ch8-a5-wk3')">← A8.5. wk3の設定</a>
+  <a onclick="navigate('ch9-cloud4')">9. クラウド環境を利用したシステム構築2 →</a>
+</div>`
+  },
+
+  'ch9-cloud4': {
+    title: '第9章 クラウド環境を利用したシステム構築2',
+    toc: [
+      { level: 1, label: '第9章 クラウド環境を利用したシステム構築2', anchor: 'top' },
+      { level: 2, label: '9.1. はじめに', anchor: 's91' },
+      { level: 3, label: '9.1.1. 概要', anchor: 's911' },
+      { level: 3, label: '9.1.2. 前提となる知識・スキル', anchor: 's912' },
+      { level: 3, label: '9.1.3. 到達目標', anchor: 's913' },
+      { level: 3, label: '9.1.4. 本章の操作対象', anchor: 's914' },
+      { level: 2, label: '9.2. バックエンドサーバ', anchor: 's92' },
+      { level: 3, label: '9.2.1. REST API', anchor: 's921' },
+      { level: 3, label: '9.2.2. バックエンドアプリの設計', anchor: 's922' },
+      { level: 2, label: '9.3. ハンズオン1： コンテナイメージの作成', anchor: 's93' },
+      { level: 3, label: '9.3.1. アーカイブファイルの展開', anchor: 's931' },
+      { level: 3, label: '9.3.2. イメージのビルド', anchor: 's932' },
+      { level: 2, label: '9.4. ハンズオン2： K3s 試験環境（dev）', anchor: 's94' },
+      { level: 3, label: '9.4.1. 事前準備', anchor: 's941' },
+      { level: 3, label: '9.4.2. バックエンドサーバのデプロイ', anchor: 's942' },
+      { level: 3, label: '9.4.3. サービスの利用確認', anchor: 's943' },
+      { level: 3, label: '9.4.4. 変更した定義ファイルの更新', anchor: 's944' },
+      { level: 3, label: '9.4.5. 後始末（今回は不要）', anchor: 's945' },
+      { level: 2, label: '9.5. 総合演習', anchor: 's95' },
+      { level: 3, label: '9.5.1. ヘルスチェック', anchor: 's951' },
+      { level: 3, label: '9.5.2. ユーザ登録', anchor: 's952' },
+      { level: 3, label: '9.5.3. ログイン', anchor: 's953' },
+      { level: 3, label: '9.5.4. 自分の情報の取得', anchor: 's954' },
+      { level: 3, label: '9.5.5. チャットルーム一覧の取得', anchor: 's955' },
+      { level: 3, label: '9.5.6. メッセージ送信', anchor: 's956' },
+      { level: 3, label: '9.5.7. メッセージ一覧の取得', anchor: 's957' },
+      { level: 3, label: '9.5.8. スタンプ一覧の取得', anchor: 's958' },
+      { level: 3, label: '9.5.9. スタンプ送信', anchor: 's959' },
+      { level: 3, label: '9.5.10. アイコン画像のアップロード', anchor: 's9510' },
+      { level: 3, label: '9.5.11. アップロードした内容の確認', anchor: 's9511' },
+    ],
+    content: `<h1 id="top">第9章　クラウド環境を利用したシステム構築2</h1>
+<p class="meta-sub">サーバサイドプログラミング</p>
+<p class="meta">公開日：2026年6月20日（土）<br>講義日：2026年6月22日（月）</p>
+
+<h2 id="s91">9.1. はじめに</h2>
+
+<h3 id="s911">9.1.1. 概要</h3>
+<p>　本演習の最終目標は、プライベートクラウド環境上で動作する Web アプリケーション（チャットアプリケーション）のクラスタ実装にある。 その目標に向けて、これまでの章では、Kubernetes（K3s）を利用したコンテナ環境の構築方法や、オブジェクトストレージ（MinIO）、リレーショナルデータベース（PostgreSQL）の利用方法について学んできた。 本章では、それらのサービスを実際に利用する Node.js ベースのバックエンドサーバを作成し、コンテナ化した上で Kubernetes 環境へデプロイすると共にバックエンドサーバが提供する Web API の動作を curl コマンドを利用して確認する。 ここで、バックエンドサーバは、利用者からの HTTP リクエストを受け取り、認証処理やデータベース操作、ファイル管理などの処理を実行し、その結果をクライアントへ返す役割を持つ。</p>
+<p>　本章で作成するチャットアプリケーションのバックエンドでは、ユーザ登録、ログイン認証、メッセージ送信、アイコン画像管理、スタンプ管理などの機能を REST API として実装する。 手順としては、元となるソースコードをダウンロードし、そのソースコードを基に Docker のコンテナイメージを作り、Kubernetes 環境へデプロイする。 この手順を通して、Docker を利用したコンテナイメージの作成方法について学ぶとともに、Kubernetes 上でアプリケーションを公開するために必要な Secret、Deployment、Service の利用方法について理解を深める。</p>
+
+<h3 id="s912">9.1.2. 前提となる知識・スキル</h3>
+<ul>
+<li>第8章までの内容を修了していること</li>
+<li>Alpine Linux 仮想マシンへ SSH 接続できること</li>
+<li>Linux の基本操作（ファイル作成、ディレクトリ移動、エディタ操作）ができること</li>
+<li>Docker および Docker Compose の基本的な利用方法を理解していること</li>
+<li>Kubernetes（K3s）の基本概念（Namespace、Deployment、Pod、Service、Secret）を理解していること</li>
+<li>kubectl の基本操作ができること</li>
+<li>MinIO の基本的な利用方法を理解していること</li>
+<li>PostgreSQL の基本的な利用方法（テーブル、SQL、CRUD 操作）を理解していること</li>
+</ul>
+
+<h3 id="s913">9.1.3. 到達目標</h3>
+<p>【基本】</p>
+<ul>
+<li>バックエンドサーバの役割を説明できる。</li>
+<li>PostgreSQL と連携するバックエンドサーバを作成できる。</li>
+<li>MinIO と連携するバックエンドサーバを作成できる。</li>
+<li>Dockerfile を利用してコンテナイメージを作成できる。</li>
+<li>Kubernetes 上へバックエンドサーバをデプロイできる。</li>
+<li>Secret、Deployment、Service を利用してアプリケーションを構成できる。</li>
+<li>Web ブラウザや API クライアントからバックエンドサービスへアクセスできる。</li>
+</ul>
+
+<h3 id="s914">9.1.4. 本章の操作対象</h3>
+<p>　第9章では、以下の角括弧で囲まれたマシンを利用して、バックエンドサーバを構築する。</p>
+<div class="cmd"><pre>【演習環境の構成（Alpine Linux・Docker・K3s）】
+ベアメタルマシン
+   └─ Windows
+       └─ Oracle VirtualBox
+            │
+            │　【Web アプリケーション用クラウド環境（開発・テスト用）】
+            ├─ [Alpine Linux（alpine-k3s, core:2, ram:4G, hdd:20G）]　　※ dev.s____.enshu.aicit.jp
+            │    ├─ Docker - PostgreSQL, pgAdmin
+            │    └─ K3s（Kubernetes + containerd）- MinIO
+            │
+            │　【Web アプリケーション用クラウド環境（公開用クラスタ）】
+            ├─ Alpine Linux（k3s-lb, core:1, ram:1G, hdd:8G）  　　　　 ※ lb.s____.enshu.aicit.jp
+            │    ├─ HAProxy
+            │    ├─ Unbound
+            │    └─ WireGuard Client
+            ├─ Alpine Linux（k3s-server, core:1, ram:2G, hdd:16G） 　　※ sv.s____.enshu.aicit.jp
+            │    ├─ Docker ── BIND9
+            │    └─ K3s（Kubernetes + containerd）
+            ├─ Alpine Linux（k3s-worker1, core:1, ram:1G, hdd:8G） 　　※ wk1.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            ├─ Alpine Linux（k3s-worker2, core:1, ram:1G, hdd:8G） 　　※ wk2.s____.enshu.aicit.jp
+            │    └─ Docker, K3s（Kubernetes + containerd）
+            └─ Alpine Linux（k3s-worker3, core:1, ram:1G, hdd:8G） 　　※ wk3.s____.enshu.aicit.jp
+                 └─ Docker, K3s（Kubernetes + containerd）</pre></div>
+
+<h2 id="s92">9.2. バックエンドサーバ</h2>
+<p>　この節では、本章で作成するバックエンドサーバの概要について説明すると共に、バックエンドサービスが提供する REST API について簡単に解説する。</p>
+
+<h3 id="s921">9.2.1. REST API</h3>
+<h4>(1) 概要</h4>
+<p>　API（Application Programming Interface）とは、ソフトウェア同士がデータや機能をやり取りするための仕組みである。 API を利用することで、他のシステムが提供する機能やデータを簡単に利用できる。 現在の Web アプリケーションの多くは SPA（Single Page Application）の形態を取っており、 サーバとの通信に HTTP/HTTPS 通信を利用した API（Web API） が利用されている。</p>
+<p>　ここで、Web API はインターネット経由で機能やデータをやり取りする仕組み全般を指し、 REST API は、Web システムで広く利用されている API の設計方式に位置づけられる。</p>
+<p>　REST では、URL を利用してデータ（リソース）を表現し、HTTP/HTTPS 通信によって操作を行う。</p>
+<p>　例えば、以下の URL はユーザー情報を表す。この例のように REST API はシンプルで分かりやすく、また利用しやすいため、多くの Web サービスの通信に採用されている。</p>
+<div class="cmd"><pre>https://api.example.com/users</pre></div>
+<p>　以下に、REST API の代表的な特徴について簡単に説明する。</p>
+
+<h4>(2) リクエストとレスポンス</h4>
+<p>　REST API では、クライアントがサーバーへリクエストを送信し、その結果としてレスポンスを受け取ることで、システム間の情報を交換する。例えば、ユーザー情報の取得を要求すると、サーバーは対象のユーザー情報を返す。</p>
+<p>【リクエスト例】</p>
+<div class="cmd"><pre>GET /users/1</pre></div>
+<p>【レスポンス例】</p>
+<div class="cmd"><pre>{
+  "id": 1,
+  "name": "Taro"
+}</pre></div>
+
+<h4>(3) HTTP メソッド</h4>
+<p>　REST API では、実行したい操作をHTTP メソッドで表現する。 これらの操作は、データベースで行う CRUD 操作や SQL 文と対応している。 例えば、ユーザー情報を取得する場合は GET、ユーザーを新規登録する場合は POST を使用する。また、既存のユーザー情報を変更する場合は PUT、不要になったユーザー情報を削除する場合は DELETE を使用する。</p>
+<p>【表 9.2.1. HTTP メソッドと CRUD / SQL の関係】</p>
+<table>
+<thead><tr><th>HTTP メソッド</th><th>用途</th><th>CRUD</th><th>SQL</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td>データの取得</td><td>Read</td><td>SELECT</td></tr>
+<tr><td>POST</td><td>データの作成</td><td>Create</td><td>INSERT</td></tr>
+<tr><td>PUT</td><td>データの更新</td><td>Update</td><td>UPDATE</td></tr>
+<tr><td>DELETE</td><td>データの削除</td><td>Delete</td><td>DELETE</td></tr>
+</tbody>
+</table>
+<p>　第 7 章でも説明したが、表 9.2.2 に示すように、CRUD はデータに対する基本的な 4 つの操作を表した用語となっている。REST API の HTTP メソッドは、CRUD 操作を HTTP 通信上で表現するための仕組みと考えることができる。例えば、データベースで SELECT 文を実行する処理は、REST API では GET メソッドとして提供されることが多い。</p>
+<p>【表 9.2.2. CRUD の示す意味】</p>
+<table>
+<thead><tr><th>CRUD</th><th>意味</th></tr></thead>
+<tbody>
+<tr><td>Create</td><td>データを作成する</td></tr>
+<tr><td>Read</td><td>データを参照する</td></tr>
+<tr><td>Update</td><td>データを更新する</td></tr>
+<tr><td>Delete</td><td>データを削除する</td></tr>
+</tbody>
+</table>
+
+<h4>(4) URL（エンドポイント）</h4>
+<p>　REST API では、URL によって操作対象を指定する。 これをエンドポイントと呼ぶ。 例えば、全ユーザーを表す場合のリクエスト例は次のようになる。</p>
+<div class="cmd"><pre>/users</pre></div>
+<p>　また、IDが1のユーザーを表すときは次のように指定し、URL（エンドポイント）によって操作対象を明確に表現することで、APIの構造を直感的に理解しやすくなり、利用者と開発者の双方にとって扱いやすい設計を実現することができる。</p>
+<div class="cmd"><pre>/users/1</pre></div>
+<p>　ここで、URL のうち、/users のようなドメイン名以降の部分を一般的にパス（Path）と呼び、REST API の文脈では、パス全体を含めて エンドポイント（Endpoint）と呼ぶことが多い。</p>
+<p>ここで、以下の URL 中に含まれる要素の名称は表 9.2.3 のように示すことができる。</p>
+<div class="cmd"><pre>https://api.example.com/users/1</pre></div>
+<p>【表 9.2.3. URL 中に含まれる要素の名称】</p>
+<table>
+<thead><tr><th>部分</th><th>名称</th></tr></thead>
+<tbody>
+<tr><td>https</td><td>スキーム（プロトコル）</td></tr>
+<tr><td>api.example.com</td><td>ホスト名（ドメイン名）</td></tr>
+<tr><td>/users/1</td><td>パス（Path）</td></tr>
+</tbody>
+</table>
+
+<h4>(5) JSON 形式</h4>
+<p>　REST API では、データの受け渡しにJSON 形式がよく利用される。 JSON はもともと JavaScript のデータ記法の一つであるが、人間が読みやすく、プログラムでも扱いやすいため、多くのAPIで標準的に利用されている。</p>
+<p>【JSON 記述例】</p>
+<div class="cmd"><pre>{
+  "id": 1,
+  "name": "Taro",
+  "age": 20
+}</pre></div>
+
+<h4>(6) ステータスコード</h4>
+<p>　サーバは処理結果を HTTP ステータスコードで返す。 例えば、正常にデータを取得できた場合は「200」を返し、存在しないデータを指定した場合は「404」を返す。</p>
+<p>【表 9.2.4. HTTP の代表的なステータスコード】</p>
+<table>
+<thead><tr><th>コード</th><th>意味</th></tr></thead>
+<tbody>
+<tr><td>200</td><td>成功</td></tr>
+<tr><td>201</td><td>作成成功</td></tr>
+<tr><td>404</td><td>対象が存在しない</td></tr>
+<tr><td>500</td><td>サーバーエラー</td></tr>
+</tbody>
+</table>
+
+<h3 id="s922">9.2.2. バックエンドアプリの設計</h3>
+<p>　Web アプリケーションは一般的に、フロントエンド（Frontend）とバックエンド（Backend）から構成される。フロントエンドは Web ブラウザ上で動作し、利用者との画面表示や入力処理を担当する。一方、バックエンドはサーバ上で動作し、認証、データベースアクセス、ファイル管理などの処理を担当する。</p>
+<p>　利用者が Web ブラウザから操作を行うと、フロントエンドは HTTP または HTTPS を利用してバックエンドへリクエストを送信する。バックエンドはその内容を処理し、必要に応じて PostgreSQL や MinIO などのデータを管理するサーバと連携した後、結果を JSON 形式で返却する。</p>
+<p>　本演習のケースでは、利用者がチャットへメッセージを投稿した場合、バックエンドは PostgreSQL にメッセージ内容を保存する。また、プロフィール画像を変更した場合は MinIO に画像を保存し、その保存先情報を PostgreSQL に記録する。</p>
+<p>　これらの仕組みで実現される、本演習のチャットアプリケーションの構成を図 9.2.1 に示す。</p>
+<p class="caption">図 9.2.1. チャットアプリケーションの構成</p>
+<img src="images/ch9-fig1.png" alt="図9.2.1 チャットアプリケーションの構成" style="max-width:900px;">
+<p>　本章では、Node.js 実行環境上で Express フレームワークを利用して、図 9.2.1 のバックエンドサーバを作成する。 具体的には、後続章で作成するフロントエンドアプリケーションと連携するために、次の REST API を実装する。</p>
+<ul>
+<li>ユーザ登録</li>
+<li>ログイン認証</li>
+<li>ユーザ情報取得</li>
+<li>アイコン画像登録</li>
+<li>チャットルーム一覧取得</li>
+<li>メッセージ送信</li>
+<li>メッセージ一覧取得</li>
+<li>スタンプ一覧取得</li>
+<li>ファイル配信</li>
+</ul>
+<p>　ここで、Node.js は JavaScript をサーバサイドで実行するための実行環境であり、Express は Node.js 上で Web アプリケーションや Web API を簡単に構築するためのフレームワークである。</p>
+<p>　上記一覧の機能を REST API として設計したものを表 9.2.5 に示す。実際の運用も踏まえて、サービスの稼働状態を確認するためのヘルスチェック API も追加している。</p>
+<p>【表 9.2.5. WebAPI 設計情報】</p>
+<table>
+<thead><tr><th>用途</th><th>CRUD</th><th>HTTP メソッド</th><th>パス</th><th>認証</th><th>概要</th></tr></thead>
+<tbody>
+<tr><td>ユーザ登録</td><td>Create</td><td>POST</td><td>/api/register</td><td>不要</td><td>新しいユーザを登録し、認証トークンを発行する</td></tr>
+<tr><td>ログイン認証</td><td>-</td><td>POST</td><td>/api/login</td><td>不要</td><td>ユーザ認証を行い、認証トークンを発行する</td></tr>
+<tr><td>ユーザ情報取得</td><td>Read</td><td>GET</td><td>/api/me</td><td>必要</td><td>ログイン中のユーザ情報を取得する</td></tr>
+<tr><td>アイコン画像登録</td><td>Create / Update</td><td>POST</td><td>/api/me/icon</td><td>必要</td><td>ユーザのアイコン画像を登録または更新する</td></tr>
+<tr><td>チャットルーム一覧取得</td><td>Read</td><td>GET</td><td>/api/rooms</td><td>必要</td><td>利用可能なチャットルーム一覧を取得する</td></tr>
+<tr><td>メッセージ一覧取得</td><td>Read</td><td>GET</td><td>/api/rooms/:roomId/messages</td><td>必要</td><td>指定したチャットルームのメッセージ一覧を取得する</td></tr>
+<tr><td>メッセージ送信</td><td>Create</td><td>POST</td><td>/api/messages</td><td>必要</td><td>テキストまたはスタンプのメッセージを送信する</td></tr>
+<tr><td>スタンプ一覧取得</td><td>Read</td><td>GET</td><td>/api/stamps</td><td>必要</td><td>利用可能なスタンプ一覧を取得する</td></tr>
+<tr><td>ファイル配信</td><td>Read</td><td>GET</td><td>/api/files</td><td>不要</td><td>画像やスタンプなどのファイルを取得する</td></tr>
+<tr><td>ヘルスチェック</td><td>-</td><td>GET</td><td>/healthz</td><td>不要</td><td>サービスの稼働状態を確認する</td></tr>
+</tbody>
+</table>
+<p>　次の節では、これらの機能を持つバックエンドサーバを Docker を利用してコンテナとして実際に実装する。</p>
+
+<h2 id="s93">9.3. ハンズオン1： コンテナイメージの作成</h2>
+<p>　本節では、前節で説明したバックエンドサーバをダウンロードし、Docker コンテナイメージとして利用できる形にする。 一般的に、Web アプリケーションでは、バックエンドサーバは利用者から送られた HTTP リクエストを受け取り、認証処理やデータベース操作、ファイル管理などを実行する。</p>
+<p>　本演習で利用するバックエンドサーバは Node.js と Express を利用して REST API サーバが実装し、第 6,7 章で構築した MinIO および PostgreSQL と連携する。なお、Node.js アプリケーションは複数のソースコードファイルから構成される。 今回作成するサーバでは、利用者認証、データベースアクセス、オブジェクトストレージアクセスなどの機能ごとにソースコードを分割して管理する（package.json, src ディレクトリ内のファイル群）。 また、サーバをKubernetes 上へデプロイするコンテナイメージを作成するため、それに関連したファイル（build-backend.sh, Dockerfile など）も含まれている。</p>
+<p>　これらのファイルの一覧を図 9.3.1 に示す。</p>
+<p>【図 9.3.1. バックエンドサーバのディレクトリ構成】</p>
+<div class="cmd"><pre>※ ダウンロードして展開
+/root/k3s/
+      └── chat-app/
+          │
+          ├── scripts/
+          │   └── build-backend.sh
+          │
+          └── backend/
+              ├── .env
+              ├── Dockerfile
+              ├── package.json
+              └── src/
+                  ├── auth.js
+                  ├── db.js
+                  ├── index.js
+                  ├── minio.js
+                  └── schema.sql</pre></div>
+
+<h3 id="s931">9.3.1. アーカイブファイルの展開</h3>
+<p>　本演習では、自身で構築したプライベートクラウド上で Web アプリケーションをクラスタリングすることを目標としているため、バックエンドサーバの開発は省略し、作成済みのアーカイブファイルを利用する。そのため、余力のある学習者向けにバックエンドサーバの開発の手順を資料 A9-1 に示すので、余力のある受講者は参考にして欲しい。</p>
+<p>　なお、作成済みのアーカイブファイル backend.tar.gz は、dev のシェル上で curl コマンドを利用してダウンロードする（この場合は /tmp ディレクトリにダウンロード）。</p>
+<div class="cmd"><pre>dev# curl https://els.naka.ai.chibatech.ac.jp/static/bef962e2/backend.tar.gz -o /tmp/backend.tar.gz</pre></div>
+<p>　ダウンロードが完了したら、次のコマンドでダウンロードしたアーカイブファイルを「/root/k3s」ディレクトリへ展開する。</p>
+<div class="cmd"><pre>dev# tar xzvf /tmp/backend.tar.gz -C /root/k3s/chat-app
+出力例：
+backend/
+backend/src/
+backend/src/index.js
+backend/src/auth.js
+backend/src/schema.sql
+backend/src/db.js
+backend/src/minio.js
+backend/package.json
+backend/Dockerfile
+backend/.env
+scripts/
+scripts/build-backend.sh</pre></div>
+<p>　アーカイブファイルを展開すると、図 9.3.1 に示すファイル群が作成されるので、 tree コマンドを利用して、実際にファイルが展開されたか確認する。</p>
+<div class="cmd"><pre>dev# tree /root/k3s/chat-app</pre></div>
+<p>　上記のコマンドでは、これまでに作成したファイルも含めて表示される。見づらいと感じる場合は、関係するディレクトリを次のように個別に確認しても良い。</p>
+<div class="cmd"><pre>dev# tree /root/k3s/chat-app/scripts　　※ ファイルが一つなので「ls」コマンドを利用しても良い
+dev# tree /root/k3s/chat-app/backend</pre></div>
+
+<h3 id="s932">9.3.2. イメージのビルド</h3>
+<p>　本演習で利用するバックエンドサーバのコンテナイメージビルドは、シェルスクリプト build-backend.sh によって行う。なお、このスクリプトの実行には、実行時のディレクトリの位置が重要になるため、cd コマンドで /root/k3s/chat-app へ移動してから、シェルスクリプトを実行する。 無事シェルスクリプトの実行が終了すると、コンテナイメージが完成する。</p>
+<div class="cmd"><pre>dev# cd /root/k3s/chat-app
+dev# sh ./scripts/build-backend.sh
+※ 出力例
+[+] Building 22.0s (10/10) FINISHED                                                                                 docker:default
+ =&gt; [internal] load build definition from Dockerfile                                                                          0.0s
+ =&gt; =&gt; transferring dockerfile: 231B                                                                                          0.0s
+ =&gt; [internal] load metadata for hub.enshu.aicit.jp/node:lts-alpine                                                           0.2s
+ =&gt; [internal] load .dockerignore                                                                                             0.0s
+ =&gt; =&gt; transferring context: 2B                                                                                               0.0s
+ =&gt; [1/5] FROM hub.enshu.aicit.jp/node:lts-alpine@sha256:2c05a7dca5128127ca4b7d3c86ccc3a22ad2f7e11b338f190db74acd784222f3     6.7s
+ =&gt; =&gt; resolve hub.enshu.aicit.jp/node:lts-alpine@sha256:2c05a7dca5128127ca4b7d3c86ccc3a22ad2f7e11b338f190db74acd784222f3     0.1s
+ =&gt; =&gt; sha256:c7fd89fde4162535dc23357092d0e79d83508e8176f3aee3aef4a3a20ec1f450 445B / 445B                                    0.0s
+ =&gt; =&gt; sha256:414f813165cf3485659f259590b5a84ca11c7caa28c508fff740ddb7f59f00ef 1.26MB / 1.26MB                                0.2s
+ =&gt; =&gt; sha256:eea2c8c31119c028a455d4bf33b2d3db30709fc3cbe5731a86fd418a2f2a047b 52.28MB / 52.28MB                              4.2s
+ =&gt; =&gt; extracting sha256:eea2c8c31119c028a455d4bf33b2d3db30709fc3cbe5731a86fd418a2f2a047b                                     2.1s
+ =&gt; =&gt; extracting sha256:414f813165cf3485659f259590b5a84ca11c7caa28c508fff740ddb7f59f00ef                                     0.1s
+ =&gt; =&gt; extracting sha256:c7fd89fde4162535dc23357092d0e79d83508e8176f3aee3aef4a3a20ec1f450                                     0.0s
+ =&gt; [internal] load build context                                                                                             0.0s
+ =&gt; =&gt; transferring context: 215B                                                                                             0.0s
+ =&gt; [2/5] WORKDIR /app                                                                                                        0.7s
+ =&gt; [3/5] COPY package.json package-lock.json* ./                                                                             0.1s
+ =&gt; [4/5] RUN npm install --omit=dev                                                                                         10.3s
+ =&gt; [5/5] COPY src ./src                                                                                                      0.2s
+ =&gt; exporting to image                                                                                                        3.2s
+ =&gt; =&gt; exporting layers                                                                                                       1.8s
+ =&gt; =&gt; exporting manifest sha256:239e6b058e38213dc20d1c9459c03d38b918b652acd6e07b10759d40c945a583                             0.0s
+ =&gt; =&gt; exporting config sha256:b9f1b65c83565c5cda4ac436bd1d2686e70dde4a9d873ad124c3c1294e97d336                               0.0s
+ =&gt; =&gt; exporting attestation manifest sha256:8eb4f57e19dcaa5661aca3717f10f6c20dfd2aa382c21f24400e75b568b80473                 0.1s
+ =&gt; =&gt; exporting manifest list sha256:08f8b31e6b85195528c1edf86db0591e538aa8a2781e4c98535581ff494368b4                        0.0s
+ =&gt; =&gt; naming to docker.io/library/chat-backend:1.0.0                                                                         0.0s
+ =&gt; =&gt; unpacking to docker.io/library/chat-backend:1.0.0</pre></div>
+<p>　ビルド完了後は docker images コマンドで作成されたイメージを確認できる。</p>
+<p>　作られたコンテナイメージは次のコマンドで確認する。</p>
+<div class="cmd"><pre>dev# docker images
+※ 出力例
+IMAGE                                      ID             DISK USAGE   CONTENT SIZE   EXTRA
+chat-backend:1.0.0                         3da09d183de0        248MB         58.3MB
+※ 以下省略</pre></div>
+<p>　また、今回実行したシェルスクリプトは、K3sのローカルイメージリポジトリである/var/lib/rancher/k3s/agent/images にイメージ作成後のイメージを自動コピーしているため、Kubernetes デプロイ時に image として chat-backend:1.0.0 を指定するだけで環境を構築することができる。</p>
+<p>　以降、このイメージを利用して、Kubernetes（K3s）上で backend コンテナを実行する方法について説明する。</p>
+
+<h2 id="s94">9.4. ハンズオン2： K3s 試験環境（dev）</h2>
+<p>　本節では、前節で作成したバックエンドサーバのコンテナイメージを Kubernetes（K3s）環境へデプロイする。 Docker 単体で実行する場合は docker run コマンドでコンテナを起動することができるが、Kubernetes では Deployment や Service などのリソースを利用してアプリケーションを管理する。</p>
+<p>　本演習では、これまでに構築した PostgreSQL および MinIO と連携するバックエンドサーバを K3s 上へ展開し、Web ブラウザや Web API クライアントから利用できる状態にする。 この時、バックエンドサーバは単独で動作するわけではなく、図 9.4.1 のように PostgreSQL、MinIO、およびバックエンドサーバが相互に連携して動作する。この図に示すように、利用者から送信されたリクエストはバックエンドサーバが受け取り、必要に応じて PostgreSQL および MinIO と通信する。</p>
+<p>　これらのことから、バックエンドサーバには PostgreSQL および MinIO に関する接続先情報や認証情報が必要となる。</p>
+<p class="caption">図 9.4.1. バックエンドサーバの構成</p>
+<img src="images/ch9-fig2.png" alt="図9.4.1 バックエンドサーバの構成" style="max-width:760px;">
+<p>　K3s 環境で新たに作成するファイルは、図 9.4.2 に示す通り、/root/k3s/chat-app/k3s ディレクトリにある3つとなる。これらのファイルは MinIO や PostgreSQL の時と同様、シークレット、デプロイメント、サービスの 3 つから構成される。ここで、バックエンドサーバには永続性のある固有情報を必要としないため、永続ボリューム要求に関するファイルは作成しない。</p>
+<p>【図 9.4.2. クラスタ定義のディレクトリ構成】</p>
+<div class="cmd"><pre>/root/k3s/
+      └── chat-app/
+          └── k3s/
+               ├── backend-secret.yaml
+               ├── backend-deploy.yaml
+               └── backend-service.yaml</pre></div>
+<p>　これらのファイルに、前章までに作成したファイルと、図9.3.1 に示したファイル群を加えると /root/k3s/chat-app ディレクトリの構成は図 9.4.2 のようになる。</p>
+<p>【図 9.4.3. 全ファイルのディレクトリ構成】</p>
+<div class="cmd"><pre>/root/k3s/
+      └── chat-app/
+          │
+          ├── k3s
+          │    ├── namespace.yaml
+          │    │
+          │    ├── minio-secret.yaml　　　 ※ 作成済
+          │    ├── minio-deploy.yaml　　　  ※ 作成済
+          │    ├── minio-service.yaml　　　 ※ 作成済
+          │    │
+          │    ├── postgresql-pvc.yaml　　　※ 作成済
+          │    ├── postgresql-secret.yaml　※ 作成済
+          │    ├── postgresql-deploy.yaml 　※ 作成済
+          │    ├── postgresql-service.yaml　※ 作成済
+          │    │
+          │    ├── pgadmin-secret.yaml　 　 ※ 作成済
+          │    ├── pgadmin-deploy.yaml　 　 ※ 作成済
+          │    ├── pgadmin-service.yaml　　 ※ 作成済
+          │    │
+          │    ├── backend-secret.yaml
+          │    ├── backend-deploy.yaml
+          │    └── backend-service.yaml
+          │
+          ├── scripts/
+          │   └── build-backend.sh
+          │
+          └── backend/
+              ├── .env.example
+              ├── Dockerfile
+              ├── package.json
+              └── src/
+                  ├── auth.js
+                  ├── db.js
+                  ├── index.js
+                  ├── minio.js
+                  └── schema.sql</pre></div>
+
+<h3 id="s941">9.4.1. 事前準備</h3>
+<p>　本節では、バックエンドサーバを Kubernetes（K3s）環境へデプロイする前に、依存するサービスが正常に動作していることを確認する。 図 9.4.4 に示すように 今回作成したサーバは単独で動作するものではなく、PostgreSQL および MinIO と連携しながら動作する。 そのため、サーバをデプロイする前に、これらのサービスが正常に起動していること、および Kubernetes クラスタが正常に動作していることを確認する必要がある。</p>
+<p class="caption">図 9.4.4. バックエンドアプリの依存関係</p>
+<img src="images/ch9-fig3.png" alt="図9.4.4 バックエンドアプリの依存関係" style="max-width:520px;">
+<p>　具体的には、以下の項目について確認する。</p>
+<ul>
+<li>Kubernetes（K3s） ノードの状態</li>
+<li>名前空間（Namespace）の存在</li>
+<li>MinIO の起動状態</li>
+<li>PostgreSQL の起動状態</li>
+<li>コンテナイメージの存在</li>
+</ul>
+<p>　これらの確認を行うことで、デプロイ後のトラブルを未然に防ぐことができる。</p>
+
+<h4>(1) Kubernetes（K3s） ノードの確認</h4>
+<p>　まず、Kubernetes クラスタが正常に動作していることを確認する。 次のコマンドを実行し、ノードの状態を確認する。 表示されたノードの STATUS が Ready であれば、Kubernetes が正常に動作していると判断できる。</p>
+<div class="cmd"><pre>dev# kubectl get nodes -o wide
+※ 出力例
+NAME                       STATUS   ROLES           AGE   VERSION        INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
+dev.s____.enshu.aicit.jp   Ready    control-plane   21d   v1.34.6+k3s1   172.2_.___.51   &lt;none&gt;        Alpine Linux v3.23   6.18.22-0-lts    containerd://2.2.2-bd1.34</pre></div>
+
+<h4>(2) 名前空間（Namespace）の確認</h4>
+<p>　本演習では、これまでと同様に chat-app 名前空間を利用する。 そのため、名前空間が存在することを確認する。 出力結果に chat-app が表示されれば問題ない。</p>
+<div class="cmd"><pre>dev# kubectl get namespace
+※ 出力例
+dev:~/k3s/chat-app# kubectl get namespace
+NAME              STATUS   AGE
+chat-app          Active   13d
+default           Active   56d
+kube-node-lease   Active   56d
+kube-public       Active   56d
+kube-system       Active   56d</pre></div>
+
+<h4>(3) MinIOの起動確認</h4>
+<p>　アイコン画像やスタンプ画像は MinIO に保存される。 そのため、MinIO が正常に動作していることを確認する。 MinIO 用 Pod が Running 状態になっていることを確認する。</p>
+<div class="cmd"><pre>dev# kubectl get pods -n chat-app
+NAME                          READY   STATUS    RESTARTS      AGE
+minio-7448f458-wsjcc          1/1     Running   9 (64m ago)   13d
+pgadmin-67f9984468-bdl48      1/1     Running   9 (64m ago)   13d
+postgresql-85678fc4b8-7vr7w   1/1     Running   7 (64m ago)   4d6h</pre></div>
+<p>　さらに Service が存在することも確認する。</p>
+<div class="cmd"><pre>dev# kubectl get services -n chat-app
+※出力例
+NAME                 TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)                         AGE
+minio-service        NodePort    10.43.230.52   &lt;none&gt;        9000:30090/TCP,9001:30091/TCP   13d
+pgadmin-service      NodePort    10.43.70.161   &lt;none&gt;        8080:30088/TCP                  13d
+postgresql-service   ClusterIP   10.43.56.174   &lt;none&gt;        5432/TCP                        4d6h</pre></div>
+<p>　必要に応じて MinIO 管理画面へアクセスし、バケットが存在することも確認する。</p>
+
+<h4>(4) PostgreSQLの起動確認</h4>
+<p>　バックエンドサーバは PostgreSQL を利用してユーザ情報やチャットメッセージを管理する。 そのため、前章で構築した PostgreSQL が正常に動作していることを確認する。 PostgreSQL 用 Pod が Running 状態になっていることを確認する。</p>
+<div class="cmd"><pre>dev# kubectl get pods -n chat-app
+※ 出力例
+NAME                          READY   STATUS    RESTARTS      AGE
+minio-7448f458-wsjcc          1/1     Running   9 (64m ago)   13d
+pgadmin-67f9984468-bdl48      1/1     Running   9 (64m ago)   13d
+postgresql-85678fc4b8-7vr7w   1/1     Running   7 (64m ago)   4d6h</pre></div>
+<p>　さらに Service が存在することも確認する。</p>
+<div class="cmd"><pre>dev# kubectl get services -n chat-app
+※出力例
+NAME                 TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)                         AGE
+minio-service        NodePort    10.43.230.52   &lt;none&gt;        9000:30090/TCP,9001:30091/TCP   13d
+pgadmin-service      NodePort    10.43.70.161   &lt;none&gt;        8080:30088/TCP                  13d
+postgresql-service   ClusterIP   10.43.56.174   &lt;none&gt;        5432/TCP                        4d6h</pre></div>
+
+<h4>(5) コンテナイメージの確認</h4>
+<p>　前節で作成したバックエンドサーバのコンテナイメージが存在することを確認する。 一覧の中に、バックエンドサーバ用イメージ chat-backend:1.0.0 が表示されればよい。</p>
+<div class="cmd"><pre>dev# docker images
+※ 出力例
+IMAGE                                      ID             DISK USAGE   CONTENT SIZE   EXTRA
+chat-backend:1.0.0                         3da09d183de0        248MB         58.3MB
+※ 以下省略</pre></div>
+
+<h3 id="s942">9.4.2. バックエンドサーバのデプロイ</h3>
+<p>　この項では、前節の取り組みで作られた chat-backend:1.0.0 コンテナイメージデプロイを行う。 このデプロイに先立ち、図 9.4.5 に示すバックエンドサーバにおける検証構成を理解する。 この図から、図 9.4.1 で示した構成に検証用の構成として、Alpine Linux 上の curl コマンドが追加されたことがわかる。この構成をベースにデプロイ作業を進めていく。</p>
+<p class="caption">図 9.4.5. Kubernetes を利用した検証構成（バックエンド中心）</p>
+<img src="images/ch9-fig4.png" alt="図9.4.5 Kubernetesを利用した検証構成（バックエンド中心）" style="max-width:900px;">
+
+<h4>(1) シークレットの作成</h4>
+<p>　バックエンドサーバは次の認証情報を必要とする。</p>
+<ul>
+<li>PostgreSQL 接続情報</li>
+<li>MinIO 接続情報</li>
+<li>JWT 秘密鍵</li>
+<li>データベースパスワード</li>
+<li>オブジェクトストレージ認証情報</li>
+</ul>
+<p>　これらを Deployment ファイルへ直接記述すると、設定ファイルを閲覧できる利用者に秘密情報が漏洩する危険がある。 そのため Kubernetes では Secret リソースを利用して機密情報を管理する。</p>
+<p>【リスト 9.4.1. シークレットの定義（/root/k3s/chat-app/k3s/backend-secret.yaml）】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-secret
+  namespace: chat-app
+type: Opaque
+stringData:
+  PORT: "3000"
+  POSTGRESQL_ENDPOINT: "postgresql-service"
+  JWT_SECRET: change-this-secret
+  MINIO_ENDPOINT: "minio-service"
+  MINIO_PORT: "9000"
+  MINIO_USE_SSL: "false"
+  MINIO_BUCKET_ICONS: "icons"
+  MINIO_BUCKET_STAMPS: "stamps"</pre></div>
+<p>【表 9.4.1. backend-secret.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>Kubernetes の Core API グループを利用することを示す。</td></tr>
+<tr><td>kind</td><td>Secret</td><td>機密情報や設定値を格納する Secret リソースを定義する。</td></tr>
+<tr><td>metadata</td><td>-</td><td>リソースのメタデータ（識別情報）を定義する。</td></tr>
+<tr><td>name</td><td>backend-secret</td><td>Secret の名前を指定する。Pod や Deployment から参照する際に使用する。</td></tr>
+<tr><td>namespace</td><td>chat-app</td><td>Secret を配置する Kubernetes ネームスペースを指定する。</td></tr>
+<tr><td>type</td><td>Opaque</td><td>任意のキーと値を格納する一般的な Secret タイプを表す。</td></tr>
+<tr><td>stringData</td><td>-</td><td>Secret に格納するデータを平文で定義する。適用時に Kubernetes が自動的に Base64 エンコードして保存する。</td></tr>
+<tr><td>PORT</td><td>3000</td><td>バックエンドサーバが待ち受けるポート番号を指定する。</td></tr>
+<tr><td>POSTGRESQL_ENDPOINT</td><td>postgresql-service</td><td>PostgreSQL サービスの接続先ホスト名（Service 名）を指定する。</td></tr>
+<tr><td>JWT_SECRET</td><td>change-this-secret</td><td>JWT（JSON Web Token）の署名および検証に使用する秘密鍵を指定する。</td></tr>
+<tr><td>MINIO_ENDPOINT</td><td>minio-service</td><td>MinIO オブジェクトストレージの接続先ホスト名（Service 名）を指定する。</td></tr>
+<tr><td>MINIO_PORT</td><td>9000</td><td>MinIO サーバの API ポート番号を指定する。</td></tr>
+<tr><td>MINIO_USE_SSL</td><td>false</td><td>MinIO への接続時に SSL/TLS を利用しないことを示す。</td></tr>
+<tr><td>MINIO_BUCKET_ICONS</td><td>icons</td><td>アイコン画像を保存する MinIO バケット名を指定する。</td></tr>
+<tr><td>MINIO_BUCKET_STAMPS</td><td>stamps</td><td>スタンプ画像を保存する MinIO バケット名を指定する。</td></tr>
+</tbody>
+</table>
+
+<h4>(2) デプロイの定義</h4>
+<p>　Deployment は Kubernetes においてアプリケーションを管理するための主要なリソースであり、次のような役割がある。</p>
+<ul>
+<li>Pod の作成</li>
+<li>Pod の再起動</li>
+<li>Pod の監視</li>
+<li>レプリカ数の維持</li>
+<li>ローリングアップデート</li>
+</ul>
+<p>　そのため、バックエンド Pod が異常終了した場合でも、Deployment が自動的に新しい Pod を生成することができ、アプリケーションの可用性を高めることができる。</p>
+<p>　実際のバックエンドサーバのデプロイメントの定義はリスト 9.4.2 のようになる。 環境変数 env にシークレット上のデータを指定しているために冗長な書き方となっているが、定義ファイルの階層構造はこれまでの Deployment の構成と同様である。</p>
+<p>【リスト 9.4.2. デプロイの定義（/root/k3s/chat-app/k3s/backend-deploy.yaml）】</p>
+<div class="cmd"><pre>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: chat-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: chat-backend:1.0.0
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRESQL_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: POSTGRESQL_ENDPOINT
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_DB
+            - name: DATABASE_URL
+              value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRESQL_ENDPOINT):5432/$(POSTGRES_DB)
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: JWT_SECRET
+            - name: MINIO_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: MINIO_ENDPOINT
+            - name: MINIO_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: MINIO_PORT
+            - name: MINIO_USE_SSL
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: MINIO_USE_SSL
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_USER
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_PASSWORD
+            - name: MINIO_BUCKET_ICONS
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: MINIO_BUCKET_ICONS
+            - name: MINIO_BUCKET_STAMPS
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: MINIO_BUCKET_STAMPS
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10</pre></div>
+<p>【表 9.4.2. backend-deploy.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>apps/v1</td><td>Deployment リソースを管理する Kubernetes Apps API を利用する。</td></tr>
+<tr><td>kind</td><td>Deployment</td><td>Pod のデプロイおよび管理を行う Deployment リソースを定義する。</td></tr>
+<tr><td>metadata.name</td><td>backend</td><td>Deployment 名を指定する。</td></tr>
+<tr><td>metadata.namespace</td><td>chat-app</td><td>Deployment を配置するネームスペースを指定する。</td></tr>
+<tr><td>spec</td><td>-</td><td>Deployment の動作設定を定義する。</td></tr>
+<tr><td>replicas</td><td>1</td><td>Backend Pod を 1 個起動する。</td></tr>
+<tr><td>selector.matchLabels</td><td>app: backend</td><td>Deployment が管理対象とする Pod のラベルを指定する。</td></tr>
+<tr><td>template.metadata.labels</td><td>app: backend</td><td>作成される Pod に付与するラベルを指定する。</td></tr>
+<tr><td>template.spec</td><td>-</td><td>Pod の実行設定を定義する。</td></tr>
+<tr><td>nodeSelector</td><td>コメントアウト</td><td>特定ノードへの配置制御を行う設定である。現在は無効化されている。</td></tr>
+<tr><td>containers</td><td>-</td><td>Pod 内で実行するコンテナ群を定義する。</td></tr>
+<tr><td>name</td><td>backend</td><td>コンテナ名を指定する。</td></tr>
+<tr><td>image</td><td>chat-backend:1.0.0</td><td>バックエンドサーバのコンテナイメージを指定する。</td></tr>
+<tr><td>imagePullPolicy</td><td>Never</td><td>イメージをレジストリから取得せず、ノード上のローカルイメージを利用する。</td></tr>
+<tr><td>containerPort</td><td>3000</td><td>コンテナが待ち受けるポート番号を指定する。</td></tr>
+<tr><td>env</td><td>-</td><td>コンテナへ渡す環境変数を定義する。</td></tr>
+<tr><td>PORT</td><td>3000</td><td>バックエンドサーバの待受ポートを指定する。</td></tr>
+<tr><td>POSTGRES_USER</td><td>postgresql-secret</td><td>PostgreSQL 接続ユーザ名を Secret から取得する。</td></tr>
+<tr><td>POSTGRES_PASSWORD</td><td>postgresql-secret</td><td>PostgreSQL 接続パスワードを Secret から取得する。</td></tr>
+<tr><td>POSTGRESQL_ENDPOINT</td><td>backend-secret</td><td>PostgreSQL Service のホスト名を Secret から取得する。</td></tr>
+<tr><td>POSTGRES_DB</td><td>postgresql-secret</td><td>接続対象データベース名を Secret から取得する。</td></tr>
+<tr><td>DATABASE_URL</td><td>postgres://...</td><td>PostgreSQL 接続用 URL を環境変数から組み立てて生成する。</td></tr>
+<tr><td>JWT_SECRET</td><td>backend-secret</td><td>JWT 認証用の秘密鍵を Secret から取得する。</td></tr>
+<tr><td>MINIO_ENDPOINT</td><td>backend-secret</td><td>MinIO サーバの接続先ホスト名を Secret から取得する。</td></tr>
+<tr><td>MINIO_PORT</td><td>backend-secret</td><td>MinIO のポート番号を Secret から取得する。</td></tr>
+<tr><td>MINIO_USE_SSL</td><td>backend-secret</td><td>MinIO 接続時の SSL/TLS 利用有無を Secret から取得する。</td></tr>
+<tr><td>MINIO_ACCESS_KEY</td><td>minio-secret</td><td>MinIO 接続ユーザ名を Secret から取得する。</td></tr>
+<tr><td>MINIO_SECRET_KEY</td><td>minio-secret</td><td>MinIO 接続パスワードを Secret から取得する。</td></tr>
+<tr><td>MINIO_BUCKET_ICONS</td><td>backend-secret</td><td>アイコン画像保存用バケット名を Secret から取得する。</td></tr>
+<tr><td>MINIO_BUCKET_STAMPS</td><td>backend-secret</td><td>スタンプ画像保存用バケット名を Secret から取得する。</td></tr>
+<tr><td>valueFrom.secretKeyRef</td><td>-</td><td>Secret 内のキーを環境変数としてコンテナへ渡す仕組みである。</td></tr>
+<tr><td>readinessProbe</td><td>-</td><td>Pod がリクエストを受け付け可能かを判定するヘルスチェックを定義する。</td></tr>
+<tr><td>httpGet.path</td><td>/healthz</td><td>ヘルスチェック用エンドポイントを指定する。</td></tr>
+<tr><td>httpGet.port</td><td>3000</td><td>ヘルスチェック対象ポートを指定する。</td></tr>
+<tr><td>initialDelaySeconds</td><td>10</td><td>Pod 起動後 10 秒待ってから Readiness Probe を開始する。</td></tr>
+<tr><td>periodSeconds</td><td>5</td><td>5 秒間隔で Readiness Probe を実行する。</td></tr>
+<tr><td>livenessProbe</td><td>-</td><td>アプリケーションが正常動作しているかを判定するヘルスチェックを定義する。</td></tr>
+<tr><td>httpGet.path</td><td>/healthz</td><td>生存確認用エンドポイントを指定する。</td></tr>
+<tr><td>httpGet.port</td><td>3000</td><td>生存確認対象ポートを指定する。</td></tr>
+<tr><td>initialDelaySeconds</td><td>30</td><td>Pod 起動後 30 秒待ってから Liveness Probe を開始する。</td></tr>
+<tr><td>periodSeconds</td><td>10</td><td>10 秒間隔で Liveness Probe を実行する。</td></tr>
+</tbody>
+</table>
+
+<h4>(3) サービスの定義</h4>
+<p>　Pod は再作成されるたびに IP アドレスが変更される可能性がある。 そのため、他のサービスや利用者が直接 Pod へ接続することは一般的ではない。 そこで Kubernetes では Service を利用して通信先を固定化する。 この時、利用者は Service に対してアクセスするだけでよく、Pod の増減や再配置を意識する必要がない。 また、サービスの対象となる Pod が複数で構成される場合は、自動的にロードバランシングして負荷分散する。</p>
+<p>　サービスとデプロイメントは基本的にセットで利用される。 シークレット情報を持つことも多いため、シークレット、サービス、デプロイメントの3つはセットで考えると良い。</p>
+<p>　実際のバックエンドサーバのサービスの定義をリスト 9.4.3 に示す。 ファイル内の基本的な構造は MinIO や PostgreSQL の時と同様である。</p>
+<p>【リスト 9.4.3. サービスの定義（/root/k3s/chat-app/k3s/backend-service.yaml）】</p>
+<div class="cmd"><pre>apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: chat-app
+spec:
+  type: NodePort
+  selector:
+    app: backend
+  ports:
+    - name: api
+      port: 3000
+      targetPort: 3000
+      nodePort: 30030</pre></div>
+<p>【表 9.4.3. backend-service.yaml の解説】</p>
+<table>
+<thead><tr><th>項目</th><th>値</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>apiVersion</td><td>v1</td><td>Kubernetes Core API を利用することを示す。</td></tr>
+<tr><td>kind</td><td>Service</td><td>Pod へのアクセスを提供する Service リソースを定義する。</td></tr>
+<tr><td>metadata.name</td><td>backend-service</td><td>Service 名を指定する。DNS 名としても利用される。</td></tr>
+<tr><td>metadata.namespace</td><td>chat-app</td><td>Service を配置するネームスペースを指定する。</td></tr>
+<tr><td>spec</td><td>-</td><td>Service の動作設定を定義する。</td></tr>
+<tr><td>type</td><td>NodePort</td><td>Kubernetes ノードの特定ポートを外部公開する Service タイプを指定する。</td></tr>
+<tr><td>selector</td><td>app: backend</td><td>app=backend ラベルを持つ Pod を通信先として選択する。</td></tr>
+<tr><td>ports</td><td>-</td><td>Service が公開するポート情報を定義する。</td></tr>
+<tr><td>name</td><td>api</td><td>ポート設定の識別名を指定する。</td></tr>
+<tr><td>port</td><td>3000</td><td>Service がクラスタ内で公開するポート番号を指定する。</td></tr>
+<tr><td>targetPort</td><td>3000</td><td>転送先となる Pod（コンテナ）のポート番号を指定する。</td></tr>
+<tr><td>nodePort</td><td>30030</td><td>Kubernetes ノード上で外部公開するポート番号を指定する。</td></tr>
+<tr><td>Service DNS名</td><td>backend-service.chat-app.svc.cluster.local</td><td>クラスタ内部からアクセスする際の完全修飾ドメイン名（FQDN）である。</td></tr>
+<tr><td>クラスタ内アクセス</td><td>backend-service:3000</td><td>同一ネームスペース内の Pod からアクセスする際のホスト名とポートである。</td></tr>
+<tr><td>外部アクセス</td><td>&lt;NodeIP&gt;:30030</td><td>Kubernetes ノードの IP アドレスと NodePort を利用して外部からアクセスできる。</td></tr>
+</tbody>
+</table>
+
+<h4>(4) 設定のデプロイ</h4>
+<p>　これまでは、YAML ファイルを作るごとに設定のデプロイを行った。 しかし、デプロイはまとめて行った方が効率的な場合もある。 前述した3つのファイルをひとまとめに管理できるよう、本章では、次のように最後にデプロイを行う。</p>
+<div class="cmd"><pre>dev# kubectl apply -f /root/k3s/chat-app/k3s/backend-secret.yaml
+※出力例
+secret/backend-secret created
+dev# kubectl apply -f /root/k3s/chat-app/k3s/backend-deploy.yaml
+※出力例
+deployment.apps/backend created
+dev# kubectl apply -f /root/k3s/chat-app/k3s/backend-service.yaml
+※出力例
+service/backend-service created</pre></div>
+<p>　また、次のようにデプロイをフォルダ単位で行うこともできる。</p>
+<div class="cmd"><pre>dev# kubectl apply -f /root/k3s/chat-app/k3s
+※出力例
+deployment.apps/backend created
+secret/backend-secret created
+service/backend-service created
+deployment.apps/minio unchanged
+namespace/chat-app unchanged
+deployment.apps/pgadmin unchanged
+secret/pgadmin-secret configured
+service/pgadmin-service unchanged
+deployment.apps/postgresql unchanged
+persistentvolumeclaim/postgresql-pvc unchanged
+secret/postgresql-secret configured
+service/postgresql-service unchanged
+persistentvolumeclaim/minio-pvc unchanged
+secret/minio-secret configured
+service/minio-service unchanged</pre></div>
+
+<h3 id="s943">9.4.3. サービスの利用確認</h3>
+<h4>(1) デプロイ状況の確認</h4>
+<p>　デプロイ後は、Pod が正常に起動していることを確認する。</p>
+<p>【Pod の確認】</p>
+<p>　Pod の起動状態を確認する。正常に動作している場合は STATUS が Running と表示される。</p>
+<div class="cmd"><pre>dev# kubectl get pods -n chat-app
+※出力例
+NAME                          READY   STATUS    RESTARTS       AGE
+backend-7599948bcf-4fpkd      1/1     Running   0              4m55s
+minio-7448f458-wsjcc          1/1     Running   12 (72m ago)   14d
+pgadmin-67f9984468-bdl48      1/1     Running   12 (72m ago)   14d
+postgresql-85678fc4b8-7vr7w   1/1     Running   10 (72m ago)   5d2h</pre></div>
+<p>【Service の確認】</p>
+<p>　Service の作成状態を確認する。Service が作成されていれば、バックエンドサーバへ接続可能な状態となっている。</p>
+<div class="cmd"><pre>dev# kubectl get service -n chat-app
+※出力例
+NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                         AGE
+backend-service      NodePort    10.43.187.221   &lt;none&gt;        3000:30030/TCP                  5m29s
+minio-service        NodePort    10.43.230.52    &lt;none&gt;        9000:30090/TCP,9001:30091/TCP   14d
+pgadmin-service      NodePort    10.43.70.161    &lt;none&gt;        8080:30088/TCP                  14d
+postgresql-service   ClusterIP   10.43.56.174    &lt;none&gt;        5432/TCP                        5d2h</pre></div>
+<p>【ログの確認】</p>
+<p>　ログにはアプリケーション起動状況やエラー情報が出力されるため、トラブルシューティング時に利用する。 正しく動いている場合は、次のような出力が得られる。</p>
+<div class="cmd"><pre>dev# kubectl logs deployment/backend -n chat-app
+※出力例
+&gt; chat-backend@1.0.0 start
+&gt; node src/index.js
+default room: {
+  id: 1,
+  name: 'general',
+  description: 'みんなの会話ルーム',
+  created_at: 2026-06-19T16:13:44.529Z
+}
+backend listening on 3000
+::ffff:10.42.1.1 - - [20/Jun/2026:05:16:35 +0000] "GET /healthz HTTP/1.1" 200 11 "-" "kube-probe/1.34"
+::ffff:10.42.1.1 - - [20/Jun/2026:05:16:40 +0000] "GET /healthz HTTP/1.1" 200 11 "-" "kube-probe/1.34"
+::ffff:10.42.1.1 - - [20/Jun/2026:05:16:45 +0000] "GET /healthz HTTP/1.1" 200 11 "-" "kube-probe/1.34"</pre></div>
+
+<h4>(2) 動作確認</h4>
+<p>　バックエンドサーバが正常に起動したら、API へアクセスして応答を確認する。 多くの Web API では、ヘルスチェック用エンドポイントが用意されているように、 本演習のバックエンドでも /healthz を利用してサービス状態を確認できるようにしている。</p>
+<p>【ヘルスチェック例】</p>
+<div class="cmd"><pre>dev#   curl http://＜バックエンドアドレス＞/healthz
+　　※ dev 上から確認する場合は、ノードポート30030でサービス提供しているため http://localhost:30030/healthz を指定</pre></div>
+<p>　次のような JSON が返却されれば正常に動作している。 バックエンドサーバが起動していても、PostgreSQL や MinIO への接続設定に問題がある場合、Pod は起動しても API が正常に応答しないことがある。 そのため、単に Pod が Running になっていることを確認するだけでなく、実際に API へアクセスして動作確認を行うことが重要である。</p>
+<div class="cmd"><pre>{
+  "ok": true
+}</pre></div>
+
+<h3 id="s944">9.4.4. 変更した定義ファイルの更新</h3>
+<p>　作成した定義ファイルを更新した場合は、再び apply コマンドを実行することで状態を更新することができる。</p>
+<div class="cmd"><pre>dev# kubectl apply -f backend-secret.yaml
+dev# kubectl apply -f backend-deploy.yaml
+dev# kubectl apply -f backend-service.yaml</pre></div>
+
+<h3 id="s945">9.4.5. 後始末（今回は不要）</h3>
+<p>　作成した Deployment および Service を必要に応じて削除することができる。</p>
+<div class="cmd"><pre>dev# kubectl delete -f backend-service.yaml
+dev# kubectl delete -f backend-deploy.yaml
+dev# kubectl delete -f backend-secret.yaml</pre></div>
+
+<h2 id="s95">9.5. 総合演習</h2>
+<p>　本バックエンドは HTTP ベースの REST API が利用できる。 フロントエンドアプリケーションは、これらの API を呼び出すことでユーザ登録、認証、チャット送受信、スタンプ利用、画像アップロードなどの機能を実現する。</p>
+<p>　この総合演習では、 curl コマンドを利用して代表的な操作例を試すことで、構築したシステムの動作確認を行うと共に Web API に関する理解を深める。</p>
+
+<h3 id="s951">9.5.1. ヘルスチェック</h3>
+<p>　次の curl コマンドを利用した REST API リクエストを通して、バックエンドの稼働状態を確認せよ。</p>
+<div class="cmd"><pre>dev$ curl http://localhost:30030/healthz</pre></div>
+<p>【出力例】</p>
+<div class="cmd"><pre>{
+  "ok": true
+}</pre></div>
+
+<h3 id="s952">9.5.2. ユーザ登録</h3>
+<p>　次の curl コマンドを利用した REST API リクエストを通して、新しいユーザを登録せよ。</p>
+<div class="cmd"><pre>dev$ curl -X POST http://localhost:30030/api/register \\
+  -H "Content-Type: application/json" \\
+  -d '{
+        "username":"alice",
+        "password":"password123",
+        "displayName":"Alice"
+      }'</pre></div>
+<p>【出力例】</p>
+<div class="cmd"><pre>{
+  "token":"eyJhbGciOiJIUzI1NiIs...",
+  "user":{
+    "id":1,
+    "username":"alice",
+    "displayName":"Alice",
+    "iconUrl":null
+  }
+}</pre></div>
+
+<h3 id="s953">9.5.3. ログイン</h3>
+<p>　次の curl コマンドを利用した REST API リクエストを通して、登録済みユーザでログインせよ。</p>
+<div class="cmd"><pre>dev$ curl -X POST http://localhost:30030/api/login \\
+  -H "Content-Type: application/json" \\
+  -d '{
+        "username":"alice",
+        "password":"password123"
+      }'</pre></div>
+<p>【出力例】</p>
+<div class="cmd"><pre>{
+  "token":"eyJhbGciOiJIUzI1NiIs...",
+  "user":{
+    "id":1,
+    "username":"alice",
+    "displayName":"Alice",
+    "iconUrl":null
+  }
+}</pre></div>
+<p>　以降の API では、このトークンを利用して認証を行う。</p>
+<div class="cmd"><pre>TOKEN="eyJhbGciOiJIUzI1NiIs..."</pre></div>
+
+<h3 id="s954">9.5.4. 自分の情報の取得</h3>
+<p>　次の curl コマンドを利用した REST API リクエストを通して、ログイン中の利用者情報を取得せよ。</p>
+<div class="cmd"><pre>dev$ curl http://localhost:30030/api/me \\
+  -H "Authorization: Bearer \${TOKEN}"</pre></div>
+<p>【出力例】</p>
+<div class="cmd"><pre>{
+  "id":1,
+  "username":"alice",
+  "displayName":"Alice",
+  "iconUrl":null
+}</pre></div>
+
+<h3 id="s955">9.5.5. チャットルーム一覧の取得</h3>
+<p>　次の curl コマンドを利用した REST API リクエストを通して、利用可能なチャットルームを取得せよ。</p>
+<div class="cmd"><pre>dev$ curl http://localhost:30030/api/rooms \\
+  -H "Authorization: Bearer \${TOKEN}"</pre></div>
+<p>【出力例】</p>
+<div class="cmd"><pre>{
+  "rooms":[
+    {
+      "id":1,
+      "name":"general",
+      "description":"みんなの会話ルーム"
+    },
+    {
+      "id":2,
+      "name":"random",
+      "description":"雑談ルーム"
+    },
+    {
+      "id":3,
+      "name":"dev",
+      "description":"開発メモ用ルーム"
+    }
+  ]
+}</pre></div>
+
+<h3 id="s956">9.5.6. メッセージ送信</h3>
+<p>　次の curl コマンドを利用した REST API リクエストを通して、チャットルームへテキストメッセージを投稿せよ。</p>
+<div class="cmd"><pre>dev$ curl -X POST http://localhost:30030/api/messages \\
+  -H "Authorization: Bearer \${TOKEN}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+        "roomId":1,
+        "text":"こんにちは"
+      }'</pre></div>
+<p>【出力例】</p>
+<div class="cmd"><pre>{
+  "message":{
+    "id":1,
+    "room_id":1,
+    "user_id":1,
+    "message_type":"text",
+    "body":"こんにちは",
+    "object_bucket":null,
+    "object_key":null,
+    "created_at":"2026-06-15T12:34:56.789Z"
+  }
+}</pre></div>
+
+<h3 id="s957">9.5.7. メッセージ一覧の取得</h3>
+<p>　次の curl コマンドを利用した REST API リクエストを通して、ルーム内のメッセージ履歴を取得せよ。</p>
+<div class="cmd"><pre>dev$ curl http://localhost:30030/api/rooms/1/messages \\
+  -H "Authorization: Bearer \${TOKEN}"</pre></div>
+<p>【出力例】</p>
+<div class="cmd"><pre>{
+  "messages":[
+    {
+      "id":1,
+      "roomId":1,
+      "userId":1,
+      "username":"alice",
+      "displayName":"Alice",
+      "messageType":"text",
+      "body":"こんにちは",
+      "objectUrl":null,
+      "createdAt":"2026-06-15T12:34:56.789Z"
+    }
+  ]
+}</pre></div>
+
+<h3 id="s958">9.5.8. スタンプ一覧の取得</h3>
+<p>　次の curl コマンドを利用した REST API リクエストを通して、MinIO に保存されているスタンプ一覧を取得せよ。</p>
+<div class="cmd"><pre>dev$ curl http://localhost:30030/api/stamps \\
+  -H "Authorization: Bearer \${TOKEN}"</pre></div>
+<p>【出力例】</p>
+<div class="cmd"><pre>{
+  "stamps":[
+    {
+      "name":"smile.svg",
+      "size":385,
+      "url":"/api/files?bucket=stamps&amp;object=smile.svg"
+    },
+    {
+      "name":"heart.svg",
+      "size":402,
+      "url":"/api/files?bucket=stamps&amp;object=heart.svg"
+    },
+    {
+      "name":"clap.svg",
+      "size":518,
+      "url":"/api/files?bucket=stamps&amp;object=clap.svg"
+    }
+  ]
+}</pre></div>
+
+<h3 id="s959">9.5.9. スタンプ送信</h3>
+<p>　次の curl コマンドを利用した REST API リクエストを通して、スタンプをメッセージとして送信せよ。</p>
+<div class="cmd"><pre>dev$ curl -X POST http://localhost:30030/api/messages \\
+  -H "Authorization: Bearer \${TOKEN}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+        "roomId":1,
+        "stampObjectKey":"smile.svg"
+      }'</pre></div>
+<p>【出力例】</p>
+<div class="cmd"><pre>{
+  "message":{
+    "id":2,
+    "room_id":1,
+    "user_id":1,
+    "message_type":"stamp",
+    "body":null,
+    "object_bucket":"stamps",
+    "object_key":"smile.svg",
+    "created_at":"2026-06-15T12:40:01.123Z"
+  }
+}</pre></div>
+
+<h3 id="s9510">9.5.10. アイコン画像のアップロード</h3>
+<p>　まず、準備として以下のコマンドで test_icon.png をダウンロードする。</p>
+<div class="cmd"><pre>dev$ curl http://els.naka.ai.chibatech.ac.jp/static/bef962e2/cat_icon.png -o /tmp/cat_icon.png</pre></div>
+<p>　次の curl コマンドを利用した REST API リクエストを通して、利用者アイコンをアップロードせよ。</p>
+<div class="cmd"><pre>dev$ curl -X POST http://localhost:30030/api/me/icon \\
+  -H "Authorization: Bearer \${TOKEN}" \\
+  -F "icon=@/tmp/cat_icon.png"</pre></div>
+<p>【出力例】</p>
+<div class="cmd"><pre>{
+  "iconUrl":"/api/files?bucket=icons&amp;object=user-1/1718430000-acde1234.png"
+}</pre></div>
+
+<p>【応用課題】</p>
+<h3 id="s9511">9.5.11. アップロードした内容の確認</h3>
+<p>　第 6, 7 章で学習した内容を踏まえて、ホストマシン上の Web ブラウザから MinIO Console と pgAdmin にアクセスして、実際に登録されたデータを確認せよ。</p>
+
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch8-a6-dev')">← A8.6. devの設定</a>
+  <a onclick="navigate('ch9-a1-backend')">A9.1. バックエンドサーバの解説 →</a>
+</div>`
+  },
+
+  'ch9-a1-backend': {
+    title: 'A9.1. バックエンドサーバの解説',
+    toc: [
+      { level: 1, label: 'A9.1. バックエンドサーバの解説', anchor: 'top' },
+      { level: 2, label: 'A9.1.1. バックエンドサーバの作成', anchor: 'sa911' },
+      { level: 3, label: '(1) package.jsonの作成', anchor: 'sa911-1' },
+      { level: 3, label: '(2) index.jsの作成', anchor: 'sa911-2' },
+      { level: 3, label: '(3) auth.jsの作成', anchor: 'sa911-3' },
+      { level: 3, label: '(4) schema.sqlの作成', anchor: 'sa911-4' },
+      { level: 3, label: '(5) db.jsの作成', anchor: 'sa911-5' },
+      { level: 3, label: '(6) minio.jsの作成', anchor: 'sa911-6' },
+      { level: 2, label: 'A9.1.2. コンテナイメージのビルド', anchor: 'sa912' },
+      { level: 3, label: '(1) .envの作成', anchor: 'sa912-1' },
+      { level: 3, label: '(2) Dockerfileの作成', anchor: 'sa912-2' },
+      { level: 3, label: '(3) イメージのビルド', anchor: 'sa912-3' },
+    ],
+    content: `<h1 id="top">A9.1. バックエンドサーバの解説</h1>
+<p>　本節では、Node.js を利用してバックエンドサーバを作成し、Docker コンテナイメージとして利用できる形にする。</p>
+<p>　一般的な Web アプリケーションでは、バックエンドサーバは利用者から送られた HTTP リクエストを受け取り、認証処理やデータベース操作、ファイル管理などを実行する。本章では Express を利用した REST API サーバを作成し、PostgreSQL および MinIO と連携する。</p>
+<p>　完成後の構成は図 A9.1.1 のようになる。</p>
+<p class="caption">図 A9.1.1. バックエンドサーバの構成</p>
+<img src="images/a91-fig1.png" alt="図A9.1.1 バックエンドサーバの構成" style="max-width:760px;">
+<p>　なお、Node.js アプリケーションは複数のソースコードファイルから構成される。 今回作成するバックエンドサーバでは、利用者認証、データベースアクセス、オブジェクトストレージアクセスなどの機能ごとにソースコードを分割して管理する。 また、サーバを Kubernetes 上へデプロイするため、Dockerfile を利用してコンテナイメージを作成する。</p>
+
+<h2 id="sa911">A9.1.1. バックエンドサーバの作成</h2>
+<p>　バックエンドサーバは図 A9.1.2 のようなディレクトリ構成で管理する。</p>
+<p>【図 A9.1.2. バックエンドサーバのディレクトリ構成】</p>
+<div class="cmd"><pre>/root/k3s/chat-app/
+          │
+          ├── scripts/
+          │   └── build-backend.sh
+          │
+          └── backend/
+              ├── .env
+              ├── Dockerfile
+              ├── package.json
+              └── src/
+                  ├── index.js
+                  ├── auth.js
+                  ├── db.js
+                  ├── minio.js
+                  └── schema.sql</pre></div>
+
+<h3 id="sa911-1">(1) package.jsonの作成</h3>
+<p>　Node.js アプリケーションでは、利用するライブラリや実行方法を package.json に記述する。 例えば、本演習では次のようなライブラリを利用する。</p>
+<p>【表 A9.1.1. 主な Node.js ライブラリ】</p>
+<table>
+<thead><tr><th>ライブラリ</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td>Express</td><td>Web API サーバ</td></tr>
+<tr><td>pg</td><td>PostgreSQL 接続</td></tr>
+<tr><td>MinIO SDK</td><td>MinIO 接続</td></tr>
+<tr><td>bcryptjs</td><td>パスワードハッシュ化</td></tr>
+<tr><td>jsonwebtoken</td><td>JWT 認証</td></tr>
+<tr><td>multer</td><td>ファイルアップロード</td></tr>
+<tr><td>dotenv</td><td>環境変数読み込み</td></tr>
+<tr><td>cors</td><td>クロスオリジン制御</td></tr>
+</tbody>
+</table>
+<p>　Node.js では npm によって外部ライブラリを容易に利用できるため、 比較的少ないコード量で Web アプリケーションを実装できる。</p>
+<p>【リスト A9.1.1. /root/k3s/chat-app/backend/package.json】</p>
+<div class="cmd"><pre>{
+  "name": "chat-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "minio": "^8.0.4",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.13.1",
+    "uuid": "^11.0.5"
+  }
+}</pre></div>
+
+<h3 id="sa911-2">(2) index.jsの作成</h3>
+<p>　index.js はアプリケーションのエントリポイントであり、バックエンド全体の起動処理を担当する。 具体的には次の処理を行う。</p>
+<ul>
+<li>Express サーバの起動</li>
+<li>API エンドポイントの登録</li>
+<li>PostgreSQL 接続確認</li>
+<li>MinIO 接続確認</li>
+<li>ログ出力設定</li>
+<li>ミドルウェアの登録</li>
+</ul>
+<p>　利用者から HTTP リクエストが送信されると、まずこのプログラムが受け取り、適切な処理へ振り分ける。</p>
+<p>【表 A9.1.2. index.js に実装される機能】</p>
+<table>
+<thead><tr><th>関数名</th><th>種別</th><th>機能の概要</th></tr></thead>
+<tbody>
+<tr><td>publicFileUrl(bucket, objectKey)</td><td>ヘルパー関数</td><td>MinIO 上のファイルを取得するための API URL を生成する。</td></tr>
+<tr><td>getUserByUsername(username)</td><td>DB検索補助</td><td>ユーザー名を指定して users テーブルから 1 件取得する。</td></tr>
+<tr><td>getUserById(id)</td><td>DB検索補助</td><td>ユーザー ID を指定して users テーブルから 1 件取得する。</td></tr>
+<tr><td>getDefaultRoom()</td><td>DB検索補助</td><td>既定ルーム general を取得する。</td></tr>
+<tr><td>/healthz の処理</td><td>ルートハンドラ</td><td>サービスが稼働しているかを確認するヘルスチェック API。</td></tr>
+<tr><td>/api/register の処理</td><td>ルートハンドラ</td><td>新規ユーザー登録を行い、JWT を返す。</td></tr>
+<tr><td>/api/login の処理</td><td>ルートハンドラ</td><td>ログイン認証を行い、JWT を返す。</td></tr>
+<tr><td>/api/me の処理</td><td>ルートハンドラ</td><td>認証済みユーザー自身の情報を返す。</td></tr>
+<tr><td>/api/me/icon の処理</td><td>ルートハンドラ</td><td>ユーザーアイコンを MinIO にアップロードし、DB を更新する。</td></tr>
+<tr><td>/api/rooms の処理</td><td>ルートハンドラ</td><td>ルーム一覧を返す。</td></tr>
+<tr><td>/api/rooms/:roomId/messages の処理</td><td>ルートハンドラ</td><td>指定ルームのメッセージ一覧を返す。</td></tr>
+<tr><td>/api/messages の処理</td><td>ルートハンドラ</td><td>テキストメッセージまたはスタンプメッセージを投稿する。</td></tr>
+<tr><td>/api/stamps の処理</td><td>ルートハンドラ</td><td>利用可能なスタンプ一覧を返す。</td></tr>
+<tr><td>/api/files の処理</td><td>ルートハンドラ</td><td>MinIO 上のファイルをストリームで返す。</td></tr>
+<tr><td>waitForDependencies()</td><td>起動待機処理</td><td>PostgreSQL が利用可能になるまで待つ。</td></tr>
+<tr><td>waitForMinio()</td><td>起動待機処理</td><td>MinIO が利用可能になるまで待つ。</td></tr>
+<tr><td>main()</td><td>起動処理</td><td>DB・MinIO 初期化後にサーバを起動する。</td></tr>
+</tbody>
+</table>
+<p>【リスト A9.1.2. /root/k3s/chat-app/backend/src/index.js】</p>
+<div class="cmd"><pre>require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
+const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const { pool, initDb } = require('./db');
+const { signToken, authMiddleware } = require('./auth');
+const {
+  ICON_BUCKET,
+  STAMP_BUCKET,
+  initMinio,
+  uploadObject,
+  getObjectStream,
+  getObjectInfo,
+  listBucketObjects,
+} = require('./minio');
+const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+const PORT = Number(process.env.PORT || 3000);
+app.use(cors());
+app.use(express.json({ limit: '2mb' }));
+app.use(morgan('combined'));
+function publicFileUrl(bucket, objectKey) {
+  return \`/api/files?bucket=\${encodeURIComponent(bucket)}&amp;object=\${encodeURIComponent(objectKey)}\`;
+}
+async function getUserByUsername(username) {
+  const { rows } = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+  return rows[0] || null;
+}
+async function getUserById(id) {
+  const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+  return rows[0] || null;
+}
+async function getDefaultRoom() {
+  const { rows } = await pool.query("SELECT * FROM rooms WHERE name = 'general' LIMIT 1");
+  return rows[0];
+}
+app.get('/healthz', async (_req, res) =&gt; {
+  res.json({ ok: true });
+});
+app.post('/api/register', async (req, res) =&gt; {
+  try {
+    const { username, password, displayName } = req.body || {};
+    if (!username || !password || !displayName) {
+      return res.status(400).json({ error: 'username, password, displayName は必須です' });
+    }
+    const exists = await getUserByUsername(username);
+    if (exists) {
+      return res.status(409).json({ error: 'そのユーザ名は既に使われています' });
+    }
+    const hash = await bcrypt.hash(password, 10);
+    const { rows } = await pool.query(
+      \`INSERT INTO users (username, password_hash, display_name)
+       VALUES ($1, $2, $3)
+       RETURNING *\`,
+      [username, hash, displayName]
+    );
+    const user = rows[0];
+    const token = signToken(user);
+    return res.status(201).json({
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.display_name,
+        iconUrl: user.icon_bucket &amp;&amp; user.icon_object ? publicFileUrl(user.icon_bucket, user.icon_object) : null,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: '登録に失敗しました' });
+  }
+});
+app.post('/api/login', async (req, res) =&gt; {
+  try {
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ error: 'username, password は必須です' });
+    }
+    const user = await getUserByUsername(username);
+    if (!user) {
+      return res.status(401).json({ error: 'ユーザ名またはパスワードが違います' });
+    }
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) {
+      return res.status(401).json({ error: 'ユーザ名またはパスワードが違います' });
+    }
+    const token = signToken(user);
+    return res.json({
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.display_name,
+        iconUrl: user.icon_bucket &amp;&amp; user.icon_object ? publicFileUrl(user.icon_bucket, user.icon_object) : null,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'ログインに失敗しました' });
+  }
+});
+app.get('/api/me', authMiddleware, async (req, res) =&gt; {
+  const user = await getUserById(req.user.id);
+  if (!user) {
+    return res.status(404).json({ error: 'ユーザが見つかりません' });
+  }
+  return res.json({
+    id: user.id,
+    username: user.username,
+    displayName: user.display_name,
+    iconUrl: user.icon_bucket &amp;&amp; user.icon_object ? publicFileUrl(user.icon_bucket, user.icon_object) : null,
+  });
+});
+app.post('/api/me/icon', authMiddleware, upload.single('icon'), async (req, res) =&gt; {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'icon ファイルが必要です' });
+    }
+    const ext = path.extname(req.file.originalname || '').toLowerCase() || '.png';
+    const safeExt = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'].includes(ext) ? ext : '.png';
+    const objectKey = \`user-\${req.user.id}/\${Date.now()}-\${uuidv4()}\${safeExt}\`;
+    await uploadObject(ICON_BUCKET, objectKey, req.file.buffer, req.file.mimetype || 'application/octet-stream');
+    await pool.query('UPDATE users SET icon_bucket = $1, icon_object = $2 WHERE id = $3', [ICON_BUCKET, objectKey, req.user.id]);
+    return res.json({ iconUrl: publicFileUrl(ICON_BUCKET, objectKey) });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'アイコンのアップロードに失敗しました' });
+  }
+});
+app.get('/api/rooms', authMiddleware, async (_req, res) =&gt; {
+  try {
+    const { rows } = await pool.query('SELECT id, name, description, created_at FROM rooms ORDER BY id ASC');
+    return res.json({ rooms: rows });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'ルーム取得に失敗しました' });
+  }
+});
+app.get('/api/rooms/:roomId/messages', authMiddleware, async (req, res) =&gt; {
+  try {
+    const roomId = Number(req.params.roomId);
+    const { rows } = await pool.query(
+      \`SELECT m.id, m.room_id, m.user_id, m.message_type, m.body, m.object_bucket, m.object_key, m.created_at,
+              u.display_name, u.username, u.icon_bucket, u.icon_object
+         FROM messages m
+         JOIN users u ON u.id = m.user_id
+        WHERE m.room_id = $1
+        ORDER BY m.created_at ASC
+        LIMIT 200\`,
+      [roomId]
+    );
+    return res.json({
+      messages: rows.map((row) =&gt; ({
+        id: row.id,
+        roomId: row.room_id,
+        userId: row.user_id,
+        username: row.username,
+        displayName: row.display_name,
+        messageType: row.message_type,
+        body: row.body,
+        objectBucket: row.object_bucket,
+        objectKey: row.object_key,
+        objectUrl: row.object_bucket &amp;&amp; row.object_key ? publicFileUrl(row.object_bucket, row.object_key) : null,
+        userIconUrl: row.icon_bucket &amp;&amp; row.icon_object ? publicFileUrl(row.icon_bucket, row.icon_object) : null,
+        createdAt: row.created_at,
+      })),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'メッセージ取得に失敗しました' });
+  }
+});
+app.post('/api/messages', authMiddleware, async (req, res) =&gt; {
+  try {
+    const { roomId, text, stampObjectKey, stampBucket } = req.body || {};
+    if (!roomId) {
+      return res.status(400).json({ error: 'roomId は必須です' });
+    }
+    const roomCheck = await pool.query('SELECT id FROM rooms WHERE id = $1', [Number(roomId)]);
+    if (roomCheck.rowCount === 0) {
+      return res.status(404).json({ error: 'ルームが見つかりません' });
+    }
+    let messageType = 'text';
+    let body = null;
+    let objectBucket = null;
+    let objectKey = null;
+    if (stampObjectKey) {
+      messageType = 'stamp';
+      objectBucket = stampBucket || STAMP_BUCKET;
+      objectKey = stampObjectKey;
+    } else if (text &amp;&amp; text.trim()) {
+      body = text.trim();
+    } else {
+      return res.status(400).json({ error: 'text または stampObjectKey が必要です' });
+    }
+    const { rows } = await pool.query(
+      \`INSERT INTO messages (room_id, user_id, message_type, body, object_bucket, object_key)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, room_id, user_id, message_type, body, object_bucket, object_key, created_at\`,
+      [Number(roomId), req.user.id, messageType, body, objectBucket, objectKey]
+    );
+    return res.status(201).json({ message: rows[0] });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'メッセージ送信に失敗しました' });
+  }
+});
+app.get('/api/stamps', authMiddleware, async (_req, res) =&gt; {
+  try {
+    const objects = await listBucketObjects(STAMP_BUCKET);
+    const stamps = objects.map((obj) =&gt; ({
+      name: obj.name,
+      size: obj.size,
+      lastModified: obj.lastModified,
+      url: publicFileUrl(STAMP_BUCKET, obj.name),
+    }));
+    return res.json({ stamps });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'スタンプ一覧の取得に失敗しました' });
+  }
+});
+app.get('/api/files', async (req, res) =&gt; {
+  try {
+    const bucket = String(req.query.bucket || '');
+    const objectKey = String(req.query.object || '');
+    if (!bucket || !objectKey) {
+      return res.status(400).json({ error: 'bucket と object が必要です' });
+    }
+    const info = await getObjectInfo(bucket, objectKey);
+    res.setHeader('Content-Type', info.metaData['content-type'] || 'application/octet-stream');
+    const stream = await getObjectStream(bucket, objectKey);
+    stream.on('error', (error) =&gt; {
+      console.error(error);
+      if (!res.headersSent) {
+        res.status(404).end('not found');
+      }
+    });
+    return stream.pipe(res);
+  } catch (error) {
+    console.error(error);
+    return res.status(404).json({ error: 'ファイルが見つかりません' });
+  }
+});
+async function waitForDependencies() {
+  for (let i = 0; i &lt; 60; i += 1) {
+    try {
+      await pool.query('SELECT 1');
+      return;
+    } catch (error) {
+      console.log(\`waiting for database... attempt \${i + 1}\`);
+      await new Promise((resolve) =&gt; setTimeout(resolve, 2000));
+    }
+  }
+  throw new Error('database is not ready');
+}
+async function waitForMinio() {
+  for (let i = 0; i &lt; 60; i += 1) {
+    try {
+      await initMinio();
+      return;
+    } catch (error) {
+      console.log(\`waiting for minio... attempt \${i + 1}\`);
+      await new Promise((resolve) =&gt; setTimeout(resolve, 2000));
+    }
+  }
+  throw new Error('minio is not ready');
+}
+async function main() {
+  await waitForDependencies();
+  await initDb();
+  await waitForMinio();
+  const defaultRoom = await getDefaultRoom();
+  console.log('default room:', defaultRoom);
+  app.listen(PORT, () =&gt; {
+    console.log(\`backend listening on \${PORT}\`);
+  });
+}
+main().catch((error) =&gt; {
+  console.error(error);
+  process.exit(1);
+});</pre></div>
+
+<h3 id="sa911-3">(3) auth.jsの作成</h3>
+<p>　Web アプリケーションでは、利用者が誰であるかを識別する認証機能が必要となる。 本演習では JWT（JSON Web Token）を利用する。 JWT を利用すると、ログイン成功後に発行されたトークンを利用して、後続の API アクセス時に利用者本人であることを確認できる。 この仕組みにより、毎回パスワードを送信する必要がなくなり、トークンを用いて認証状態を確認できる。</p>
+<p class="caption">図 A9.1.3. JWT 認証の流れ</p>
+<img src="images/a91-fig3.png" alt="図A9.1.3 JWT認証の流れ" style="max-width:560px;">
+<p>【表 A9.1.3. auth.js に実装される機能】</p>
+<table>
+<thead><tr><th>関数名</th><th>種別</th><th>機能の概要</th></tr></thead>
+<tbody>
+<tr><td>signToken(user)</td><td>トークン発行</td><td>ユーザー情報をもとに JWT を生成する。</td></tr>
+<tr><td>authMiddleware(req, res, next)</td><td>ミドルウェア</td><td>リクエストヘッダの JWT を検証し、認証済みユーザー情報を req.user に設定する。</td></tr>
+</tbody>
+</table>
+<p>【リスト A9.1.3. /root/k3s/chat-app/backend/src/auth.js】</p>
+<div class="cmd"><pre>const jwt = require('jsonwebtoken');
+function signToken(user) {
+  return jwt.sign(
+    {
+      sub: String(user.id),
+      username: user.username,
+      displayName: user.display_name,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+}
+function authMiddleware(req, res, next) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (!token) {
+    return res.status(401).json({ error: '認証が必要です' });
+  }
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = {
+      id: Number(payload.sub),
+      username: payload.username,
+      displayName: payload.displayName,
+    };
+    return next();
+  } catch {
+    return res.status(401).json({ error: '認証トークンが無効です' });
+  }
+}
+module.exports = { signToken, authMiddleware };</pre></div>
+
+<h3 id="sa911-4">(4) schema.sqlの作成</h3>
+<p>　バックエンドサーバは PostgreSQL を利用してユーザ情報やチャットメッセージを保存する。 ここで、データベース接続処理は db.js に実装する。 一方、テーブル構造は schema.sql に定義する。 今回のチャットアプリケーションでは、第7章で説明した内容を基に、図 A9.1.4 のようなデータベース構成を利用する。</p>
+<p>　なお、アプリケーション起動時には、必要なテーブルが存在しなければ自動作成される。 また、初期チャットルームも自動登録されるため、初回起動後からすぐに利用することができる。</p>
+<p class="caption">図 A9.1.4. データベース構成</p>
+<img src="images/a91-fig4.png" alt="図A9.1.4 データベース構成" style="max-width:560px;">
+<p>【リスト A9.1.4. /root/k3s/chat-app/backend/src/schema.sql】</p>
+<div class="cmd"><pre>CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  display_name VARCHAR(100) NOT NULL,
+  icon_bucket VARCHAR(100),
+  icon_object TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS rooms (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) UNIQUE NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS messages (
+  id SERIAL PRIMARY KEY,
+  room_id INTEGER NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  message_type VARCHAR(20) NOT NULL DEFAULT 'text',
+  body TEXT,
+  object_bucket VARCHAR(100),
+  object_key TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);</pre></div>
+
+<h3 id="sa911-5">(5) db.jsの作成</h3>
+<p>　このファイルは、PostgreSQL との接続と、起動時のテーブル初期化を担っている。 ソースコード中に出ている pool は関数ではないが、pg.Pool のインスタンスとして PostgreSQL への接続を管理する中心的なオブジェクトになっている。index.js 側では、この pool を使って各種 SQL を実行する。</p>
+<p>【表 A9.1.4. db.js に実装される機能】</p>
+<table>
+<thead><tr><th>関数名</th><th>種別</th><th>機能の概要</th></tr></thead>
+<tbody>
+<tr><td>initDb()</td><td>初期化処理</td><td>users、rooms、messages テーブルを作成し、初期ルームを登録する。</td></tr>
+</tbody>
+</table>
+<p>【リスト A9.1.5. /root/k3s/chat-app/backend/src/db.js】</p>
+<div class="cmd"><pre>const { Pool } = require('pg');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+async function initDb() {
+  await pool.query(\`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(50) UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      display_name VARCHAR(100) NOT NULL,
+      icon_bucket VARCHAR(100),
+      icon_object TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+  \`);
+  await pool.query(\`
+    CREATE TABLE IF NOT EXISTS rooms (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(100) UNIQUE NOT NULL,
+      description TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+  \`);
+  await pool.query(\`
+    CREATE TABLE IF NOT EXISTS messages (
+      id SERIAL PRIMARY KEY,
+      room_id INTEGER NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      message_type VARCHAR(20) NOT NULL DEFAULT 'text',
+      body TEXT,
+      object_bucket VARCHAR(100),
+      object_key TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+  \`);
+  await pool.query(\`
+    INSERT INTO rooms (name, description)
+    VALUES
+      ('general', 'みんなの会話ルーム'),
+      ('random', '雑談ルーム'),
+      ('dev', '開発メモ用ルーム')
+    ON CONFLICT (name) DO NOTHING;
+  \`);
+}
+module.exports = { pool, initDb };</pre></div>
+
+<h3 id="sa911-6">(6) minio.jsの作成</h3>
+<p>　画像ファイルやスタンプファイルは PostgreSQL に直接保存せず、MinIO に保存する。 これは、データベースが構造化データの管理に適している一方で、画像や動画などの大容量ファイル管理にはオブジェクトストレージが適しているためである。 また、バックエンドサーバは MinIO SDK を利用して、ファイルの保存や取得を行う。</p>
+<p>　このように保存先を分離することで、システム全体の性能や管理性を向上させることができる。</p>
+<p class="caption">図 A9.1.5. PostgreSQL と MinIO の役割分担</p>
+<img src="images/a91-fig5.png" alt="図A9.1.5 PostgreSQLとMinIOの役割分担" style="max-width:700px;">
+<p>【表 A9.1.5. minio.js に実装される機能】</p>
+<table>
+<thead><tr><th>関数名</th><th>種別</th><th>機能の概要</th></tr></thead>
+<tbody>
+<tr><td>ensureBucket(bucketName)</td><td>補助関数</td><td>指定バケットがなければ作成する。</td></tr>
+<tr><td>initMinio()</td><td>初期化処理</td><td>バケットを用意し、スタンプ画像を初期登録する。</td></tr>
+<tr><td>uploadObject(bucket, objectKey, buffer, contentType)</td><td>アップロード</td><td>バイナリデータを MinIO に保存する。</td></tr>
+<tr><td>getObjectStream(bucket, objectKey)</td><td>取得処理</td><td>MinIO 上のオブジェクトをストリームとして取得する。</td></tr>
+<tr><td>getObjectInfo(bucket, objectKey)</td><td>取得処理</td><td>オブジェクトのメタ情報を取得する。</td></tr>
+<tr><td>listBucketObjects(bucket)</td><td>一覧取得</td><td>指定バケット内のオブジェクト一覧を返す。</td></tr>
+</tbody>
+</table>
+<p>【リスト A9.1.6. /root/k3s/chat-app/backend/src/minio.js】</p>
+<div class="cmd"><pre>const { Client } = require('minio');
+const client = new Client({
+  endPoint: process.env.MINIO_ENDPOINT,
+  port: Number(process.env.MINIO_PORT || 9000),
+  useSSL: String(process.env.MINIO_USE_SSL || 'false') === 'true',
+  accessKey: process.env.MINIO_ACCESS_KEY,
+  secretKey: process.env.MINIO_SECRET_KEY,
+});
+const ICON_BUCKET = process.env.MINIO_BUCKET_ICONS || 'icons';
+const STAMP_BUCKET = process.env.MINIO_BUCKET_STAMPS || 'stamps';
+const seedStamps = [
+  {
+    key: 'smile.svg',
+    contentType: 'image/svg+xml',
+    body: \`&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"&gt;
+  &lt;rect width="256" height="256" rx="48" fill="#fef3c7"/&gt;
+  &lt;circle cx="92" cy="104" r="14" fill="#111827"/&gt;
+  &lt;circle cx="164" cy="104" r="14" fill="#111827"/&gt;
+  &lt;path d="M84 150c14 18 31 27 44 27s30-9 44-27" fill="none" stroke="#111827" stroke-width="12" stroke-linecap="round"/&gt;
+&lt;/svg&gt;\`,
+  },
+  {
+    key: 'heart.svg',
+    contentType: 'image/svg+xml',
+    body: \`&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"&gt;
+  &lt;rect width="256" height="256" rx="48" fill="#fee2e2"/&gt;
+  &lt;path d="M128 208s-74-45-74-95c0-28 22-51 50-51 16 0 30 8 38 20 8-12 22-20 38-20 28 0 50 23 50 51 0 50-74 95-74 95z" fill="#ef4444"/&gt;
+&lt;/svg&gt;\`,
+  },
+  {
+    key: 'clap.svg',
+    contentType: 'image/svg+xml',
+    body: \`&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"&gt;
+  &lt;rect width="256" height="256" rx="48" fill="#dbeafe"/&gt;
+  &lt;path d="M76 176l26-26 18 18-18 18z" fill="#f59e0b"/&gt;
+  &lt;path d="M102 150l24-24 18 18-24 24z" fill="#fbbf24"/&gt;
+  &lt;path d="M128 126l24-24 18 18-24 24z" fill="#f59e0b"/&gt;
+  &lt;path d="M154 102l18-18 18 18-18 18z" fill="#fbbf24"/&gt;
+  &lt;path d="M84 190c16-16 24-22 44-22h28c20 0 28 6 44 22" fill="none" stroke="#111827" stroke-width="10" stroke-linecap="round"/&gt;
+&lt;/svg&gt;\`,
+  },
+];
+async function ensureBucket(bucketName) {
+  const exists = await client.bucketExists(bucketName);
+  if (!exists) {
+    await client.makeBucket(bucketName);
+  }
+}
+async function initMinio() {
+  await ensureBucket(ICON_BUCKET);
+  await ensureBucket(STAMP_BUCKET);
+  const existing = new Set();
+  const stream = client.listObjectsV2(STAMP_BUCKET, '', true);
+  for await (const obj of stream) {
+    existing.add(obj.name);
+  }
+  for (const stamp of seedStamps) {
+    if (!existing.has(stamp.key)) {
+      await client.putObject(STAMP_BUCKET, stamp.key, Buffer.from(stamp.body), Buffer.byteLength(stamp.body), {
+        'Content-Type': stamp.contentType,
+      });
+    }
+  }
+}
+async function uploadObject(bucket, objectKey, buffer, contentType) {
+  await client.putObject(bucket, objectKey, buffer, buffer.length, {
+    'Content-Type': contentType,
+  });
+}
+async function getObjectStream(bucket, objectKey) {
+  return client.getObject(bucket, objectKey);
+}
+async function getObjectInfo(bucket, objectKey) {
+  return client.statObject(bucket, objectKey);
+}
+async function listBucketObjects(bucket) {
+  const result = [];
+  const stream = client.listObjectsV2(bucket, '', true);
+  for await (const obj of stream) {
+    result.push(obj);
+  }
+  return result;
+}
+module.exports = {
+  client,
+  ICON_BUCKET,
+  STAMP_BUCKET,
+  initMinio,
+  uploadObject,
+  getObjectStream,
+  getObjectInfo,
+  listBucketObjects,
+};</pre></div>
+
+<h2 id="sa912">A9.1.2. コンテナイメージのビルド</h2>
+<h3 id="sa912-1">(1) .envの作成</h3>
+<p>　.env ファイルは、アプリケーションの設定値を環境変数として管理するためのファイルである。 データベース接続情報や認証用秘密鍵、MinIO 接続情報などをソースコードから分離して管理できるため、設定変更時にプログラム本体を修正する必要がない。 また、開発環境や本番環境ごとに異なる設定値を利用できるため、運用管理が容易になる。 本演習では dotenv ライブラリを利用し、起動時に .env ファイルの内容を読み込んでいる。</p>
+<p>　さらに、コンテナ化されたアプリケーションを Kubernetes 上で運用する場合には、環境変数による設定管理が一般的である。 実運用環境では、.env ファイルを直接コンテナへ配置するのではなく、Kubernetes の ConfigMap や Secret を利用して環境変数を Pod に注入することが多い。</p>
+<p>　この演習で構築するバックエンドサーバは、起動時にこれらの環境変数を読み込み、PostgreSQL や MinIO への接続設定を行う。 その際、環境変数を利用することで、コンテナイメージそのものを変更することなく設定を変更できるため、Kubernetes におけるアプリケーション運用との親和性が高い。 特に ConfigMap や Secret を利用することで、設定情報とアプリケーションを分離して管理できるという利点がある。</p>
+<p>【リスト A9.1.7. /root/k3s/chat-app/backend/.env】</p>
+<div class="cmd"><pre>PORT=3000
+DATABASE_URL=postgres://postgres:postgres123@postgresql:5432/chatapp
+JWT_SECRET=change-this-secret
+MINIO_ENDPOINT=minio
+MINIO_PORT=9000
+MINIO_USE_SSL=false
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin123
+MINIO_BUCKET_ICONS=icons
+MINIO_BUCKET_STAMPS=stamps</pre></div>
+<p>【表 A9.1.6. .env の解説】</p>
+<table>
+<thead><tr><th>項目名</th><th>説明</th></tr></thead>
+<tbody>
+<tr><td>PORT</td><td>バックエンドサーバが待ち受ける TCP ポート番号。</td></tr>
+<tr><td>DATABASE_URL</td><td>PostgreSQL へ接続するための接続文字列。Kubernetes 上では postgresql Service をホスト名として利用。</td></tr>
+<tr><td>JWT_SECRET</td><td>JWT の署名および検証に使用する秘密鍵。実運用では Kubernetes Secret などで安全に管理する必要がある。</td></tr>
+<tr><td>MINIO_ENDPOINT</td><td>MinIO サービスのホスト名。Kubernetes 上では Service 名 minio を利用。</td></tr>
+<tr><td>MINIO_PORT</td><td>MinIO サービスの待受ポート番号。</td></tr>
+<tr><td>MINIO_USE_SSL</td><td>MinIO 接続時に HTTPS を利用するかどうかを指定。</td></tr>
+<tr><td>MINIO_ACCESS_KEY</td><td>MinIO 接続用のアクセスキー。</td></tr>
+<tr><td>MINIO_SECRET_KEY</td><td>MinIO 接続用のシークレットキー。</td></tr>
+<tr><td>MINIO_BUCKET_ICONS</td><td>ユーザアイコンを保存するバケット名。</td></tr>
+<tr><td>MINIO_BUCKET_STAMPS</td><td>スタンプ画像を保存するバケット名。</td></tr>
+</tbody>
+</table>
+
+<h3 id="sa912-2">(2) Dockerfileの作成</h3>
+<p>　バックエンドサーバを Kubernetes 上で実行するためには、コンテナイメージを作成する必要がある。 ここで、Dockerfile は、そのコンテナイメージの設計図に相当し、次のような処理を定義する。 そのため、作成した Dockerfile を利用することで、開発環境と本番環境で同一のアプリケーション実行環境を再現できる。</p>
+<ul>
+<li>Node.js 実行環境の準備</li>
+<li>アプリケーションファイルのコピー</li>
+<li>ライブラリのインストール</li>
+<li>起動コマンドの設定</li>
+</ul>
+<p>【リスト A9.1.8. /root/k3s/chat-app/backend/Dockerfile】</p>
+<div class="cmd"><pre>FROM hub.enshu.aicit.jp/node:lts-alpine
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm install --omit=dev
+COPY src ./src
+ENV NODE_ENV=production
+EXPOSE 3000
+CMD ["npm", "start"]</pre></div>
+
+<h3 id="sa912-3">(3) イメージのビルド</h3>
+<p>　本演習で利用するバックエンドサーバのコンテナイメージビルドは、シェルスクリプト build-backend.sh によって行う。 ここで、build-backend.sh は、次のように定義される。</p>
+<p>【リスト A9.1.9. /root/k3s/chat-app/scripts/build-backend.sh】</p>
+<div class="cmd"><pre>#!/usr/bin/env sh
+set -euo pipefail
+MYAPP="chat-backend:1.0.0"
+SAVEDIR="/var/lib/rancher/k3s/agent/images"
+docker build -t $MYAPP ./backend
+mkdir -p $SAVEDIR
+docker save $MYAPP -o $SAVEDIR/$(echo $MYAPP | sed -e 's/:/-/g').tar</pre></div>
+<p>　このスクリプトの実行には、実行時のディレクトリの位置が重要になるため、事前に cd コマンドで/root/k3s/chat-app へ移動してから、シェルスクリプトを実行する。 無事シェルスクリプトの実行が終了すると、コンテナイメージが完成する。</p>
+<div class="cmd"><pre>dev# cd /root/k3s/chat-app
+dev# sh ./scripts/build-backend.sh
+※ 出力例
+[+] Building 22.0s (10/10) FINISHED                                                                                 docker:default
+ =&gt; [internal] load build definition from Dockerfile                                                                          0.0s
+ =&gt; =&gt; transferring dockerfile: 231B                                                                                          0.0s
+ =&gt; [internal] load metadata for hub.enshu.aicit.jp/node:lts-alpine                                                           0.2s
+ =&gt; [internal] load .dockerignore                                                                                             0.0s
+ =&gt; =&gt; transferring context: 2B                                                                                               0.0s
+ =&gt; [1/5] FROM hub.enshu.aicit.jp/node:lts-alpine@sha256:2c05a7dca5128127ca4b7d3c86ccc3a22ad2f7e11b338f190db74acd784222f3     6.7s
+ =&gt; =&gt; resolve hub.enshu.aicit.jp/node:lts-alpine@sha256:2c05a7dca5128127ca4b7d3c86ccc3a22ad2f7e11b338f190db74acd784222f3     0.1s
+ =&gt; =&gt; sha256:c7fd89fde4162535dc23357092d0e79d83508e8176f3aee3aef4a3a20ec1f450 445B / 445B                                    0.0s
+ =&gt; =&gt; sha256:414f813165cf3485659f259590b5a84ca11c7caa28c508fff740ddb7f59f00ef 1.26MB / 1.26MB                                0.2s
+ =&gt; =&gt; sha256:eea2c8c31119c028a455d4bf33b2d3db30709fc3cbe5731a86fd418a2f2a047b 52.28MB / 52.28MB                              4.2s
+ =&gt; =&gt; extracting sha256:eea2c8c31119c028a455d4bf33b2d3db30709fc3cbe5731a86fd418a2f2a047b                                     2.1s
+ =&gt; =&gt; extracting sha256:414f813165cf3485659f259590b5a84ca11c7caa28c508fff740ddb7f59f00ef                                     0.1s
+ =&gt; =&gt; extracting sha256:c7fd89fde4162535dc23357092d0e79d83508e8176f3aee3aef4a3a20ec1f450                                     0.0s
+ =&gt; [internal] load build context                                                                                             0.0s
+ =&gt; =&gt; transferring context: 215B                                                                                             0.0s
+ =&gt; [2/5] WORKDIR /app                                                                                                        0.7s
+ =&gt; [3/5] COPY package.json package-lock.json* ./                                                                             0.1s
+ =&gt; [4/5] RUN npm install --omit=dev                                                                                         10.3s
+ =&gt; [5/5] COPY src ./src                                                                                                      0.2s
+ =&gt; exporting to image                                                                                                        3.2s
+ =&gt; =&gt; exporting layers                                                                                                       1.8s
+ =&gt; =&gt; exporting manifest sha256:239e6b058e38213dc20d1c9459c03d38b918b652acd6e07b10759d40c945a583                             0.0s
+ =&gt; =&gt; exporting config sha256:b9f1b65c83565c5cda4ac436bd1d2686e70dde4a9d873ad124c3c1294e97d336                               0.0s
+ =&gt; =&gt; exporting attestation manifest sha256:8eb4f57e19dcaa5661aca3717f10f6c20dfd2aa382c21f24400e75b568b80473                 0.1s
+ =&gt; =&gt; exporting manifest list sha256:08f8b31e6b85195528c1edf86db0591e538aa8a2781e4c98535581ff494368b4                        0.0s
+ =&gt; =&gt; naming to docker.io/library/chat-backend:1.0.0                                                                         0.0s
+ =&gt; =&gt; unpacking to docker.io/library/chat-backend:1.0.0</pre></div>
+<p>　ビルド完了後は docker images コマンドで作成されたイメージを確認できる。</p>
+<p>　作られたコンテナイメージは次のコマンドで確認する。</p>
+<div class="cmd"><pre>dev# docker images
+※ 出力例
+IMAGE                                      ID             DISK USAGE   CONTENT SIZE   EXTRA
+chat-backend:1.0.0                         3da09d183de0        248MB         58.3MB
+※ 以下省略</pre></div>
+<p>　また、今回実行したシェルスクリプトは、K3s のローカルイメージリポジトリである/var/lib/rancher/k3s/agent/images にイメージ作成後のイメージを自動コピーしているため、Kubernetes デプロイ時に image として chat-backend:1.0.0 を指定するだけで環境を構築することができる。</p>
+
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch9-cloud4')">← 9. クラウド環境を利用したシステム構築2</a>
   <a onclick="navigate('books-ta')">TA 推薦図書 →</a>
 </div>`
   },
