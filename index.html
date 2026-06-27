@@ -1215,15 +1215,7 @@ const pages = {
       <h3 id="sec111">1.1.1. 概要</h3>
       <p>　クラウドは単なる仮想マシン提供（IaaS）から進化し、現在は <strong>「Cloud-Smart」＋クラウドネイティブ</strong> が前提となっている。 その背景には、コンピュータ実行環境のパラダイム転換に伴い、計算機資源がスケーラブルに利用可能となったことが挙げられる。</p>
 
-      <div class="flow-diagram">
-        <div class="flow-box">物理マシン<br><small>（ベアメタル）</small></div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-box">仮想マシン<br><small>（Virtual Machine: VM）</small></div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-box">コンテナ</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-box">オーケストレータ</div>
-      </div>
+      <div class="figure"><img src="images/ch1-fig1-1-1-execution-evolution.png" alt="アプリケーション実行環境の進化（物理マシン→仮想マシン→コンテナ→オーケストレータ）" style="max-width:100%"></div>
 
       <p>　これらの関係については、資料「A1.3.アプリケーションの実行形態」を参照すること。</p>
       <p>　コンピュータの実行環境はアプリケーション（応用ソフトウェア）の実行環境に等しいと解釈できるので、この変化は、アプリケーション実行環境におけるパラダイム転換ともいえる。 このようなパラダイム転換により、次のような変化が生じている。</p>
@@ -2017,7 +2009,7 @@ Enter ssh key or URL for root (or 'none') [none]⏎　※デフォルト　2026/
       <p>　物理マシン上で直接アプリケーションを実行する形態である。BASICなどを搭載した1980年代頃までのパーソナルコンピュータやマイコン（Micro Controller Unit: MCU）などを用いた組み込みシステムに見られる。 一般に単一の専用プログラムが実行され、起動後に別のプログラムを選択することはできない。また、BIOSやファームウェアとしてプログラムが格納されており、基本的には更新によってバージョンアップを行う。 IoT（Internet of Things）機器もこの形態を取ることが多いが、複数アプリケーションを実行する場合は後述の形態が用いられる。</p>
       <p><strong>【図1. 物理マシン（ベアメタル）上でのアプリケーション実行】</strong></p>
       <div class="figure">
-        <img src="images/a13-fig1-execution-evolution.png" alt="物理マシン（ベアメタル）上でのアプリケーション実行" style="max-width:100%" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <img src="images/a13-fig1-baremetal-app.png" alt="物理マシン（ベアメタル）上でのアプリケーション実行" style="max-width:100%" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <div class="arch-diagram" style="display:none">
           <div class="arch-layer gray">物理マシン（ベアメタル）<br><small>BIOS/ファームウェア</small></div>
           <div class="arch-arrow">↓</div>
