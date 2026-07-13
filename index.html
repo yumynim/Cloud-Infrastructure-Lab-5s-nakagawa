@@ -711,6 +711,8 @@
     <span class="nav-chapter-label">第11章</span>
     <a class="nav-item" onclick="navigate('ch11-cloud6')">11. クラウド環境を利用したシステム構築4</a>
     <a class="nav-item" onclick="navigate('ch11-a1-eval')">A11-1. 構築物の評価方法</a>
+    <span class="nav-chapter-label">第12章</span>
+    <a class="nav-item" onclick="navigate('ch12-cloud7')">12. 総合点検（トラブルシューティング）</a>
 
     <span class="nav-chapter-label">関連書籍</span>
     <a class="nav-item" onclick="navigate('books-ta')">TA 推薦図書</a>
@@ -13649,6 +13651,661 @@ Checking......................Success!</pre></div>
 
 <div class="page-nav" style="justify-content:space-between;">
   <a onclick="navigate('ch11-cloud6')">← 11. クラウド環境を利用したシステム構築4</a>
+  <a onclick="navigate('ch12-cloud7')">12. 総合点検（トラブルシューティング） →</a>
+</div>`
+  },
+
+  'ch12-cloud7': {
+    title: '第12章 総合点検（トラブルシューティング）',
+    toc: [
+      { level: 1, label: '第12章 総合点検（トラブルシューティング）', anchor: 'top' },
+      { level: 2, label: '12.1 はじめに', anchor: 's121' },
+      { level: 3, label: '12.1.1 本章の目的', anchor: 's1211' },
+      { level: 3, label: '12.1.2 レイヤ構造による切り分け', anchor: 's1212' },
+      { level: 3, label: '12.1.3 トラブルシューティングの基本原則', anchor: 's1213' },
+      { level: 3, label: '12.1.4 本章で利用する主な確認コマンド', anchor: 's1214' },
+      { level: 2, label: '12.2 レイヤ別トラブルシューティング', anchor: 's122' },
+      { level: 3, label: '12.2.1 レイヤ1　仮想化レイヤ（VirtualBox）', anchor: 's1221' },
+      { level: 3, label: '12.2.2 レイヤ2　OSレイヤ（Alpine Linux）', anchor: 's1222' },
+      { level: 3, label: '12.2.3 レイヤ3　ネットワークレイヤ', anchor: 's1223' },
+      { level: 3, label: '12.2.4 レイヤ4　DNSレイヤ', anchor: 's1224' },
+      { level: 3, label: '12.2.5 レイヤ5　コンテナレイヤ', anchor: 's1225' },
+      { level: 3, label: '12.2.6 レイヤ6　Kubernetesレイヤ', anchor: 's1226' },
+      { level: 3, label: '12.2.7 レイヤ7　データレイヤ（PostgreSQL・MinIO）', anchor: 's1227' },
+      { level: 3, label: '12.2.8 レイヤ8　バックエンドレイヤ', anchor: 's1228' },
+      { level: 3, label: '12.2.9 レイヤ9　フロントエンドレイヤ', anchor: 's1229' },
+      { level: 3, label: '12.2.10 レイヤ10　公開レイヤ（HAProxy・Ingress・ブラウザ）', anchor: 's12210' },
+      { level: 2, label: '12.3 ネットワーク疎通確認の基本', anchor: 's123' },
+      { level: 3, label: '12.3.1 疎通確認の考え方', anchor: 's1231' },
+      { level: 3, label: '12.3.2 全体フロー', anchor: 's1232' },
+      { level: 3, label: '12.3.3 レベル1　自分自身の確認', anchor: 's1233' },
+      { level: 3, label: '12.3.4 レベル2　ループバック確認', anchor: 's1234' },
+      { level: 3, label: '12.3.5 レベル3　自分のIPアドレス', anchor: 's1235' },
+      { level: 3, label: '12.3.6 レベル4　デフォルトゲートウェイ', anchor: 's1236' },
+      { level: 3, label: '12.3.7 レベル5　同一LAN', anchor: 's1237' },
+      { level: 3, label: '12.3.8 レベル6　外部ネットワーク', anchor: 's1238' },
+      { level: 3, label: '12.3.9 レベル7　DNS', anchor: 's1239' },
+      { level: 3, label: '12.3.10 レベル8　アプリケーション', anchor: 's12310' },
+      { level: 2, label: '12.4 K3s異常インストール診断フロー', anchor: 's124' },
+      { level: 3, label: '12.4.1 K3s診断の考え方', anchor: 's1241' },
+      { level: 3, label: '12.4.2 K3sインストール診断フロー', anchor: 's1242' },
+      { level: 3, label: '12.4.3 インストール状態確認', anchor: 's1243' },
+      { level: 3, label: '12.4.4 Server / Agent判定', anchor: 's1244' },
+      { level: 3, label: '12.4.5 WorkerがReadyにならない場合', anchor: 's1245' },
+      { level: 3, label: '12.4.6 完全アンインストールを検討する状態', anchor: 's1246' },
+      { level: 3, label: '12.4.7 完全アンインストール', anchor: 's1247' },
+      { level: 3, label: '12.4.8 再インストールフロー', anchor: 's1248' },
+      { level: 3, label: '12.4.9 診断に利用するコマンド', anchor: 's1249' },
+      { level: 3, label: '12.4.10 最終的な切り分け', anchor: 's12410' },
+      { level: 2, label: '12.5 実践的な障害切り分け例', anchor: 's125' },
+      { level: 3, label: '12.5.1 例1：ブラウザで画面が表示されない', anchor: 's1251' },
+      { level: 3, label: '12.5.2 例2：ログインできない', anchor: 's1252' },
+      { level: 3, label: '12.5.3 例3：WorkerノードがReadyにならない', anchor: 's1253' },
+    ],
+    content: `<h1 id="top">第12章　総合点検（トラブルシューティング）</h1>
+<p class="meta">公開日：2026年7月13日（月）<br>講義日：2026年7月13日（月）</p>
+
+<h2 id="s121">12.1 はじめに</h2>
+
+<h3 id="s1211">12.1.1 本章の目的</h3>
+<p>本章では、これまで構築してきたクラウドアプリケーション環境を総合的に点検し、正常に動作しない場合の原因を体系的に切り分ける方法を学ぶ。</p>
+<p>クラウドシステムは、1つのソフトウェアだけで構成されているわけではない。仮想マシン、Linux、ネットワーク、DNS、コンテナ、Kubernetes、データベース、API、フロントエンド、ロードバランサなど、複数の要素が重なり合って動作している。そのため、画面に表示された1つのエラーだけを見て原因を判断することは危険である。</p>
+<p>例えば、「チャット画面が表示されない」という症状が発生した場合、原因はフロントエンドのプログラムとは限らない。DNSの名前解決に失敗している場合もあれば、KubernetesのPodが停止している場合、データベースに接続できていない場合、HAProxyの転送設定が誤っている場合もある。</p>
+<p>このような複合的なシステムでは、原因を思い込みで探すのではなく、下位レイヤから順番に確認することが重要である。本章では、レイヤ構造に沿った確認手順と、代表的なトラブルシューティングの流れを整理する。</p>
+
+<h3 id="s1212">12.1.2 レイヤ構造による切り分け</h3>
+<p>本講義で構築してきたシステムは、次のようなレイヤに分けて考えることができる。</p>
+<table>
+<thead><tr><th>レイヤ</th><th>対象</th><th>主な役割</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>VirtualBox</td><td>仮想マシンを実行する基盤</td></tr>
+<tr><td>2</td><td>Linux</td><td>各種サービスを実行するOS</td></tr>
+<tr><td>3</td><td>ネットワーク</td><td>VM間・外部との通信経路</td></tr>
+<tr><td>4</td><td>DNS</td><td>ホスト名とIPアドレスの対応付け</td></tr>
+<tr><td>5</td><td>Docker / containerd</td><td>コンテナの実行基盤</td></tr>
+<tr><td>6</td><td>Kubernetes</td><td>Pod、Service、Ingressの管理</td></tr>
+<tr><td>7</td><td>PostgreSQL / MinIO</td><td>永続データとオブジェクトの保存</td></tr>
+<tr><td>8</td><td>Backend API</td><td>業務処理とデータアクセス</td></tr>
+<tr><td>9</td><td>Frontend</td><td>ブラウザ画面の提供</td></tr>
+<tr><td>10</td><td>HAProxy / Ingress / ブラウザ</td><td>外部公開と利用者アクセス</td></tr>
+</tbody>
+</table>
+<p>番号の小さいレイヤは、番号の大きいレイヤの前提となる。VirtualBox上で仮想マシンが起動していなければ、LinuxもKubernetesも動作しない。ネットワークが正常でなければ、DNSやAPIは利用できない。KubernetesのPodが停止していれば、フロントエンドやバックエンドは応答しない。</p>
+<p>したがって、障害対応では、上位レイヤの問題を疑う前に、必ず下位レイヤから順番に確認する必要がある。</p>
+
+<h3 id="s1213">12.1.3 トラブルシューティングの基本原則</h3>
+<p>トラブルシューティングでは、次の原則を守ることが重要である。</p>
+<ul>
+<li>原因を推測だけで決めつけない。</li>
+<li>一度に複数の設定を変更しない。</li>
+<li>下位レイヤから上位レイヤへ順番に確認する。</li>
+<li>コマンドの実行結果を記録する。</li>
+<li>正常な状態と異常な状態の違いを比較する。</li>
+<li>ログを確認する習慣を付ける。</li>
+<li>直らない場合は、現在の状態を説明できるところまで戻る。</li>
+</ul>
+<p>特に重要なのは、「何を確認し、その結果がどうだったか」を明確にすることである。障害対応では、何となく設定を変更し続けるのではなく、確認結果に基づいて次の作業を決める必要がある。</p>
+
+<h3 id="s1214">12.1.4 本章で利用する主な確認コマンド</h3>
+<p>本章では、次のコマンドを繰り返し利用する。これらはクラウド環境の点検で頻繁に使う基本コマンドである。</p>
+<table>
+<thead><tr><th>用途</th><th>コマンド</th><th>確認できる内容</th></tr></thead>
+<tbody>
+<tr><td>IP確認</td><td>ip addr</td><td>NIC、IPアドレス、リンク状態</td></tr>
+<tr><td>ルート確認</td><td>ip route</td><td>デフォルトゲートウェイ、経路情報</td></tr>
+<tr><td>疎通確認</td><td>ping</td><td>IPレベルで通信できるか</td></tr>
+<tr><td>名前解決</td><td>nslookup</td><td>DNSで名前解決できるか</td></tr>
+<tr><td>名前解決</td><td>dig</td><td>DNS応答の詳細</td></tr>
+<tr><td>ノード確認</td><td>kubectl get nodes</td><td>Kubernetesノードの状態</td></tr>
+<tr><td>Pod確認</td><td>kubectl get pods -A</td><td>全NamespaceのPod状態</td></tr>
+<tr><td>Service確認</td><td>kubectl get services -A</td><td>Serviceの作成状況</td></tr>
+<tr><td>Ingress確認</td><td>kubectl get ingress -A</td><td>Ingressの公開設定</td></tr>
+<tr><td>Pod詳細</td><td>kubectl describe pod &lt;pod名&gt;</td><td>Podのイベント、スケジューリング状況</td></tr>
+<tr><td>ログ確認</td><td>kubectl logs &lt;pod名&gt;</td><td>コンテナ内アプリケーションのログ</td></tr>
+</tbody>
+</table>
+<p>これらのコマンドは、単に実行するだけでは不十分である。結果を見て、「正常である」「異常である」「次に確認すべき箇所はどこか」を判断することが重要である。</p>
+
+<h2 id="s122">12.2 レイヤ別トラブルシューティング</h2>
+
+<h3 id="s1221">12.2.1 レイヤ1　仮想化レイヤ（VirtualBox）</h3>
+<h4>役割</h4>
+<p>VirtualBoxは、クラウドシステム全体の土台となる仮想化環境である。仮想マシンを実行し、仮想NIC、仮想ディスク、ポートフォワード、NAT、Host-Onlyネットワークなどを提供する。</p>
+<p>このレイヤが正常でなければ、その上で動作するLinux、Docker、Kubernetes、アプリケーションは一切利用できない。そのため、SSH接続できない、pingが通らない、ノードが見えないといった問題が発生した場合は、最初にVirtualBoxの状態を確認する必要がある。</p>
+<h4>よくある症状</h4>
+<ul>
+<li>SSH接続できない。</li>
+<li>VMが一覧に表示されない。</li>
+<li>VMは存在するが起動していない。</li>
+<li>Port Forwardが効かない。</li>
+<li>Host-Onlyネットワークで通信できない。</li>
+<li>仮想NICの種類が想定と異なる。</li>
+</ul>
+<h4>確認項目</h4>
+<ul>
+<li>必要なVMが起動しているか。</li>
+<li>Adapter 1 が Host-Only Adapter になっているか。</li>
+<li>Adapter 2 が NAT になっているか。</li>
+<li>Port Forwardのホストポートとゲストポートが正しいか。</li>
+<li>仮想NICの種類が virtio-net など指定どおりになっているか。</li>
+<li>VMのスナップショットやクローンによりMACアドレスが重複していないか。</li>
+</ul>
+<h4>判断基準</h4>
+<p>VirtualBoxレイヤが正常であるとは、対象のVMが起動し、必要な仮想NICが認識され、ホストOSから想定した経路で接続できる状態をいう。SSHやpingの失敗が続く場合、上位レイヤを見る前にVirtualBoxのネットワーク設定を確認する必要がある。</p>
+<h4>トラブルシューティングフロー</h4>
+<div class="figure"><img src="images/ch12-fig2-1-layer1-virtualbox.png" alt="図12.2.1 レイヤ1 VirtualBoxトラブルシューティングフロー" style="max-width:min(700px,100%)"></div>
+<h4>実践上の注意</h4>
+<p>VirtualBoxの設定変更は、VMの停止中でなければ反映できない項目がある。また、ネットワークアダプタの順序が変わると、Linux側で eth0 と eth1 の対応が想定と異なる場合がある。ネットワーク障害では、VirtualBoxのアダプタ構成とLinux側の ip addr の結果を対応させて確認することが重要である。</p>
+
+<h3 id="s1222">12.2.2 レイヤ2　OSレイヤ（Alpine Linux）</h3>
+<h4>役割</h4>
+<p>Linuxは、クラウドサービスを実行するための基盤となるOSである。Kubernetes、Docker、containerd、データベース、DNS、Webサーバなどは、すべてLinux上のプロセスとして動作する。</p>
+<p>OSが起動していない、ログインできない、必要なサービスが起動していない、権限が不足しているといった状態では、上位のクラウドサービスを正常に扱うことはできない。</p>
+<h4>よくある症状</h4>
+<ul>
+<li>SSHできない。</li>
+<li>ログインできない。</li>
+<li>root権限を取得できない。</li>
+<li>doas が利用できない。</li>
+<li>必要なサービスが起動していない。</li>
+<li>ホスト名が想定と異なる。</li>
+</ul>
+<h4>確認コマンド</h4>
+<div class="cmd"><pre>hostname
+whoami
+uptime</pre></div>
+<p>必要に応じて、サービスの状態を確認する。</p>
+<div class="cmd"><pre>rc-service サービス名 status</pre></div>
+<h4>確認ポイント</h4>
+<ul>
+<li>SSHサービスが起動しているか。</li>
+<li>ログインしているユーザーが想定どおりか。</li>
+<li>root権限または管理者権限を取得できるか。</li>
+<li>ホスト名がノード設計と一致しているか。</li>
+<li>OSの起動後に必要なサービスが自動起動しているか。</li>
+</ul>
+<h4>判断基準</h4>
+<p>OSレイヤが正常であるとは、SSHでログインでき、管理者権限を取得でき、必要なサービスの状態を確認できる状態をいう。hostname の結果が想定と異なる場合、Kubernetesのノード名にも影響するため注意が必要である。</p>
+<h4>トラブルシューティングフロー</h4>
+<div class="figure"><img src="images/ch12-fig2-2-layer2-os.png" alt="図12.2.2 レイヤ2 OS確認フロー" style="max-width:min(700px,100%)"></div>
+<h4>補足</h4>
+<p>Linuxの状態確認では、「コマンドが実行できるか」だけでなく、「そのコマンドを実行しているホストが本当に目的のホストか」を確認する必要がある。複数のVMを扱う環境では、誤ったノードにログインして作業していることがあるため、作業前に hostname を確認する習慣が重要である。</p>
+
+<h3 id="s1223">12.2.3 レイヤ3　ネットワークレイヤ</h3>
+<h4>役割</h4>
+<p>ネットワークレイヤでは、各VMや外部ネットワークとのIP通信が可能であるかを確認する。Kubernetesクラスタ、DNS、データベース接続、Webアクセスは、すべてネットワーク通信を前提としている。</p>
+<p>IPアドレス、サブネットマスク、デフォルトゲートウェイ、NAT、ルーティングに問題がある場合、上位のサービスは正常に見えても通信できない。</p>
+<h4>よくある症状</h4>
+<ul>
+<li>pingできない。</li>
+<li>デフォルトゲートウェイへ届かない。</li>
+<li>同一LAN内のVMへ届かない。</li>
+<li>外部ネットワークへ出られない。</li>
+<li>kubectl や curl がタイムアウトする。</li>
+</ul>
+<h4>確認コマンド</h4>
+<div class="cmd"><pre>ip addr
+ip route
+ping 宛先IPアドレス</pre></div>
+<h4>確認ポイント</h4>
+<ul>
+<li>eth0 と eth1 が認識されているか。</li>
+<li>IPアドレスが設計どおりに割り当てられているか。</li>
+<li>デフォルトゲートウェイが設定されているか。</li>
+<li>NAT側のインタフェースが外部通信に利用されているか。</li>
+<li>Host-Only側のインタフェースでVM間通信ができるか。</li>
+</ul>
+<h4>判断基準</h4>
+<p>ネットワークレイヤが正常であるとは、自分自身、デフォルトゲートウェイ、同一LAN内の他ホスト、必要な外部IPアドレスに到達できる状態をいう。ただし、ping応答はファイアウォールや相手側設定で禁止される場合があるため、必要に応じて curl や nc なども併用する。</p>
+<h4>トラブルシューティングフロー</h4>
+<div class="figure"><img src="images/ch12-fig2-3-layer3-network.png" alt="図12.2.3 レイヤ3 ネットワークトラブルシューティングフロー" style="max-width:min(700px,100%)"></div>
+<h4>補足</h4>
+<p>ネットワーク障害では、遠い宛先から確認してはいけない。まず自分自身、次にゲートウェイ、次に同一LAN、最後に外部ネットワークの順に確認する。遠い宛先だけを確認すると、途中のどこで失敗しているかを特定できない。</p>
+
+<h3 id="s1224">12.2.4 レイヤ4　DNSレイヤ</h3>
+<h4>役割</h4>
+<p>DNSは、ホスト名からIPアドレスを取得する仕組みである。IPアドレスで通信できても、名前解決ができなければアプリケーションは利用できない場合がある。</p>
+<p>Webアプリケーション、API、データベース接続、Kubernetes内部通信では、IPアドレスではなくホスト名やService名を使うことが多い。そのため、DNSの不具合は多くのアプリケーション障害として現れる。</p>
+<h4>よくある症状</h4>
+<ul>
+<li>ホスト名で通信できない。</li>
+<li>IPアドレスでは通信できるが名前では失敗する。</li>
+<li>nslookup が失敗する。</li>
+<li>curl で名前解決エラーになる。</li>
+<li>Kubernetes内のService名が解決できない。</li>
+</ul>
+<h4>確認コマンド</h4>
+<div class="cmd"><pre>cat /etc/resolv.conf
+nslookup ホスト名
+dig ホスト名</pre></div>
+<h4>確認対象</h4>
+<ul>
+<li>/etc/hosts</li>
+<li>/etc/resolv.conf</li>
+<li>Unbound</li>
+<li>BIND</li>
+<li>CoreDNS</li>
+<li>Kubernetes Service名</li>
+</ul>
+<h4>判断基準</h4>
+<p>DNSレイヤが正常であるとは、必要なホスト名が正しいIPアドレスへ解決できる状態をいう。外部ドメインと内部ドメインでは参照するDNSサーバが異なる場合があるため、どのDNSサーバに問い合わせているかも確認する必要がある。</p>
+<h4>トラブルシューティングフロー</h4>
+<div class="figure"><img src="images/ch12-fig2-4-layer4-dns.png" alt="図12.2.4 レイヤ4 DNSトラブルシューティングフロー" style="max-width:min(700px,100%)"></div>
+<h4>補足</h4>
+<p>DNS障害は、ネットワーク障害と混同されやすい。IPアドレスで通信できるがホスト名で通信できない場合は、ネットワークではなくDNSを疑うべきである。逆に、IPアドレスでも通信できない場合は、DNSではなくネットワークレイヤを先に確認する。</p>
+
+<h3 id="s1225">12.2.5 レイヤ5　コンテナレイヤ</h3>
+<h4>役割</h4>
+<p>Dockerやcontainerdは、アプリケーションをコンテナとして実行するための基盤である。コンテナは、アプリケーション本体、実行環境、依存ライブラリをまとめた実行単位である。</p>
+<p>Kubernetesを利用する場合でも、実際にコンテナを起動しているのはcontainerdなどのコンテナランタイムである。したがって、コンテナイメージの取得や起動に失敗すると、Kubernetes上のPodも正常に動作しない。</p>
+<h4>よくある症状</h4>
+<ul>
+<li>コンテナが起動しない。</li>
+<li>イメージ取得に失敗する。</li>
+<li>Buildに失敗する。</li>
+<li>環境変数が反映されない。</li>
+<li>ログにエラーが出る。</li>
+<li>KubernetesのPodが ImagePullBackOff になる。</li>
+</ul>
+<h4>Dockerでの確認</h4>
+<div class="cmd"><pre>docker ps
+docker images
+docker logs コンテナ名</pre></div>
+<h4>Kubernetesでの確認</h4>
+<div class="cmd"><pre>kubectl get pods
+kubectl logs Pod名</pre></div>
+<h4>判断基準</h4>
+<p>コンテナレイヤが正常であるとは、必要なコンテナイメージが存在し、コンテナまたはPodが起動し、ログに致命的なエラーが出ていない状態をいう。コンテナがすぐ停止する場合は、アプリケーションの起動コマンド、環境変数、設定ファイル、依存サービスへの接続を確認する必要がある。</p>
+<h4>トラブルシューティングフロー</h4>
+<div class="figure"><img src="images/ch12-fig2-5-layer5-container.png" alt="図12.2.5 レイヤ5 コンテナトラブルシューティングフロー" style="max-width:min(700px,100%)"></div>
+<h4>補足</h4>
+<p>コンテナのログは、障害原因を直接示すことが多い。例えば、データベース接続エラー、認証エラー、設定ファイルの読み込み失敗、ポート競合などはログに出力される。Podが起動しない場合は、kubectl get pods だけで判断せず、kubectl describe pod と kubectl logs を組み合わせて確認する必要がある。</p>
+
+<h3 id="s1226">12.2.6 レイヤ6　Kubernetesレイヤ</h3>
+<h4>役割</h4>
+<p>Kubernetesは、コンテナ化されたアプリケーションをクラスタ上で管理するための基盤である。Pod、Service、Ingress、Secret、ConfigMap、Volumeなどを用いて、アプリケーションの実行、公開、設定管理、永続化を行う。</p>
+<p>Kubernetesでは、Podが起動しているだけではアプリケーションが利用できるとは限らない。Serviceが正しく作成されているか、Ingressが正しく設定されているか、SecretやConfigMapが正しいかを総合的に確認する必要がある。</p>
+<h4>よくある症状</h4>
+<ul>
+<li>Podが Pending になる。</li>
+<li>Podが CrashLoopBackOff になる。</li>
+<li>Podが ImagePullBackOff になる。</li>
+<li>Serviceが見えない。</li>
+<li>Ingressで404になる。</li>
+<li>Nodeが NotReady になる。</li>
+</ul>
+<h4>確認コマンド</h4>
+<div class="cmd"><pre>kubectl get nodes
+kubectl get pods -A
+kubectl get services -A
+kubectl get ingress -A</pre></div>
+<h4>詳細確認</h4>
+<div class="cmd"><pre>kubectl describe pod Pod名
+kubectl logs Pod名</pre></div>
+<h4>判断基準</h4>
+<p>Kubernetesレイヤが正常であるとは、Nodeが Ready であり、必要なPodが Running または Completed であり、ServiceとIngressが設計どおりに作成されている状態をいう。Podが Running であっても、アプリケーションの内部エラーによりサービスとして利用できない場合があるため、ログ確認が必要である。</p>
+<h4>トラブルシューティングフロー</h4>
+<div class="figure"><img src="images/ch12-fig2-6-layer6-kubernetes.png" alt="図12.2.6 レイヤ6 Kubernetesトラブルシューティングフロー" style="max-width:min(700px,100%)"></div>
+<h4>補足</h4>
+<p>kubectl get pods で Running と表示されても、アプリケーションが正しく応答しているとは限らない。Running はコンテナプロセスが起動していることを示すだけである。HTTP APIが正しく応答するか、データベースに接続できるか、必要な環境変数が設定されているかは別途確認する必要がある。</p>
+
+<h3 id="s1227">12.2.7 レイヤ7　データレイヤ（PostgreSQL・MinIO）</h3>
+<h4>役割</h4>
+<p>データレイヤは、アプリケーションが扱うデータを保存する役割を持つ。本講義の環境では、主にPostgreSQLとMinIOを利用する。</p>
+<p>PostgreSQLは、ユーザー情報、チャット履歴、設定情報などの構造化データを保存する。MinIOは、画像やファイルなどのオブジェクトデータを保存する。どちらかに問題があると、ログイン、保存、画像表示、履歴表示などが失敗する。</p>
+<h4>よくある症状</h4>
+<ul>
+<li>ログインできない。</li>
+<li>データを保存できない。</li>
+<li>画像が表示されない。</li>
+<li>ファイルアップロードに失敗する。</li>
+<li>Backend APIがHTTP 500を返す。</li>
+<li>Secretの値が誤っている。</li>
+</ul>
+<h4>PostgreSQLの確認</h4>
+<div class="cmd"><pre>psql</pre></div>
+<p>またはDocker Compose環境では次を確認する。</p>
+<div class="cmd"><pre>docker compose ps</pre></div>
+<p>Kubernetes環境では次を確認する。</p>
+<div class="cmd"><pre>kubectl get pods -A
+kubectl logs Pod名</pre></div>
+<h4>MinIOの確認</h4>
+<ul>
+<li>バケットが存在するか。</li>
+<li>オブジェクトが保存されているか。</li>
+<li>Access Keyが正しいか。</li>
+<li>Secret Keyが正しいか。</li>
+<li>エンドポイントURLが正しいか。</li>
+<li>BackendからMinIOへ到達できるか。</li>
+</ul>
+<h4>判断基準</h4>
+<p>データレイヤが正常であるとは、アプリケーションからPostgreSQLへ接続でき、必要なテーブルにアクセスでき、MinIOのバケットに対してオブジェクトの保存と取得ができる状態をいう。認証情報、接続先ホスト名、ポート番号、バケット名のいずれかが誤っているだけでも障害が発生する。</p>
+<h4>トラブルシューティングフロー</h4>
+<div class="figure"><img src="images/ch12-fig2-7-layer7-data.png" alt="図12.2.7 レイヤ7 データレイヤトラブルシューティングフロー" style="max-width:min(700px,100%)"></div>
+<h4>補足</h4>
+<p>データレイヤの障害は、バックエンドAPIのエラーとして表面化することが多い。画面上では「保存できない」と見えるだけでも、実際にはPostgreSQL接続エラーやMinIO認証エラーである場合がある。そのため、フロントエンドだけで判断せず、バックエンドログを確認することが重要である。</p>
+
+<h3 id="s1228">12.2.8 レイヤ8　バックエンドレイヤ</h3>
+<h4>役割</h4>
+<p>バックエンドは、REST APIを提供し、フロントエンドとデータレイヤの仲介を行う。ユーザー認証、データ保存、検索、画像取得、チャット処理などの業務ロジックはバックエンドで実行される。</p>
+<p>バックエンドは、PostgreSQL、MinIO、JWT、Secret、外部APIなど、複数の要素に依存している。そのため、バックエンドの障害は単独のプログラムエラーだけでなく、依存先サービスの不具合によっても発生する。</p>
+<h4>よくある症状</h4>
+<ul>
+<li>HTTP 500が返る。</li>
+<li>HTTP 401が返る。</li>
+<li>HTTP 404が返る。</li>
+<li>APIが応答しない。</li>
+<li>ログイン処理に失敗する。</li>
+<li>データ保存に失敗する。</li>
+</ul>
+<h4>確認コマンド</h4>
+<div class="cmd"><pre>curl APIのURL
+kubectl logs backendのPod名</pre></div>
+<h4>確認ポイント</h4>
+<ul>
+<li>APIのURLが正しいか。</li>
+<li>HTTPステータスコードは何か。</li>
+<li>Secretが正しいか。</li>
+<li>DB接続情報が正しいか。</li>
+<li>MinIO接続情報が正しいか。</li>
+<li>JWTの設定が正しいか。</li>
+<li>CORS設定が必要に応じて行われているか。</li>
+</ul>
+<h4>判断基準</h4>
+<p>バックエンドレイヤが正常であるとは、想定したAPIエンドポイントに対してHTTPリクエストを送信したとき、期待するステータスコードとレスポンスが返る状態をいう。単にPodが起動していることではなく、APIとして正常に応答することを確認する必要がある。</p>
+<h4>トラブルシューティングフロー</h4>
+<div class="figure"><img src="images/ch12-fig2-8-layer8-backend.png" alt="図12.2.8 レイヤ8 バックエンドトラブルシューティングフロー" style="max-width:min(700px,100%)"></div>
+<h4>補足</h4>
+<p>HTTPステータスコードには意味がある。401 は認証やトークンの問題、404 はURLやルーティングの問題、500 はサーバ内部エラーを示すことが多い。エラー内容を見ずに設定を変更するのではなく、ステータスコードとログを組み合わせて原因を推定する必要がある。</p>
+
+<h3 id="s1229">12.2.9 レイヤ9　フロントエンドレイヤ</h3>
+<h4>役割</h4>
+<p>フロントエンドは、利用者がブラウザで操作する画面を提供する。HTML、CSS、JavaScriptを通じてユーザーインタフェースを構成し、バックエンドAPIと通信してデータを取得・保存する。</p>
+<p>フロントエンドの障害は、画面が真っ白になる、ボタンが動かない、API通信が失敗する、ブラウザのConsoleにJavaScriptエラーが表示されるといった形で現れる。</p>
+<h4>よくある症状</h4>
+<ul>
+<li>真っ白な画面になる。</li>
+<li>JavaScriptエラーが出る。</li>
+<li>ボタンを押しても反応しない。</li>
+<li>API通信に失敗する。</li>
+<li>ログイン後の画面に遷移しない。</li>
+<li>ブラウザのNetworkタブでエラーが出る。</li>
+</ul>
+<h4>確認方法</h4>
+<p>ブラウザの開発者ツールを利用する。</p>
+<ul>
+<li>Console</li>
+<li>Network</li>
+<li>Application</li>
+<li>Sources</li>
+</ul>
+<p>Kubernetes上のログも確認する。</p>
+<div class="cmd"><pre>kubectl logs frontendのPod名</pre></div>
+<h4>判断基準</h4>
+<p>フロントエンドレイヤが正常であるとは、ブラウザで画面が表示され、JavaScriptエラーがなく、必要なAPI通信が成功している状態をいう。画面が表示されてもAPI通信が失敗している場合は、バックエンド、DNS、Ingress、CORSなどの問題を確認する必要がある。</p>
+<h4>トラブルシューティングフロー</h4>
+<div class="figure"><img src="images/ch12-fig2-9-layer9-frontend.png" alt="図12.2.9 レイヤ9 フロントエンドトラブルシューティングフロー" style="max-width:min(700px,100%)"></div>
+<h4>補足</h4>
+<p>フロントエンドで最も重要な確認箇所は、ブラウザのConsoleとNetworkである。ConsoleにはJavaScriptの実行エラーが表示される。NetworkにはAPI通信の成否、HTTPステータスコード、レスポンス内容が表示される。これらを確認することで、画面側の問題か、API側の問題かを切り分けられる。</p>
+
+<h3 id="s12210">12.2.10 レイヤ10　公開レイヤ（HAProxy・Ingress・ブラウザ）</h3>
+<h4>役割</h4>
+<p>公開レイヤは、利用者がブラウザからアプリケーションへアクセスするための入口である。本講義の環境では、HAProxyやIngressを利用して、外部からのHTTPリクエストをKubernetes内のServiceやPodへ転送する。</p>
+<p>このレイヤに問題があると、内部ではPodやServiceが正常でも、ブラウザからアクセスできない状態になる。</p>
+<h4>よくある症状</h4>
+<ul>
+<li>ブラウザで404になる。</li>
+<li>502 Bad Gatewayになる。</li>
+<li>APIだけ失敗する。</li>
+<li>静的ファイルは表示されるがAPIが失敗する。</li>
+<li>HTTPSやホスト名の設定で失敗する。</li>
+</ul>
+<h4>確認コマンド</h4>
+<div class="cmd"><pre>kubectl get ingress -A
+kubectl get services -A</pre></div>
+<p>HAProxyを利用している場合は、設定ファイルを確認する。</p>
+<div class="cmd"><pre>haproxy.cfg</pre></div>
+<h4>判断基準</h4>
+<p>公開レイヤが正常であるとは、ブラウザから指定したホスト名またはURLにアクセスしたとき、HAProxyやIngressを経由して正しいServiceへ転送され、期待するページまたはAPI応答が返る状態をいう。</p>
+<h4>トラブルシューティングフロー</h4>
+<div class="figure"><img src="images/ch12-fig2-10-layer10-public.png" alt="図12.2.10 レイヤ10 公開レイヤトラブルシューティングフロー" style="max-width:min(700px,100%)"></div>
+<h4>補足</h4>
+<p>502 Bad Gateway は、ロードバランサやプロキシが転送先と通信できない場合に発生することが多い。404 は、Ingressやアプリケーションのルーティング設定が一致していない場合に発生しやすい。エラーの種類ごとに疑う箇所を変えることが重要である。</p>
+
+<h2 id="s123">12.3 ネットワーク疎通確認の基本</h2>
+
+<h3 id="s1231">12.3.1 疎通確認の考え方</h3>
+<p>レイヤ別確認とは別に、ネットワーク障害では「自分に近い場所から順に確認する」という基本がある。通信相手まで一気に確認するのではなく、自分自身、ループバック、NIC、同一ネットワーク、デフォルトゲートウェイ、外部ネットワーク、DNS、アプリケーションの順に確認する。</p>
+<p>確認の順番は次のとおりである。</p>
+<div class="cmd"><pre>自分
+ ↓
+Loopback
+ ↓
+NIC
+ ↓
+自ネットワーク
+ ↓
+デフォルトゲートウェイ
+ ↓
+同一LAN
+ ↓
+他ネットワーク
+ ↓
+DNS
+ ↓
+アプリケーション</pre></div>
+<p>この順番を守ることで、障害がどの範囲にあるかを効率よく切り分けられる。</p>
+
+<h3 id="s1232">12.3.2 全体フロー</h3>
+<div class="figure"><img src="images/ch12-fig3-2-overall-flow.png" alt="図12.3.2 ネットワーク疎通確認の全体フロー" style="max-width:min(700px,100%)"></div>
+
+<h3 id="s1233">12.3.3 レベル1　自分自身の確認</h3>
+<p>最初に確認するのは、自分自身が正常に動作しているかである。OSが起動していない、NICが認識されていない、IPアドレスが付与されていない場合、外部との通信は成立しない。</p>
+<p>確認内容は次のとおりである。</p>
+<ul>
+<li>OSが起動しているか。</li>
+<li>NICが認識されているか。</li>
+<li>IPアドレスが設定されているか。</li>
+<li>作業対象のホスト名が正しいか。</li>
+</ul>
+<p>確認コマンドは次のとおりである。</p>
+<div class="cmd"><pre>ip addr
+hostname</pre></div>
+<h4>確認フローチャート</h4>
+<div class="figure"><img src="images/ch12-fig3-3-level1-self.png" alt="図12.3.3 レベル1 自分自身の確認フローチャート" style="max-width:min(560px,100%)"></div>
+
+<h3 id="s1234">12.3.4 レベル2　ループバック確認</h3>
+<p>ループバック確認では、TCP/IPスタックが正常に動作しているかを確認する。ループバックアドレスは自分自身を示す特別なアドレスであり、通常は 127.0.0.1 を利用する。</p>
+<div class="cmd"><pre>ping 127.0.0.1</pre></div>
+<p>または次を実行する。</p>
+<div class="cmd"><pre>ping localhost</pre></div>
+<p>この確認に失敗する場合、通常のネットワーク設定以前にOS内のネットワーク機能に問題がある可能性がある。</p>
+<h4>確認フローチャート</h4>
+<div class="figure"><img src="images/ch12-fig3-4-level2-loopback.png" alt="図12.3.4 レベル2 ループバック確認フローチャート" style="max-width:min(560px,100%)"></div>
+
+<h3 id="s1235">12.3.5 レベル3　自分のIPアドレス</h3>
+<p>次に、自分自身に割り当てられたIPアドレスへpingを実行する。これにより、NICやIPアドレス設定が基本的に機能しているかを確認できる。</p>
+<div class="cmd"><pre>ping 自分のIPアドレス</pre></div>
+<p>例を次に示す。</p>
+<div class="cmd"><pre>ping 172.20.0.11</pre></div>
+<h4>確認フローチャート</h4>
+<div class="figure"><img src="images/ch12-fig3-5-level3-selfip.png" alt="図12.3.5 レベル3 自分のIPアドレス確認フローチャート" style="max-width:min(560px,100%)"></div>
+
+<h3 id="s1236">12.3.6 レベル4　デフォルトゲートウェイ</h3>
+<p>デフォルトゲートウェイは、別ネットワークへ通信するための出口である。外部ネットワークへ通信できない場合、この設定が原因であることが多い。</p>
+<div class="cmd"><pre>ping GatewayのIPアドレス</pre></div>
+<p>例を次に示す。</p>
+<div class="cmd"><pre>ping 172.20.0.1</pre></div>
+<p>失敗する場合は、ip route で経路情報を確認する。</p>
+<div class="cmd"><pre>ip route</pre></div>
+<h4>確認フローチャート</h4>
+<div class="figure"><img src="images/ch12-fig3-6-level4-gateway.png" alt="図12.3.6 レベル4 デフォルトゲートウェイ確認フローチャート" style="max-width:min(560px,100%)"></div>
+
+<h3 id="s1237">12.3.7 レベル5　同一LAN</h3>
+<p>同一LAN内の他ホストへ通信できるかを確認する。ここで失敗する場合、VLAN、仮想NIC、相手ホストの起動状態、IPアドレス設定、ファイアウォールなどを疑う。</p>
+<div class="cmd"><pre>ping sv
+ping wk1</pre></div>
+<p>ホスト名で失敗する場合は、DNSやhostsの問題も考えられるため、IPアドレスでも確認する。</p>
+<h4>確認フローチャート</h4>
+<div class="figure"><img src="images/ch12-fig3-7-level5-lan.png" alt="図12.3.7 レベル5 同一LAN確認フローチャート" style="max-width:min(560px,100%)"></div>
+
+<h3 id="s1238">12.3.8 レベル6　外部ネットワーク</h3>
+<p>同一LANが正常であれば、次に外部ネットワークへの通信を確認する。この段階ではDNSを利用しないIPアドレスで確認することが重要である。DNS名を使うと、通信障害とDNS障害を区別できないためである。</p>
+<div class="cmd"><pre>ping 202.17.20.1</pre></div>
+<p>または環境に応じて次のようなIPアドレスを利用する。</p>
+<div class="cmd"><pre>ping 172.31.255.1</pre></div>
+<h4>確認フローチャート</h4>
+<div class="figure"><img src="images/ch12-fig3-8-level6-external.png" alt="図12.3.8 レベル6 外部ネットワーク確認フローチャート" style="max-width:min(560px,100%)"></div>
+
+<h3 id="s1239">12.3.9 レベル7　DNS</h3>
+<p>IPアドレスで通信できるにもかかわらずホスト名で通信できない場合は、DNSを確認する。</p>
+<div class="cmd"><pre>nslookup aicit.jp</pre></div>
+<p>または次を実行する。</p>
+<div class="cmd"><pre>dig aicit.jp</pre></div>
+<p>DNSの確認では、問い合わせ先のDNSサーバ、返ってきたIPアドレス、エラー内容を確認する。</p>
+<h4>確認フローチャート</h4>
+<div class="figure"><img src="images/ch12-fig3-9-level7-dns.png" alt="図12.3.9 レベル7 DNS確認フローチャート" style="max-width:min(560px,100%)"></div>
+
+<h3 id="s12310">12.3.10 レベル8　アプリケーション</h3>
+<p>最後に、HTTPなどのアプリケーションレベルの通信を確認する。ネットワークとDNSが正常でも、Webサーバ、API、Service、Ingress、Firewallなどに問題があるとアプリケーションは利用できない。</p>
+<div class="cmd"><pre>curl URL</pre></div>
+<p>または次を利用する。</p>
+<div class="cmd"><pre>wget URL</pre></div>
+<p>ブラウザから確認する場合は、開発者ツールのNetworkタブも併用する。</p>
+<h4>確認フローチャート</h4>
+<div class="figure"><img src="images/ch12-fig3-10-level8-app.png" alt="図12.3.10 レベル8 アプリケーション確認フローチャート" style="max-width:min(700px,100%)"></div>
+
+<h2 id="s124">12.4 K3s異常インストール診断フロー</h2>
+
+<h3 id="s1241">12.4.1 K3s診断の考え方</h3>
+<p>K3sが正常に動作しない場合、設定ファイルを何度も変更し続けるよりも、現在のインストール状態を診断し、Serverとして構成されているのか、Workerとして構成されているのかを確認した方が早く解決できる場合がある。</p>
+<p>Kubernetesの初期構築では、誤った状態を引きずることがある。例えば、ホスト名を変更する前にK3sを導入したためノード名が localhost のまま残る、Serverとして導入すべきVMにAgentを導入してしまう、Workerとして導入すべきVMにServerを導入してしまう、といった状態である。</p>
+<p>このような場合、設定を少しずつ修正するよりも、現在の状態を確認した上で完全にアンインストールし、正しい手順で再インストールした方が確実である。</p>
+
+<h3 id="s1242">12.4.2 K3sインストール診断フロー</h3>
+<div class="figure"><img src="images/ch12-fig4-2-k3s-install-diagnosis.png" alt="図12.4.2 K3sインストール診断フロー" style="max-width:min(700px,100%)"></div>
+<p>このフローでは、まず kubectl get nodes を実行し、ノードが表示されるかを確認する。ノードが表示されない場合、K3s自体が起動していない可能性がある。ノードが表示されても、ノード名やRoleが想定と異なる場合は、過去のインストール状態が残っている可能性がある。</p>
+
+<h3 id="s1243">12.4.3 インストール状態確認</h3>
+<p>現在何がインストールされているかを確認する。</p>
+<div class="cmd"><pre>which k3s</pre></div>
+<p>次に、Server側サービスを確認する。</p>
+<div class="cmd"><pre>rc-service k3s status</pre></div>
+<p>さらに、Agent側サービスを確認する。</p>
+<div class="cmd"><pre>rc-service k3s-agent status</pre></div>
+<p>結果の読み方は次のとおりである。</p>
+<table>
+<thead><tr><th>状態</th><th>意味</th><th>対応</th></tr></thead>
+<tbody>
+<tr><td>k3s だけ起動</td><td>Serverとして動作している</td><td>Serverノードなら正常である</td></tr>
+<tr><td>k3s-agent だけ起動</td><td>Workerとして動作している</td><td>Workerノードなら正常である</td></tr>
+<tr><td>両方起動</td><td>異常状態である</td><td>完全アンインストールを検討する</td></tr>
+<tr><td>両方停止</td><td>未インストールまたは故障である</td><td>サービス起動または再インストールを行う</td></tr>
+</tbody>
+</table>
+
+<h3 id="s1244">12.4.4 Server / Agent判定</h3>
+<div class="figure"><img src="images/ch12-fig4-4-server-agent-judge.png" alt="図12.4.4 Server / Agent判定フロー" style="max-width:min(700px,100%)"></div>
+<p>この判定では、対象ノードが本来Serverであるべきか、Workerであるべきかを設計と照合する必要がある。サービスの状態だけでなく、ノードの役割設計と一致しているかを確認することが重要である。</p>
+
+<h3 id="s1245">12.4.5 WorkerがReadyにならない場合</h3>
+<p>Workerノードが NotReady の場合、Serverとの通信、参加用Token、node-ip の指定を確認する。</p>
+<div class="figure"><img src="images/ch12-fig4-5-worker-notready.png" alt="図12.4.5 WorkerがReadyにならない場合の確認フロー" style="max-width:min(700px,100%)"></div>
+<p>WorkerがReadyにならない場合、Kubernetesそのものの問題ではなく、ネットワークやTokenの誤りであることが多い。Serverへpingできない場合はKubernetesではなくネットワークレイヤへ戻る必要がある。</p>
+
+<h3 id="s1246">12.4.6 完全アンインストールを検討する状態</h3>
+<p>次のような状態では、設定変更を続けるよりも完全アンインストール後に再インストールした方が早い場合がある。</p>
+<ul>
+<li>ServerとAgentが同一ノードで混在している。</li>
+<li>ノード名が重複している。</li>
+<li>localhost のような誤ったノード名が残っている。</li>
+<li>本来のRoleと異なる状態で導入されている。</li>
+<li>Tokenを誤って登録した可能性が高い。</li>
+<li>原因不明の状態を長時間追い続けている。</li>
+</ul>
+<div class="figure"><img src="images/ch12-fig4-6-uninstall-decision.png" alt="図12.4.6 完全アンインストールを検討する状態の判定" style="max-width:min(900px,100%)"></div>
+
+<h3 id="s1247">12.4.7 完全アンインストール</h3>
+<p>Serverとして導入している場合は、次を実行する。</p>
+<div class="cmd"><pre>/usr/local/bin/k3s-uninstall.sh</pre></div>
+<p>Workerとして導入している場合は、次を実行する。</p>
+<div class="cmd"><pre>/usr/local/bin/k3s-agent-uninstall.sh</pre></div>
+<p>アンインストール後は、次を確認する。</p>
+<div class="cmd"><pre>which k3s</pre></div>
+<p>何も表示されなければ、K3sの実行ファイルが削除されていることを意味する。ただし、環境によっては関連ディレクトリや設定ファイルが残る場合があるため、再インストール前に手順書に従って確認する必要がある。</p>
+
+<h3 id="s1248">12.4.8 再インストールフロー</h3>
+<div class="figure"><img src="images/ch12-fig4-8-reinstall-flow.png" alt="図12.4.8 再インストールフロー" style="max-width:min(700px,100%)"></div>
+<p>再インストールでは、Serverを先に構築し、その後Workerを参加させる。Workerを参加させる際には、ServerのIPアドレス、参加用Token、node-ipの指定が正しいことを確認する。</p>
+
+<h3 id="s1249">12.4.9 診断に利用するコマンド</h3>
+<p>K3sの診断では、次のコマンドを組み合わせて利用する。</p>
+<div class="cmd"><pre>hostname
+ip addr
+rc-service k3s status
+rc-service k3s-agent status
+kubectl get nodes -o wide
+kubectl get pods -A
+which k3s
+which kubectl</pre></div>
+<p>これらの結果を比較することで、ノード名、IPアドレス、Role、サービス状態、Pod状態を総合的に確認できる。</p>
+
+<h3 id="s12410">12.4.10 最終的な切り分け</h3>
+<div class="figure"><img src="images/ch12-fig4-10-final-triage.png" alt="図12.4.10 最終的な切り分けフロー" style="max-width:min(700px,100%)"></div>
+<p>K3sのトラブルでは、現在の状態を説明できるかが重要である。説明できない状態のまま設定を変更し続けると、さらに原因が分からなくなる。必要に応じて初期化し、設計どおりに再構築する判断も重要である。</p>
+
+<h2 id="s125">12.5 実践的な障害切り分け例</h2>
+
+<h3 id="s1251">12.5.1 例1：ブラウザで画面が表示されない</h3>
+<p>ブラウザで画面が表示されない場合、フロントエンドだけを疑うのではなく、次の順に確認する。</p>
+<ul>
+<li>VMは起動しているか。</li>
+<li>LinuxへSSHできるか。</li>
+<li>ネットワーク疎通はあるか。</li>
+<li>DNSでホスト名を解決できるか。</li>
+<li>KubernetesのNodeはReadyか。</li>
+<li>Frontend PodはRunningか。</li>
+<li>ServiceとIngressは存在するか。</li>
+<li>HAProxyから正しい転送先へ送られているか。</li>
+<li>ブラウザのConsoleとNetworkにエラーはあるか。</li>
+</ul>
+<p>このように確認すると、単なる画面表示エラーでも、下位レイヤから上位レイヤまで体系的に切り分けられる。</p>
+
+<h3 id="s1252">12.5.2 例2：ログインできない</h3>
+<p>ログインできない場合、原因は認証画面だけではない。次のような原因が考えられる。</p>
+<ul>
+<li>Backend APIに到達できない。</li>
+<li>PostgreSQLに接続できない。</li>
+<li>JWTのSecretが誤っている。</li>
+<li>ユーザーテーブルが作成されていない。</li>
+<li>CORS設定によりブラウザからAPIを呼び出せない。</li>
+<li>Ingressのパス設定が誤っている。</li>
+</ul>
+<p>確認は次の順に行う。</p>
+<ul>
+<li>ブラウザのNetworkでログインAPIのステータスコードを確認する。</li>
+<li>curl でAPIへ直接アクセスする。</li>
+<li>Backend Podのログを確認する。</li>
+<li>PostgreSQLへ接続できるか確認する。</li>
+<li>Secretや環境変数を確認する。</li>
+</ul>
+<p>このように、画面上の症状と実際の原因は異なる場合がある。</p>
+
+<h3 id="s1253">12.5.3 例3：WorkerノードがReadyにならない</h3>
+<p>WorkerノードがReadyにならない場合、次の順に確認する。</p>
+<ul>
+<li>WorkerからServerへpingできるか。</li>
+<li>ServerのK3sサービスは起動しているか。</li>
+<li>Workerの k3s-agent は起動しているか。</li>
+<li>参加用Tokenは正しいか。</li>
+<li>Server URLは正しいか。</li>
+<li>node-ip に指定したIPアドレスは正しいか。</li>
+<li>ホスト名が重複していないか。</li>
+</ul>
+<p>WorkerがReadyにならない場合は、KubernetesのYAMLを修正しても解決しないことが多い。まずクラスタ参加の前提条件を確認する必要がある。</p>
+
+<div class="page-nav" style="justify-content:space-between;">
+  <a onclick="navigate('ch11-a1-eval')">← A11-1. 構築物の評価方法</a>
   <a onclick="navigate('books-ta')">TA 推薦図書 →</a>
 </div>`
   },
